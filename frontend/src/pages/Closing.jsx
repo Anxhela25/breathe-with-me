@@ -1,7 +1,7 @@
 import Screen from '../components/Screen.jsx'
 import Button from '../components/Button.jsx'
 
-// TODO: calm check and quick questions
+// TODO: calm check
 export default function Closing() {
   return (
     <Screen>
@@ -15,7 +15,7 @@ export default function Closing() {
       <p className="mt-10">Want a one-minute calm check?</p>
       <div className="mt-6 flex w-full flex-col items-center gap-2">
         <Button to="/calm-check" className="opacity-50 pointer-events-none" aria-disabled>Start calm check</Button>
-        <Button to="/" variant="link">Skip for now</Button>
+        <Button to="/questions" variant="link">Skip for now</Button>
       </div>
     </Screen>
   )

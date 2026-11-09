@@ -6,6 +6,9 @@ import CheckIn from './pages/CheckIn.jsx'
 import Closing from './pages/Closing.jsx'
 import UrgentHelp from './pages/UrgentHelp.jsx'
 import Chat from './pages/Chat.jsx'
+import AuthForm from './pages/AuthForm.jsx'
+import ChatTexts from './pages/ChatTexts.jsx'
+import QuickQuestions from './pages/QuickQuestions.jsx'
 import ComingSoon from './pages/ComingSoon.jsx'
 
 export default function App() {
@@ -18,6 +21,10 @@ export default function App() {
       <Route path="/closing" element={<Closing />} />
       <Route path="/urgent" element={<UrgentHelp />} />
       <Route path="/chat" element={<Chat />} />
+      <Route path="/questions" element={<QuickQuestions />} />
+      <Route path="/register" element={<AuthForm mode="register" />} />
+      <Route path="/login" element={<AuthForm mode="login" />} />
+      <Route path="/chat-texts" element={<ChatTexts />} />
       <Route path="/history" element={<ComingSoon title="My history" />} />
       <Route path="*" element={<Home />} />
     </Routes>

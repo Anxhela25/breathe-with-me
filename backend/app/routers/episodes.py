@@ -22,6 +22,8 @@ def _own_episode(episode_id: int, user: User, db: Session) -> Episode:
 @router.post("", response_model=EpisodeOut, status_code=status.HTTP_201_CREATED)
 def start_episode(data: EpisodeCreate, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     episode = Episode(user_id=user.id, start_level=data.start_level)
+    if data.started_at:
+        episode.started_at = data.started_at
     db.add(episode)
     db.commit()
     db.refresh(episode)

@@ -1,16 +1,48 @@
 // In dev, vite proxies /api to the backend. The phone build needs VITE_API_URL.
 const BASE = import.meta.env.VITE_API_URL ?? ''
+const TOKEN_KEY = 'bwm_token'
 
-async function post(path, body) {
+// TODO: move the token to the iOS Keychain before real users
+export function getToken() {
+  try { return localStorage.getItem(TOKEN_KEY) } catch { return null }
+}
+
+export function setToken(token) {
+  try {
+    if (token) localStorage.setItem(TOKEN_KEY, token)
+    else localStorage.removeItem(TOKEN_KEY)
+  } catch { /* storage unavailable */ }
+}
+
+export class ApiError extends Error {
+  constructor(status, message) {
+    super(message)
+    this.status = status
+  }
+}
+
+async function request(method, path, body) {
+  const headers = { 'Content-Type': 'application/json' }
+  const token = getToken()
+  if (token) headers.Authorization = `Bearer ${token}`
   const response = await fetch(`${BASE}${path}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+    method, headers, body: body === undefined ? undefined : JSON.stringify(body),
   })
-  if (!response.ok) throw new Error(`Request failed: ${response.status}`)
-  return response.json()
+  if (response.status === 204) return null
+  const data = await response.json().catch(() => null)
+  if (!response.ok) {
+    const detail = typeof data?.detail === 'string' ? data.detail : null
+    throw new ApiError(response.status, detail ?? `Request failed: ${response.status}`)
+  }
+  return data
 }
 
-export function sendChat({ message, history, level }) {
-  return post('/api/chat', { message, history, level })
-}
+export const sendChat = ({ message, history, level }) => request('POST', '/api/chat', { message, history, level })
+
+export const register = (email, password) => request('POST', '/api/auth/register', { email, password })
+export const login = (email, password) => request('POST', '/api/auth/login', { email, password })
+export const getMe = () => request('GET', '/api/me')
+export const updateMe = fields => request('PATCH', '/api/me', fields)
+
+export const createEpisode = fields => request('POST', '/api/episodes', fields)
+export const updateEpisode = (id, fields) => request('PATCH', `/api/episodes/${id}`, fields)

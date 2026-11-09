@@ -1,3 +1,6 @@
+from datetime import datetime, timezone
+
+
 def _register(client, email="maria@example.com"):
     r = client.post("/api/auth/register", json={"email": email, "password": "secret123"})
     assert r.status_code == 201
@@ -29,6 +32,17 @@ def test_episode_flow_and_privacy(client):
     assert client.patch(f"/api/episodes/{ep['id']}", headers=other, json={"note": "x"}).status_code == 404
     assert client.get("/api/episodes", headers=other).json() == []
     assert len(client.get("/api/episodes", headers=h).json()) == 1
+
+
+def test_episode_keeps_real_start_time_and_crisis_flag(client):
+    h = _register(client)
+    ep = client.post("/api/episodes", headers=h,
+                     json={"start_level": 9, "started_at": "2026-11-09T08:00:00Z"}).json()
+    assert datetime.fromisoformat(ep["started_at"]) == datetime(2026, 11, 9, 8, 0, tzinfo=timezone.utc)
+    r = client.patch(f"/api/episodes/{ep['id']}", headers=h, json={"crisis_shown": True})
+    assert r.json()["crisis_shown"] is True
+    future = client.post("/api/episodes", headers=h, json={"started_at": "2099-01-01T00:00:00Z"})
+    assert future.status_code == 422
 
 
 def test_delete_all_my_data(client):
