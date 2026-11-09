@@ -12,6 +12,7 @@ Calm support for panic moments. **A support tool, not a treatment.**
 cd backend
 cp .env.example .env            # first time only, then edit the values
 source .venv/bin/activate       # first time: python3 -m venv .venv && pip install -r requirements.txt
+alembic upgrade head            # creates/updates the tables (run after pulling new migrations)
 uvicorn app.main:app --reload --port 8001   # http://localhost:8001/docs
 
 # 2. Frontend (terminal 2)

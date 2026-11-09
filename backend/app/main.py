@@ -1,22 +1,11 @@
-from contextlib import asynccontextmanager
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-import app.models  # noqa: F401  (registers all tables)
 from app.config import settings
-from app.database import Base, engine
 from app.routers import auth, chat, episodes, safety
 
-
-@asynccontextmanager
-async def lifespan(_: FastAPI):
-    # TODO: replace with Alembic migrations
-    Base.metadata.create_all(bind=engine)
-    yield
-
-
-app = FastAPI(title="Breathe With Me API", version="0.1.0", lifespan=lifespan)
+# Tables are managed by Alembic: run `alembic upgrade head` after pulling new migrations.
+app = FastAPI(title="Breathe With Me API", version="0.1.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
