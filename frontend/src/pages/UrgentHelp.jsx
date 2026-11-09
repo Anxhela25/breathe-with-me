@@ -4,6 +4,7 @@ import Button from '../components/Button.jsx'
 import { getEmergency } from '../data/emergency.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { listContacts } from '../lib/api.js'
+import { formatPhone } from '../lib/phone.js'
 
 const card = 'rounded-2xl border border-alert/40 bg-alert/5 p-4 text-center text-alert'
 
@@ -34,9 +35,9 @@ export default function UrgentHelp() {
       <div className="mt-auto flex w-full flex-col items-center gap-2 pt-8">
         {contacts.length > 0 && <p className="text-sm text-sage/70">Call someone you trust</p>}
         {contacts.map(c => (
-          <a key={c.id} href={`tel:${c.phone.replace(/[^\d+]/g, '')}`}
+          <a key={c.id} href={`tel:${c.phone}`}
             className="block w-full rounded-3xl bg-sage px-6 py-4 text-center text-lg font-bold text-white">
-            {c.name} <span className="block text-sm font-normal opacity-90">{c.phone}</span>
+            {c.name} <span className="block text-sm font-normal opacity-90">{formatPhone(c.phone)}</span>
           </a>
         ))}
         {user && contacts.length === 0 && (

@@ -4,6 +4,8 @@ import Screen from '../components/Screen.jsx'
 import Button from '../components/Button.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { addContact, deleteContact, listContacts } from '../lib/api.js'
+import PhoneInput from '../components/PhoneInput.jsx'
+import { formatPhone, toInternational } from '../lib/phone.js'
 
 // Stored now; the numbers per country are added once each one is verified from an official source.
 const COUNTRIES = [
@@ -27,6 +29,7 @@ export default function Settings() {
   const [contacts, setContacts] = useState([])
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
+  const [phoneCountry, setPhoneCountry] = useState(user.country_code || 'AL')
   const [error, setError] = useState('')
   const [confirmDelete, setConfirmDelete] = useState(false)
 
@@ -35,13 +38,18 @@ export default function Settings() {
   async function add(event) {
     event.preventDefault()
     setError('')
+    const international = toInternational(phoneCountry, phone)
+    if (!international) {
+      setError('This phone number is not valid for the selected country.')
+      return
+    }
     try {
-      const contact = await addContact({ name, phone })
+      const contact = await addContact({ name, phone: international })
       setContacts(c => [...c, contact])
       setName('')
       setPhone('')
     } catch (err) {
-      setError(err.status === 422 ? 'Please enter a name and a phone number (digits, spaces, +).' : err.message)
+      setError(err.status === 422 ? 'Please check the name and the phone number.' : err.message)
     }
   }
 
@@ -67,7 +75,7 @@ export default function Settings() {
         <ul className="mb-3 flex flex-col gap-2">
           {contacts.map(c => (
             <li key={c.id} className="flex items-center justify-between rounded-2xl border border-sage/15 bg-white px-4 py-3">
-              <span><strong>{c.name}</strong> <span className="text-sage/80">{c.phone}</span></span>
+              <span><strong>{c.name}</strong> <span className="text-sage/80">{formatPhone(c.phone)}</span></span>
               <button type="button" onClick={() => remove(c.id)} className="px-2 text-sm text-sage underline">Remove</button>
             </li>
           ))}
@@ -76,9 +84,8 @@ export default function Settings() {
           <form onSubmit={add} className="flex flex-col gap-2">
             <label htmlFor="contact-name" className="sr-only">Name</label>
             <input id="contact-name" value={name} onChange={e => setName(e.target.value)} placeholder="Name" maxLength={100} className={input} />
-            <label htmlFor="contact-phone" className="sr-only">Phone number</label>
-            <input id="contact-phone" value={phone} onChange={e => setPhone(e.target.value)} placeholder="Phone number"
-              type="tel" inputMode="tel" maxLength={40} className={input} />
+            <PhoneInput id="contact-phone" country={phoneCountry} onCountryChange={setPhoneCountry}
+              value={phone} onChange={setPhone} />
             <Button type="submit" variant="outline" disabled={!name.trim() || !phone.trim()} className="disabled:opacity-50">
               Add contact
             </Button>

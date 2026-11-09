@@ -17,8 +17,9 @@ def _episode(client, h, started_at, **answers):
 def test_contacts_crud_and_privacy(client):
     h = _register(client)
     c = client.post("/api/contacts", headers=h, json={"name": " Mum ", "phone": "+355 69 123 4567"}).json()
-    assert c["name"] == "Mum"
-    assert client.patch(f"/api/contacts/{c['id']}", headers=h, json={"name": "Mother", "phone": "069 123"}).json()["name"] == "Mother"
+    assert c["name"] == "Mum" and c["phone"] == "+355691234567"
+    updated = client.patch(f"/api/contacts/{c['id']}", headers=h, json={"name": "Mother", "phone": "+39 312 345 6789"}).json()
+    assert updated["name"] == "Mother" and updated["phone"] == "+393123456789"
 
     other = _register(client, "other@example.com")
     assert client.get("/api/contacts", headers=other).json() == []
@@ -28,7 +29,12 @@ def test_contacts_crud_and_privacy(client):
     assert client.get("/api/contacts", headers=h).json() == []
 
 
-@pytest.mark.parametrize("body", [{"name": "", "phone": "123"}, {"name": "A", "phone": "call me"}, {"name": "A", "phone": "+-"}])
+@pytest.mark.parametrize("body", [
+    {"name": "", "phone": "+355691234567"},
+    {"name": "A", "phone": "call me"},
+    {"name": "A", "phone": "069 123 4567"},   # no country code
+    {"name": "A", "phone": "+355 12"},        # too short for Albania
+])
 def test_contact_validation(client, body):
     assert client.post("/api/contacts", headers=_register(client), json=body).status_code == 422
 
@@ -36,8 +42,8 @@ def test_contact_validation(client, body):
 def test_contacts_limit(client):
     h = _register(client)
     for i in range(5):
-        assert client.post("/api/contacts", headers=h, json={"name": f"P{i}", "phone": "12345"}).status_code == 201
-    assert client.post("/api/contacts", headers=h, json={"name": "P5", "phone": "12345"}).status_code == 409
+        assert client.post("/api/contacts", headers=h, json={"name": f"P{i}", "phone": "+355691234567"}).status_code == 201
+    assert client.post("/api/contacts", headers=h, json={"name": "P5", "phone": "+355691234567"}).status_code == 409
 
 
 def test_contacts_need_login(client):
