@@ -15,6 +15,16 @@ class RegisterIn(BaseModel):
         return value
 
 
+class ForgotPasswordIn(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordIn(BaseModel):
+    email: EmailStr
+    code: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$")
+    password: str = Field(max_length=200)
+
+
 class LoginIn(BaseModel):
     email: EmailStr
     password: str

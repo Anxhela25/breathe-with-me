@@ -58,3 +58,7 @@ export function getInsights() {
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
   return request('GET', `/api/insights?tz=${encodeURIComponent(tz)}`)
 }
+
+export const forgotPassword = email => request('POST', '/api/auth/forgot-password', { email })
+export const resetPassword = (email, code, password) =>
+  request('POST', '/api/auth/reset-password', { email, code, password })

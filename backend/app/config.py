@@ -20,5 +20,9 @@ class Settings(BaseSettings):
 
     check_breached_passwords: bool = True  # Have I Been Pwned range API
 
+    # without a key, emails are written to the server log instead of being sent
+    resend_api_key: str = ""
+    email_from: str = "Breathe With Me <onboarding@resend.dev>"
+
 
 settings = Settings()

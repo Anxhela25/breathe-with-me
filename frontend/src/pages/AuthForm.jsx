@@ -98,6 +98,9 @@ export default function AuthForm({ mode }) {
         <Button to={`/${otherMode}?next=${encodeURIComponent(next)}`} variant="link">
           {isRegister ? 'I already have an account' : 'Create an account'}
         </Button>
+        {!isRegister && (
+          <Button to={`/forgot-password?email=${encodeURIComponent(email)}`} variant="link">Forgot password?</Button>
+        )}
         <Button to="/" variant="link" className="text-sage/70">Not now</Button>
       </div>
     </Screen>

@@ -1,13 +1,15 @@
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import User
-from app.schemas.user import LoginIn, RegisterIn, SettingsIn, TokenOut, UserOut
+from app.schemas.user import ForgotPasswordIn, LoginIn, RegisterIn, ResetPasswordIn, SettingsIn, TokenOut, UserOut
 from app.services.auth import create_token, get_current_user, hash_password, verify_password
+from app.services import password_reset
+from app.services.email import send_email
 from app.services.passwords import password_problem
 
 router = APIRouter(prefix="/api", tags=["account"])
@@ -27,7 +29,7 @@ def register(data: RegisterIn, db: Session = Depends(get_db)):
     )
     db.add(user)
     db.commit()
-    return TokenOut(access_token=create_token(user.id))
+    return TokenOut(access_token=create_token(user))
 
 
 @router.post("/auth/login", response_model=TokenOut)
@@ -35,7 +37,27 @@ def login(data: LoginIn, db: Session = Depends(get_db)):
     user = db.scalar(select(User).where(User.email == data.email.lower()))
     if not user or not verify_password(data.password, user.password_hash):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Email or password is not correct.")
-    return TokenOut(access_token=create_token(user.id))
+    return TokenOut(access_token=create_token(user))
+
+
+@router.post("/auth/forgot-password", status_code=status.HTTP_202_ACCEPTED)
+def forgot_password(data: ForgotPasswordIn, background: BackgroundTasks, db: Session = Depends(get_db)):
+    # same answer whether or not the account exists
+    if found := password_reset.create_code(db, data.email):
+        email, code = found
+        background.add_task(send_email, email, "Your Breathe With Me code", password_reset.email_text(code))
+    return {"detail": "If an account exists for this email, we've sent a 6-digit code."}
+
+
+@router.post("/auth/reset-password", response_model=TokenOut)
+def reset_password(data: ResetPasswordIn, db: Session = Depends(get_db)):
+    if problem := password_problem(data.password, data.email):
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, problem)
+    user = password_reset.check_code(db, data.email, data.code)
+    if user is None:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "This code is not valid or has expired. Ask for a new one.")
+    password_reset.finish(db, user, hash_password(data.password))
+    return TokenOut(access_token=create_token(user))
 
 
 @router.get("/me", response_model=UserOut)

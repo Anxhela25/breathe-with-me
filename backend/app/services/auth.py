@@ -21,9 +21,15 @@ def verify_password(password: str, password_hash: str) -> bool:
     return bcrypt.checkpw(password.encode(), password_hash.encode())
 
 
-def create_token(user_id: int) -> str:
+def _password_version(user: User) -> float:
+    return round(user.password_changed_at.timestamp(), 3) if user.password_changed_at else 0
+
+
+def create_token(user: User) -> str:
     expire = datetime.now(timezone.utc) + timedelta(minutes=settings.jwt_expire_minutes)
-    return jwt.encode({"sub": str(user_id), "exp": expire}, settings.jwt_secret, algorithm="HS256")
+    # "pv" ties the token to the current password, so changing it signs out other devices
+    claims = {"sub": str(user.id), "pv": _password_version(user), "exp": expire}
+    return jwt.encode(claims, settings.jwt_secret, algorithm="HS256")
 
 
 def get_current_user(
@@ -39,5 +45,7 @@ def get_current_user(
     except (jwt.PyJWTError, KeyError, ValueError):
         raise unauthorized
     if user is None:
+        raise unauthorized
+    if payload.get("pv", 0) != _password_version(user):
         raise unauthorized
     return user

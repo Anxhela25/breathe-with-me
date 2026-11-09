@@ -8,6 +8,8 @@ import UrgentHelp from './pages/UrgentHelp.jsx'
 import Chat from './pages/Chat.jsx'
 import AuthForm from './pages/AuthForm.jsx'
 import ChatTexts from './pages/ChatTexts.jsx'
+import ForgotPassword from './pages/ForgotPassword.jsx'
+import ResetPassword from './pages/ResetPassword.jsx'
 import QuickQuestions from './pages/QuickQuestions.jsx'
 import History from './pages/History.jsx'
 import Insights from './pages/Insights.jsx'
@@ -29,6 +31,8 @@ export default function App() {
       <Route path="/register" element={<AuthForm mode="register" />} />
       <Route path="/login" element={<AuthForm mode="login" />} />
       <Route path="/chat-texts" element={<ChatTexts />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/history" element={<RequireAuth><History /></RequireAuth>} />
       <Route path="/insights" element={<RequireAuth><Insights /></RequireAuth>} />
       <Route path="/summary" element={<RequireAuth><Summary /></RequireAuth>} />

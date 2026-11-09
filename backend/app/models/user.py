@@ -19,6 +19,8 @@ class User(Base):
     # required at sign-up: the app is for adults, and health data needs explicit consent (GDPR art. 9)
     adult_confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     health_data_consent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # tokens issued before this are no longer accepted
+    password_changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     # cascade so "Delete all my data" removes everything
     emergency_contacts: Mapped[list["EmergencyContact"]] = relationship(
