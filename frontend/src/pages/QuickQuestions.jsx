@@ -14,7 +14,9 @@ const EXTRAS = [
   ['with_someone', 'Were you alone?', [[false, 'Alone'], [true, 'With someone']]],
   ['coffee', 'Coffee today?', [[true, 'Yes'], [false, 'No']]],
 ]
-const choice = 'w-full rounded-2xl border border-sage/20 bg-white px-4 py-3 text-center active:bg-pistachio'
+const choiceBase = 'w-full rounded-2xl border px-4 py-3 text-center'
+const choice = `${choiceBase} border-sage/20 bg-white active:bg-pistachio`
+const selected = `${choiceBase} border-sage bg-pistachio font-bold`
 
 export default function QuickQuestions() {
   const { user, ready } = useAuth()
@@ -114,7 +116,7 @@ function Questions() {
                   {options.map(([value, label]) => (
                     <button key={label} type="button" aria-pressed={answers[field] === value}
                       onClick={() => setAnswers(a => ({ ...a, [field]: a[field] === value ? undefined : value }))}
-                      className={`${choice} ${answers[field] === value ? 'border-sage bg-pistachio' : ''}`}>
+                      className={answers[field] === value ? selected : choice}>
                       {label}
                     </button>
                   ))}
