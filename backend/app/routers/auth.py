@@ -8,6 +8,7 @@ from app.database import get_db
 from app.models import User
 from app.schemas.user import LoginIn, RegisterIn, SettingsIn, TokenOut, UserOut
 from app.services.auth import create_token, get_current_user, hash_password, verify_password
+from app.services.passwords import password_problem
 
 router = APIRouter(prefix="/api", tags=["account"])
 
@@ -17,6 +18,8 @@ def register(data: RegisterIn, db: Session = Depends(get_db)):
     email = data.email.lower()
     if db.scalar(select(User).where(User.email == email)):
         raise HTTPException(status.HTTP_409_CONFLICT, "This email already has an account.")
+    if problem := password_problem(data.password, email):
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, problem)
     now = datetime.now(timezone.utc)
     user = User(
         email=email, password_hash=hash_password(data.password),

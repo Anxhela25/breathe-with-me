@@ -5,6 +5,8 @@ os.environ["DATABASE_URL"] = os.environ.get(
     "TEST_DATABASE_URL", "postgresql+psycopg://localhost:5432/breathe_with_me_test"
 )
 
+os.environ["CHECK_BREACHED_PASSWORDS"] = "false"  # no network calls in tests
+
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 

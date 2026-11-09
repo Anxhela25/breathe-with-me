@@ -18,5 +18,7 @@ class Settings(BaseSettings):
     ai_timeout_seconds: float = 8.0
     chat_max_user_messages: int = 6
 
+    check_breached_passwords: bool = True  # Have I Been Pwned range API
+
 
 settings = Settings()

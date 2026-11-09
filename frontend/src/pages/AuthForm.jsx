@@ -5,6 +5,7 @@ import Button from '../components/Button.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { safeNext } from '../lib/next.js'
 
+const MIN_PASSWORD = 12
 const inputClass = 'w-full rounded-2xl border border-sage/20 bg-white px-4 py-3 text-base outline-none focus:border-sage'
 
 export default function AuthForm({ mode }) {
@@ -23,8 +24,8 @@ export default function AuthForm({ mode }) {
   async function submit(event) {
     event.preventDefault()
     setError('')
-    if (isRegister && password.length < 8) {
-      setError('Use at least 8 characters for the password.')
+    if (isRegister && password.length < MIN_PASSWORD) {
+      setError(`Use at least ${MIN_PASSWORD} characters. A short phrase is easy to remember.`)
       return
     }
     if (isRegister && !(isAdult && consent)) {
@@ -41,7 +42,7 @@ export default function AuthForm({ mode }) {
         navigate(next, { replace: true })
       }
     } catch (err) {
-      if (err.status === 422) setError('Please check the email address.')
+      if (err.status === 422 && err.message.startsWith('Request failed')) setError('Please check the email address.')
       else if (err.status) setError(err.message)
       else setError("Can't reach the server. Please try again.")
     } finally {
@@ -65,7 +66,13 @@ export default function AuthForm({ mode }) {
         <input id="password" type="password" placeholder="Password"
           autoComplete={isRegister ? 'new-password' : 'current-password'}
           value={password} onChange={e => setPassword(e.target.value)} required className={inputClass} />
-        {isRegister && <p className="-mt-1 px-1 text-xs text-sage/70">At least 8 characters.</p>}
+        {isRegister && (
+          <p className="-mt-1 px-1 text-xs text-sage/70">
+            {password.length < MIN_PASSWORD
+              ? `At least ${MIN_PASSWORD} characters (${password.length} so far). A few unrelated words work well.`
+              : '✓ Long enough'}
+          </p>
+        )}
         {isRegister && (
           <div className="mt-2 flex flex-col gap-3 px-1 text-sm">
             <label className="flex items-start gap-3">

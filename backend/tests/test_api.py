@@ -6,7 +6,7 @@ CONSENT = {"is_adult": True, "health_data_consent": True}
 
 
 def _register(client, email="maria@example.com"):
-    r = client.post("/api/auth/register", json={"email": email, "password": "secret123", **CONSENT})
+    r = client.post("/api/auth/register", json={"email": email, "password": "quiet-river-lamp", **CONSENT})
     assert r.status_code == 201
     return {"Authorization": f"Bearer {r.json()['access_token']}"}
 
@@ -18,9 +18,9 @@ def test_health(client):
 def test_register_login_and_me(client):
     _register(client)
     assert client.post("/api/auth/register",
-                       json={"email": "maria@example.com", "password": "secret123", **CONSENT}).status_code == 409
+                       json={"email": "maria@example.com", "password": "quiet-river-lamp", **CONSENT}).status_code == 409
     assert client.post("/api/auth/login", json={"email": "maria@example.com", "password": "wrong-pass"}).status_code == 401
-    token = client.post("/api/auth/login", json={"email": "Maria@Example.com", "password": "secret123"}).json()["access_token"]
+    token = client.post("/api/auth/login", json={"email": "Maria@Example.com", "password": "quiet-river-lamp"}).json()["access_token"]
     me = client.get("/api/me", headers={"Authorization": f"Bearer {token}"}).json()
     assert me["email"] == "maria@example.com" and me["save_chat_texts"] is False
 
@@ -52,7 +52,7 @@ def test_episode_keeps_real_start_time_and_crisis_flag(client):
 
 @pytest.mark.parametrize("missing", ["is_adult", "health_data_consent"])
 def test_register_needs_adult_and_consent(client, missing):
-    body = {"email": "new@example.com", "password": "secret123", **CONSENT, missing: False}
+    body = {"email": "new@example.com", "password": "quiet-river-lamp", **CONSENT, missing: False}
     assert client.post("/api/auth/register", json=body).status_code == 422
     body.pop(missing)
     assert client.post("/api/auth/register", json=body).status_code == 422
