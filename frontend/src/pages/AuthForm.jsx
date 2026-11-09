@@ -14,6 +14,8 @@ export default function AuthForm({ mode }) {
   const { register, login } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [isAdult, setIsAdult] = useState(false)
+  const [consent, setConsent] = useState(false)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const next = safeNext(params)
@@ -25,10 +27,14 @@ export default function AuthForm({ mode }) {
       setError('Use at least 8 characters for the password.')
       return
     }
+    if (isRegister && !(isAdult && consent)) {
+      setError('Please confirm both boxes to create an account.')
+      return
+    }
     setBusy(true)
     try {
       if (isRegister) {
-        await register(email.trim(), password)
+        await register(email.trim(), password, { is_adult: isAdult, health_data_consent: consent })
         navigate(`/chat-texts?next=${encodeURIComponent(next)}`, { replace: true })
       } else {
         await login(email.trim(), password)
@@ -60,8 +66,24 @@ export default function AuthForm({ mode }) {
           autoComplete={isRegister ? 'new-password' : 'current-password'}
           value={password} onChange={e => setPassword(e.target.value)} required className={inputClass} />
         {isRegister && <p className="-mt-1 px-1 text-xs text-sage/70">At least 8 characters.</p>}
+        {isRegister && (
+          <div className="mt-2 flex flex-col gap-3 px-1 text-sm">
+            <label className="flex items-start gap-3">
+              <input id="is-adult" type="checkbox" checked={isAdult} onChange={e => setIsAdult(e.target.checked)}
+                className="mt-0.5 h-5 w-5 shrink-0 accent-sage" />
+              <span>I am 18 or older.</span>
+            </label>
+            <label className="flex items-start gap-3">
+              <input id="consent" type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)}
+                className="mt-0.5 h-5 w-5 shrink-0 accent-sage" />
+              <span>I agree that my entries, which are health information, are stored privately to show my history.
+                I can delete them at any time.</span>
+            </label>
+          </div>
+        )}
         {error && <p role="alert" className="px-1 text-sm text-alert">{error}</p>}
-        <Button type="submit" disabled={busy || !email || !password} className="mt-3 disabled:opacity-50">
+        <Button type="submit" disabled={busy || !email || !password || (isRegister && !(isAdult && consent))}
+          className="mt-3 disabled:opacity-50">
           {isRegister ? 'Create account' : 'Log in'}
         </Button>
       </form>

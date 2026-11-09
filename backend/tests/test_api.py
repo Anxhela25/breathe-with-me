@@ -1,8 +1,12 @@
 from datetime import datetime, timezone
 
+import pytest
+
+CONSENT = {"is_adult": True, "health_data_consent": True}
+
 
 def _register(client, email="maria@example.com"):
-    r = client.post("/api/auth/register", json={"email": email, "password": "secret123"})
+    r = client.post("/api/auth/register", json={"email": email, "password": "secret123", **CONSENT})
     assert r.status_code == 201
     return {"Authorization": f"Bearer {r.json()['access_token']}"}
 
@@ -13,7 +17,8 @@ def test_health(client):
 
 def test_register_login_and_me(client):
     _register(client)
-    assert client.post("/api/auth/register", json={"email": "maria@example.com", "password": "secret123"}).status_code == 409
+    assert client.post("/api/auth/register",
+                       json={"email": "maria@example.com", "password": "secret123", **CONSENT}).status_code == 409
     assert client.post("/api/auth/login", json={"email": "maria@example.com", "password": "wrong-pass"}).status_code == 401
     token = client.post("/api/auth/login", json={"email": "Maria@Example.com", "password": "secret123"}).json()["access_token"]
     me = client.get("/api/me", headers={"Authorization": f"Bearer {token}"}).json()
@@ -43,6 +48,30 @@ def test_episode_keeps_real_start_time_and_crisis_flag(client):
     assert r.json()["crisis_shown"] is True
     future = client.post("/api/episodes", headers=h, json={"started_at": "2099-01-01T00:00:00Z"})
     assert future.status_code == 422
+
+
+@pytest.mark.parametrize("missing", ["is_adult", "health_data_consent"])
+def test_register_needs_adult_and_consent(client, missing):
+    body = {"email": "new@example.com", "password": "secret123", **CONSENT, missing: False}
+    assert client.post("/api/auth/register", json=body).status_code == 422
+    body.pop(missing)
+    assert client.post("/api/auth/register", json=body).status_code == 422
+
+
+def test_consent_time_is_stored(client):
+    _register(client)
+    from app.database import SessionLocal
+    from app.models import User
+    with SessionLocal() as db:
+        user = db.query(User).one()
+        assert user.adult_confirmed_at is not None and user.health_data_consent_at is not None
+
+
+def test_episode_expected_and_with_someone(client):
+    h = _register(client)
+    ep = client.post("/api/episodes", json={}, headers=h).json()
+    r = client.patch(f"/api/episodes/{ep['id']}", headers=h, json={"expected": False, "with_someone": True})
+    assert r.json()["expected"] is False and r.json()["with_someone"] is True
 
 
 def test_delete_all_my_data(client):

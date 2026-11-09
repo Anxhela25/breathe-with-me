@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -15,7 +17,11 @@ def register(data: RegisterIn, db: Session = Depends(get_db)):
     email = data.email.lower()
     if db.scalar(select(User).where(User.email == email)):
         raise HTTPException(status.HTTP_409_CONFLICT, "This email already has an account.")
-    user = User(email=email, password_hash=hash_password(data.password))
+    now = datetime.now(timezone.utc)
+    user = User(
+        email=email, password_hash=hash_password(data.password),
+        adult_confirmed_at=now, health_data_consent_at=now,
+    )
     db.add(user)
     db.commit()
     return TokenOut(access_token=create_token(user.id))

@@ -32,6 +32,8 @@ class Episode(Base):
     place: Mapped[Place | None] = mapped_column(Enum(Place, native_enum=False, length=20))
     sleep: Mapped[Sleep | None] = mapped_column(Enum(Sleep, native_enum=False, length=20))
     coffee: Mapped[bool | None] = mapped_column(Boolean)
+    expected: Mapped[bool | None] = mapped_column(Boolean)  # false = came out of the blue
+    with_someone: Mapped[bool | None] = mapped_column(Boolean)
     note: Mapped[str | None] = mapped_column(Text)
 
     user: Mapped["User"] = relationship(back_populates="episodes")  # noqa: F821

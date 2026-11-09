@@ -39,7 +39,8 @@ async function request(method, path, body) {
 
 export const sendChat = ({ message, history, level }) => request('POST', '/api/chat', { message, history, level })
 
-export const register = (email, password) => request('POST', '/api/auth/register', { email, password })
+export const register = (email, password, consent) =>
+  request('POST', '/api/auth/register', { email, password, ...consent })
 export const login = (email, password) => request('POST', '/api/auth/login', { email, password })
 export const getMe = () => request('GET', '/api/me')
 export const updateMe = fields => request('PATCH', '/api/me', fields)

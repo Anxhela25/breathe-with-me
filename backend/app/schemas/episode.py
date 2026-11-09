@@ -29,6 +29,8 @@ class EpisodeUpdate(BaseModel):
     place: Place | None = None
     sleep: Sleep | None = None
     coffee: bool | None = None
+    expected: bool | None = None
+    with_someone: bool | None = None
     note: str | None = Field(default=None, max_length=2000)
     finished: bool | None = None  # sets ended_at
 
@@ -48,4 +50,6 @@ class EpisodeOut(BaseModel):
     place: Place | None
     sleep: Sleep | None
     coffee: bool | None
+    expected: bool | None
+    with_someone: bool | None
     note: str | None

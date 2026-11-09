@@ -9,6 +9,11 @@ import { updateEpisode } from '../lib/api.js'
 
 const PLACES = [['home', 'Home'], ['work', 'Work'], ['street', 'Street'], ['other', 'Other']]
 const SLEEP = [['well', 'Well'], ['little', 'Little'], ['very_little', 'Very little']]
+const EXTRAS = [
+  ['expected', 'Did you expect it?', [[true, 'I expected it'], [false, 'Out of the blue']]],
+  ['with_someone', 'Were you alone?', [[false, 'Alone'], [true, 'With someone']]],
+  ['coffee', 'Coffee today?', [[true, 'Yes'], [false, 'No']]],
+]
 const choice = 'w-full rounded-2xl border border-sage/20 bg-white px-4 py-3 text-center active:bg-pistachio'
 
 export default function QuickQuestions() {
@@ -102,16 +107,20 @@ function Questions() {
         {step >= 3 && (
           <>
             <p className="text-xl">Anything else? (optional)</p>
-            <p className="text-sm text-sage/70">Coffee today?</p>
-            <div className="flex w-full gap-3">
-              {[[true, 'Yes'], [false, 'No']].map(([value, label]) => (
-                <button key={label} type="button" aria-pressed={answers.coffee === value}
-                  onClick={() => setAnswers(a => ({ ...a, coffee: a.coffee === value ? undefined : value }))}
-                  className={`${choice} ${answers.coffee === value ? 'border-sage bg-pistachio' : ''}`}>
-                  {label}
-                </button>
-              ))}
-            </div>
+            {EXTRAS.map(([field, question, options]) => (
+              <div key={field} className="w-full">
+                <p className="mb-2 text-center text-sm text-sage/70">{question}</p>
+                <div className="flex w-full gap-3">
+                  {options.map(([value, label]) => (
+                    <button key={label} type="button" aria-pressed={answers[field] === value}
+                      onClick={() => setAnswers(a => ({ ...a, [field]: a[field] === value ? undefined : value }))}
+                      className={`${choice} ${answers[field] === value ? 'border-sage bg-pistachio' : ''}`}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
             <label htmlFor="note" className="sr-only">Note</label>
             <textarea id="note" value={note} onChange={e => setNote(e.target.value)} rows={3} maxLength={2000}
               placeholder="Any note…"

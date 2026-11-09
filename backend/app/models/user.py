@@ -16,6 +16,9 @@ class User(Base):
     # ISO code, used to pick emergency numbers
     country_code: Mapped[str | None] = mapped_column(String(2))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    # required at sign-up: the app is for adults, and health data needs explicit consent (GDPR art. 9)
+    adult_confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    health_data_consent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     # cascade so "Delete all my data" removes everything
     emergency_contacts: Mapped[list["EmergencyContact"]] = relationship(

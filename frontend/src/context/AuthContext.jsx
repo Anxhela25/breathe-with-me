@@ -15,15 +15,17 @@ export function AuthProvider({ children }) {
       .finally(() => setReady(true))
   }, [])
 
-  const signIn = useCallback(async (action, email, password) => {
-    const { access_token: token } = await action(email, password)
+  const signIn = useCallback(async (action, ...args) => {
+    const { access_token: token } = await action(...args)
     api.setToken(token)
     const me = await api.getMe()
     setUser(me)
     return me
   }, [])
 
-  const register = useCallback((email, password) => signIn(api.register, email, password), [signIn])
+  const register = useCallback(
+    (email, password, consent) => signIn(api.register, email, password, consent), [signIn],
+  )
   const login = useCallback((email, password) => signIn(api.login, email, password), [signIn])
   const logout = useCallback(() => { api.setToken(null); setUser(null) }, [])
   const updateSettings = useCallback(async fields => setUser(await api.updateMe(fields)), [])
