@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import Screen from '../components/Screen.jsx'
 import Button from '../components/Button.jsx'
+import PasswordInput from '../components/PasswordInput.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { forgotPassword } from '../lib/api.js'
 
@@ -53,9 +54,8 @@ export default function ResetPassword() {
         <input id="code" inputMode="numeric" autoComplete="one-time-code" placeholder="6-digit code" maxLength={6}
           value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ''))}
           className={`${inputClass} text-center text-2xl tracking-[0.4em]`} />
-        <label htmlFor="new-password" className="sr-only">New password</label>
-        <input id="new-password" type="password" autoComplete="new-password" placeholder="New password"
-          value={password} onChange={e => setPassword(e.target.value)} className={inputClass} />
+        <PasswordInput id="new-password" autoComplete="new-password" placeholder="New password"
+          value={password} onChange={e => setPassword(e.target.value)} />
         <p className="-mt-1 px-1 text-xs text-sage/70">
           {password.length < MIN_PASSWORD
             ? `At least ${MIN_PASSWORD} characters (${password.length} so far). A few unrelated words work well.`

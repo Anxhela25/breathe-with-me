@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Screen from '../components/Screen.jsx'
 import Button from '../components/Button.jsx'
@@ -32,6 +32,28 @@ export default function Settings() {
   const [phoneCountry, setPhoneCountry] = useState(user.country_code || 'AL')
   const [error, setError] = useState('')
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [status, setStatus] = useState('')
+  const statusTimer = useRef(null)
+
+  function flashSaved() {
+    clearTimeout(statusTimer.current)
+    setStatus('Saved ✓')
+    statusTimer.current = setTimeout(() => setStatus(''), 2500)
+  }
+
+  // every change saves right away, so show it clearly
+  async function saved(action) {
+    try {
+      await action()
+      flashSaved()
+      return true
+    } catch {
+      setStatus("Couldn't save. Please check your connection.")
+      return false
+    }
+  }
+
+  useEffect(() => () => clearTimeout(statusTimer.current), [])
 
   useEffect(() => { listContacts().then(setContacts).catch(() => setError("Couldn't load your contacts.")) }, [])
 
@@ -48,14 +70,14 @@ export default function Settings() {
       setContacts(c => [...c, contact])
       setName('')
       setPhone('')
+      flashSaved()
     } catch (err) {
       setError(err.status === 422 ? 'Please check the name and the phone number.' : err.message)
     }
   }
 
   async function remove(id) {
-    await deleteContact(id)
-    setContacts(c => c.filter(contact => contact.id !== id))
+    if (await saved(() => deleteContact(id))) setContacts(c => c.filter(contact => contact.id !== id))
   }
 
   async function removeEverything() {
@@ -65,10 +87,13 @@ export default function Settings() {
 
   return (
     <Screen>
-      <div className="mt-6 flex w-full items-center justify-between">
-        <h1 className="text-2xl font-bold">Settings</h1>
-        <Button to="/history" variant="link">My history</Button>
+      <div className="mt-4 flex w-full items-center justify-between">
+        <button type="button" onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/'))}
+          className="py-2 pr-4 text-sage">‹ Back</button>
+        <p role="status" aria-live="polite" className="text-sm font-bold text-sage">{status}</p>
       </div>
+      <h1 className="mt-2 w-full text-2xl font-bold">Settings</h1>
+      <p className="w-full text-sm text-sage/70">Changes are saved automatically.</p>
 
       <Section title="Emergency contacts">
         <p className="mb-3 text-sm text-sage/70">People you trust. They appear on the urgent help screen.</p>
@@ -98,14 +123,14 @@ export default function Settings() {
         <label className="flex items-center justify-between gap-4">
           <span>Save my chat texts <span className="block text-sm text-sage/70">When off, only the topic of each message is kept.</span></span>
           <input id="save-chat" type="checkbox" checked={user.save_chat_texts}
-            onChange={e => updateSettings({ save_chat_texts: e.target.checked })} className="h-6 w-6 shrink-0 accent-sage" />
+            onChange={e => saved(() => updateSettings({ save_chat_texts: e.target.checked }))} className="h-6 w-6 shrink-0 accent-sage" />
         </label>
       </Section>
 
       <Section title="Country">
         <label htmlFor="country" className="mb-2 block text-sm text-sage/70">Used to show the right emergency numbers.</label>
         <select id="country" value={user.country_code ?? ''} className={input}
-          onChange={e => updateSettings({ country_code: e.target.value || null })}>
+          onChange={e => saved(() => updateSettings({ country_code: e.target.value || null }))}>
           {COUNTRIES.map(([code, label]) => <option key={code} value={code}>{label}</option>)}
         </select>
       </Section>
@@ -135,6 +160,10 @@ export default function Settings() {
           </div>
         )}
       </section>
+      <div className="flex w-full flex-col items-center gap-1 pt-2">
+        <Button onClick={() => navigate('/')}>Done</Button>
+        <Button to="/history" variant="link">My history</Button>
+      </div>
     </Screen>
   )
 }

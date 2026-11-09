@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import Screen from '../components/Screen.jsx'
 import Button from '../components/Button.jsx'
+import PasswordInput from '../components/PasswordInput.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { safeNext } from '../lib/next.js'
 
@@ -62,10 +63,8 @@ export default function AuthForm({ mode }) {
         <label htmlFor="email" className="sr-only">Email</label>
         <input id="email" type="email" autoComplete="email" inputMode="email" placeholder="Email"
           value={email} onChange={e => setEmail(e.target.value)} required className={inputClass} />
-        <label htmlFor="password" className="sr-only">Password</label>
-        <input id="password" type="password" placeholder="Password"
-          autoComplete={isRegister ? 'new-password' : 'current-password'}
-          value={password} onChange={e => setPassword(e.target.value)} required className={inputClass} />
+        <PasswordInput id="password" autoComplete={isRegister ? 'new-password' : 'current-password'}
+          value={password} onChange={e => setPassword(e.target.value)} />
         {isRegister && (
           <p className="-mt-1 px-1 text-xs text-sage/70">
             {password.length < MIN_PASSWORD
