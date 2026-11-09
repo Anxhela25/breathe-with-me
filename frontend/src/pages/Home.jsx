@@ -2,12 +2,10 @@ import { useNavigate } from 'react-router-dom'
 import Screen from '../components/Screen.jsx'
 import Button from '../components/Button.jsx'
 import { useSession } from '../context/SessionContext.jsx'
-import { useAuth } from '../context/AuthContext.jsx'
 
 export default function Home() {
   const navigate = useNavigate()
   const { start } = useSession()
-  const { user } = useAuth()
 
   function needHelp() {
     start()
@@ -23,7 +21,7 @@ export default function Home() {
       </div>
       <div className="mt-auto mb-auto flex w-full flex-col items-center gap-4">
         <Button onClick={needHelp} className="py-6 text-xl">I need help now.</Button>
-        <Button to={user ? '/history' : '/login?next=/history'} variant="link">Review my history.</Button>
+        <Button to="/history" variant="link">Review my history.</Button>
       </div>
     </Screen>
   )

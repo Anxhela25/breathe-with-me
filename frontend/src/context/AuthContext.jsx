@@ -29,10 +29,11 @@ export function AuthProvider({ children }) {
   const login = useCallback((email, password) => signIn(api.login, email, password), [signIn])
   const logout = useCallback(() => { api.setToken(null); setUser(null) }, [])
   const updateSettings = useCallback(async fields => setUser(await api.updateMe(fields)), [])
+  const deleteAccount = useCallback(async () => { await api.deleteMe(); logout() }, [logout])
 
   const value = useMemo(
-    () => ({ user, ready, register, login, logout, updateSettings }),
-    [user, ready, register, login, logout, updateSettings],
+    () => ({ user, ready, register, login, logout, updateSettings, deleteAccount }),
+    [user, ready, register, login, logout, updateSettings, deleteAccount],
   )
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

@@ -9,7 +9,11 @@ import Chat from './pages/Chat.jsx'
 import AuthForm from './pages/AuthForm.jsx'
 import ChatTexts from './pages/ChatTexts.jsx'
 import QuickQuestions from './pages/QuickQuestions.jsx'
-import ComingSoon from './pages/ComingSoon.jsx'
+import History from './pages/History.jsx'
+import Insights from './pages/Insights.jsx'
+import Summary from './pages/Summary.jsx'
+import Settings from './pages/Settings.jsx'
+import RequireAuth from './components/RequireAuth.jsx'
 
 export default function App() {
   return (
@@ -25,7 +29,10 @@ export default function App() {
       <Route path="/register" element={<AuthForm mode="register" />} />
       <Route path="/login" element={<AuthForm mode="login" />} />
       <Route path="/chat-texts" element={<ChatTexts />} />
-      <Route path="/history" element={<ComingSoon title="My history" />} />
+      <Route path="/history" element={<RequireAuth><History /></RequireAuth>} />
+      <Route path="/insights" element={<RequireAuth><Insights /></RequireAuth>} />
+      <Route path="/summary" element={<RequireAuth><Summary /></RequireAuth>} />
+      <Route path="/settings" element={<RequireAuth><Settings /></RequireAuth>} />
       <Route path="*" element={<Home />} />
     </Routes>
   )

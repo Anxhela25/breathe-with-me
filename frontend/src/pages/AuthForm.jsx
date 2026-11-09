@@ -81,7 +81,7 @@ export default function AuthForm({ mode }) {
             </label>
           </div>
         )}
-        {error && <p role="alert" className="px-1 text-sm text-alert">{error}</p>}
+        {error && <p role="alert" className="px-1 text-sm font-bold">{error}</p>}
         <Button type="submit" disabled={busy || !email || !password || (isRegister && !(isAdult && consent))}
           className="mt-3 disabled:opacity-50">
           {isRegister ? 'Create account' : 'Log in'}

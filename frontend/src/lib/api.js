@@ -47,3 +47,14 @@ export const updateMe = fields => request('PATCH', '/api/me', fields)
 
 export const createEpisode = fields => request('POST', '/api/episodes', fields)
 export const updateEpisode = (id, fields) => request('PATCH', `/api/episodes/${id}`, fields)
+export const deleteMe = () => request('DELETE', '/api/me')
+export const listEpisodes = () => request('GET', '/api/episodes')
+
+export const listContacts = () => request('GET', '/api/contacts')
+export const addContact = contact => request('POST', '/api/contacts', contact)
+export const deleteContact = id => request('DELETE', `/api/contacts/${id}`)
+
+export function getInsights() {
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+  return request('GET', `/api/insights?tz=${encodeURIComponent(tz)}`)
+}
