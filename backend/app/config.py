@@ -19,8 +19,11 @@ class Settings(BaseSettings):
     chat_max_user_messages: int = 6
 
     check_breached_passwords: bool = True  # Have I Been Pwned range API
+    check_email_domain: bool = True  # sign-up email domain must have mail servers (DNS lookup)
 
-    # without a key, emails are written to the server log instead of being sent
+    # Gmail is used when set, then Resend; with neither, emails are written to the server log
+    gmail_address: str = ""
+    gmail_app_password: str = ""
     resend_api_key: str = ""
     email_from: str = "Breathe With Me <onboarding@resend.dev>"
 
