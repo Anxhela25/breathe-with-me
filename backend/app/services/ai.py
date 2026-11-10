@@ -108,6 +108,46 @@ def call_provider(provider: Provider, messages: list[dict]) -> str:
     return response.json()["choices"][0]["message"]["content"] or ""
 
 
+RISK_PROMPT = """\
+You are a safety classifier for a panic-attack self-help app. Read the user's recent messages.
+Answer YES if they express any wish to die, suicidal thoughts or plans, wanting to hurt themselves,
+or not wanting to live, even when misspelled, in slang, hinted at, or in any language
+(the app is used in Albania, so translate Albanian first: "dua te vdes" means "I want to die").
+Answer NO if they only express fear of dying or of a physical symptom (for example "I'm going to die",
+"I don't want to die", "my heart will stop"), which is common during panic, or anything else.
+Reply with exactly one word: YES or NO."""
+
+
+def _ask_classifier(provider: Provider, messages: list[dict]) -> str:
+    body = {"model": provider.model, "messages": messages, "temperature": 0,
+            "max_tokens": 300, **provider.extra}  # reasoning models need room before the answer
+    response = httpx.post(
+        f"{provider.base_url}/chat/completions",
+        json=body,
+        headers={"Authorization": f"Bearer {provider.api_key}"},
+        timeout=settings.ai_timeout_seconds,
+    )
+    response.raise_for_status()
+    return response.json()["choices"][0]["message"]["content"] or ""
+
+
+def classify_risk(user_messages: list[str]) -> bool | None:
+    """True if the recent user messages suggest suicide or self-harm risk; None if no provider answered.
+    A second layer behind the rule-based check in safety.py, for wording the rules can't know."""
+    recent = "\n".join(f"- {m}" for m in user_messages[-3:])
+    messages = [{"role": "system", "content": RISK_PROMPT}, {"role": "user", "content": recent}]
+    for provider in providers():
+        try:
+            answer = _ask_classifier(provider, messages).strip().upper()
+        except Exception as error:  # noqa: BLE001
+            log.warning("Risk check failed: %s/%s (%s)", provider.name, provider.model, type(error).__name__)
+            continue
+        if answer.startswith(("YES", "NO")):
+            return answer.startswith("YES")
+        log.warning("Risk check gave an unclear answer from %s/%s", provider.name, provider.model)
+    return None
+
+
 def generate_reply(history: list[dict], level: int | None, worry: str | None = None) -> tuple[str, str] | None:
     """Returns (reply, "provider/model"), or None if every provider failed."""
     messages = build_messages(history, level, worry)

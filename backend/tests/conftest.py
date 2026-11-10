@@ -6,17 +6,46 @@ os.environ["DATABASE_URL"] = os.environ.get(
 )
 
 os.environ["CHECK_BREACHED_PASSWORDS"] = "false"  # no network calls in tests
+os.environ["CHECK_EMAIL_DOMAIN"] = "false"
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
 from app.database import Base, engine  # noqa: E402
 from app.main import app  # noqa: E402
+from app.routers import auth  # noqa: E402
+
+
+@pytest.fixture(autouse=True)
+def risk_check(monkeypatch):
+    """The AI risk check answers NO unless a test sets risk_check.answer; tests never call a real AI."""
+    from app.services import ai
+
+    class RiskCheck:
+        answer: bool | None = False
+        seen: list[list[str]] = []
+
+    def fake(user_messages):
+        RiskCheck.seen.append(list(user_messages))
+        return RiskCheck.answer
+
+    RiskCheck.seen = []
+    monkeypatch.setattr(ai, "classify_risk", fake)
+    return RiskCheck
 
 
 @pytest.fixture()
-def client():
+def outbox(monkeypatch):
+    """Emails the app would send; tests never send real ones."""
+    sent = []
+    monkeypatch.setattr(auth, "send_email", lambda to, subject, text: sent.append((to, subject, text)))
+    return sent
+
+
+@pytest.fixture()
+def client(outbox):
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     with TestClient(app) as c:
+        c.outbox = outbox  # used by tests/helpers.py to read sign-up codes
         yield c

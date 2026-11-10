@@ -80,8 +80,99 @@ def normalize(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
+# People in distress type fast: "i wnat to diee", "kill myselv". Words one typo away from these are
+# read as the word itself, so a misspelling can't hide a crisis. Missing a crisis is worse than a
+# false alarm. Negations (dont, cant, never) are left alone: correcting them could change the meaning.
+_KEY_WORDS = [
+    "die", "dying", "dead", "end", "ending", "cut", "want", "wanna", "wish", "kill", "killing", "myself", "self",
+    "life", "live", "living", "alive", "suicide", "suicidal", "harm", "harming", "hurt", "hurting", "overdose",
+    "scared", "afraid", "terrified", "going", "gonna",
+]
+# real words that are one letter from a key word but mean something else
+_LEAVE_ALONE = {
+    "love", "like", "line", "lime", "lift", "wife", "went", "wait", "with", "will", "wild", "mild", "kilo",
+    "deal", "read", "head", "lead", "dear", "deed", "sell", "seal", "hurl", "farm", "warm", "gone", "doing",
+    "and", "can", "cat", "dig", "did", "due", "dye", "see", "set", "sad", "dad", "mad", "bad",
+    "loving", "giving", "lining", "diving", "hiring",
+    # other forms of key words, already spelled right
+    "hurts", "dies", "died", "wants", "kills", "lives", "cuts", "ends", "ended", "harms", "wishes",
+}
+
+# long, distinctive key words: two typos still count ("myselve")
+_TWO_TYPOS_OK = {"myself", "suicide", "suicidal", "overdose"}
+
+# "dye" is a real word, so it only counts as "die" when it isn't dyeing something ("dye my hair")
+_DYE_OBJECTS = {"my", "your", "her", "his", "their", "our", "the", "it", "them", "this", "that", "some", "a", "hair"}
+
+# more than one typo away, but common
+_COMMON_MISSPELLINGS = {"too": "to", "dieing": "dying", "dyeing": "dying", "kms": "kill myself"}
+
+
+def _squash(word: str) -> str:
+    # "diee" -> "die", "kiiill" -> "kil", "wanna" -> "wana"
+    return re.sub(r"(.)\1+", r"\1", word)
+
+
+def _one_typo(a: str, b: str) -> bool:
+    """True if a and b differ by one added, missing, changed or swapped letter."""
+    if abs(len(a) - len(b)) > 1:
+        return False
+    if len(a) == len(b):
+        diff = [i for i in range(len(a)) if a[i] != b[i]]
+        if len(diff) == 1:
+            return True
+        return len(diff) == 2 and diff[1] == diff[0] + 1 and a[diff[0]] == b[diff[1]] and a[diff[1]] == b[diff[0]]
+    short, long_ = sorted((a, b), key=len)
+    return any(long_[:i] + long_[i + 1:] == short for i in range(len(long_)))
+
+
+def _typos(a: str, b: str) -> int:
+    """Number of added, missing, changed or swapped letters between a and b."""
+    prev2, prev = None, list(range(len(b) + 1))
+    for i in range(1, len(a) + 1):
+        row = [i] + [0] * len(b)
+        for j in range(1, len(b) + 1):
+            row[j] = min(prev[j] + 1, row[j - 1] + 1, prev[j - 1] + (a[i - 1] != b[j - 1]))
+            if prev2 and i > 1 and j > 1 and a[i - 1] == b[j - 2] and a[i - 2] == b[j - 1]:
+                row[j] = min(row[j], prev2[j - 2] + 1)
+        prev2, prev = prev, row
+    return prev[-1]
+
+
+def _key_word(word: str) -> str:
+    # stretched letters: "toooo" -> "to", "wantttt" -> "want", "dyeeeee" -> "dye" (double letters stay)
+    word = re.sub(r"(.)\1{2,}", r"\1", word)
+    if word in _COMMON_MISSPELLINGS:
+        return _COMMON_MISSPELLINGS[word]
+    if word in _KEY_WORDS or word in _LEAVE_ALONE or len(word) < 3 or not word.isalpha():
+        return word
+    for key in _KEY_WORDS:
+        if _squash(word) == _squash(key):
+            return key
+    for key in _KEY_WORDS:
+        if len(key) <= 3:
+            # short words: only swapped letters ("dei"); a changed letter makes a different word
+            if len(word) == 3 and sorted(word) == sorted(key) and _one_typo(word, key):
+                return key
+        elif _one_typo(_squash(word), _squash(key)) and (word[0] == key[0] or word[:2] == key[1::-1]):
+            # the first letter is almost always typed right
+            return key
+    for key in _TWO_TYPOS_OK:
+        if word[0] == key[0] and len(word) >= 5 and _typos(word, key) <= 2:
+            return key
+    return word
+
+
+def fix_typos(clean: str) -> str:
+    words = [_key_word(w) for w in clean.split()]
+    for i, word in enumerate(words):
+        if word == "dye" and (i + 1 == len(words) or words[i + 1] not in _DYE_OBJECTS):
+            words[i] = "die"
+    return " ".join(" ".join(words).split())  # "kms" became two words
+
+
 def check_message(text: str) -> SafetyResult:
-    clean = normalize(text or "")
+    clean = fix_typos(normalize(text or ""))
     for_crisis = _NOT_WANTING_TO_DIE_RE.sub(" ", clean)
     crisis = [p.pattern for p in _CRISIS_RE if p.search(for_crisis)]
     if crisis:

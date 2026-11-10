@@ -60,10 +60,11 @@ export default function Breathing() {
   const showQuestion = (state === 'start' && elapsed >= ASK_AFTER_S) || state === 'check'
   const offerReady = elapsed >= OFFER_AFTER_S && !offerHidden
   const stillStrong = state === 'strong' && strongChecks >= STRONG_CHECKS_FOR_HELP
+  const chatPaused = session.crisisShown
 
   return (
     <Screen
-      footer={(state === 'strong' || softMessage) && (
+      footer={(state === 'strong' || softMessage || chatPaused) && (
         <Button to="/urgent" variant="link" className="text-xs text-sage/70">I need urgent help</Button>
       )}
     >
@@ -79,8 +80,13 @@ export default function Breathing() {
 
         {showQuestion && <NumberPicker question="How strong is it right now, 1 to 10?" onPick={pick} />}
 
-        {state === 'light' && offerReady && (
+        {/* the chat stays paused after a crisis, so offer a way to finish instead */}
+        {state === 'light' && offerReady && !chatPaused && (
           <Offer text="Would you like to chat?" action="Chat with me" to="/chat" onKeep={() => setOfferHidden(true)} />
+        )}
+        {state === 'light' && offerReady && chatPaused && (
+          <Offer text="Are you feeling a bit calmer?" action="I feel a bit better" to="/check-in"
+            onKeep={() => setOfferHidden(true)} />
         )}
         {state === 'medium' && offerReady && (
           <Offer text="Try grounding together?" action="Start grounding" to="/grounding" onKeep={() => setOfferHidden(true)} />

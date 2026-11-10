@@ -43,12 +43,20 @@ _DIAGNOSIS_AND_PROMISES = [
     r"\bi('| a)m (a )?(human|person|therapist|psychologist|doctor)\b",
 ]
 
-# crisis topics are handled by the app, not the AI
-_CRISIS_TOPICS = [r"\bsuicid", r"\bself[- ]?harm", r"\bkill (yourself|myself)\b", r"\bend (your|my) life\b"]
+# Crisis topics are handled by the app, not the AI. A reply like these means the AI understood
+# something the rules missed, so the app asks the user directly instead of showing it.
+_CRISIS_TOPICS = [
+    r"\bsuicid", r"\bself[- ]?harm", r"\bkill (yourself|myself)\b", r"\bend (your|my) life\b",
+    r"\bhurt(ing)? yourself\b", r"\b(crisis|help) ?line\b", r"\bhotline\b", r"\bprofessional (help|support)\b",
+    r"\bcan('|no)?t help (you )?with (this|that)\b", r"\b(reach out|talk) to (a |someone|somebody|a trusted)",
+    r"\bsomeone you trust\b", r"\btrusted (person|friend|adult)\b", r"\bemergency services\b",
+    r"\bplease (call|contact)\b",
+]
 
 _MEDICINE_RE = [re.compile(p, re.I) for p in _MEDICINE]
 _BREATHING_RE = [re.compile(p, re.I) for p in _BREATHING]
-_OTHER_RE = [re.compile(p, re.I) for p in _DIAGNOSIS_AND_PROMISES + _CRISIS_TOPICS]
+_OTHER_RE = [re.compile(p, re.I) for p in _DIAGNOSIS_AND_PROMISES]
+_CRISIS_RE = [re.compile(p, re.I) for p in _CRISIS_TOPICS]
 
 
 @dataclass
@@ -56,6 +64,7 @@ class ReplyCheck:
     ok: bool
     text: str
     reason: str = ""  # for logging
+    crisis: bool = False  # the reply suggests the user may be at risk
 
 
 def _sentences(text: str) -> int:
@@ -66,12 +75,14 @@ def check_reply(reply: str | None) -> ReplyCheck:
     text = (reply or "").strip().replace("’", "'")
     if not text:
         return ReplyCheck(False, CALM_MESSAGE, "empty")
+    if any(p.search(text) for p in _CRISIS_RE):
+        return ReplyCheck(False, CALM_MESSAGE, "crisis topic", crisis=True)
     if any(p.search(text) for p in _MEDICINE_RE):
         return ReplyCheck(False, MEDICINE_MESSAGE, "medicine")
     if any(p.search(text) for p in _BREATHING_RE):
         return ReplyCheck(False, CALM_MESSAGE, "breathing wording")
     if any(p.search(text) for p in _OTHER_RE):
-        return ReplyCheck(False, CALM_MESSAGE, "diagnosis, promise or crisis topic")
+        return ReplyCheck(False, CALM_MESSAGE, "diagnosis or promise")
     if _sentences(text) > MAX_SENTENCES or len(text.split()) > MAX_WORDS:
         return ReplyCheck(False, CALM_MESSAGE, "too long")
     return ReplyCheck(True, text)

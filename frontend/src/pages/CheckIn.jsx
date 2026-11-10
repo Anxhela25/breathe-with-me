@@ -3,6 +3,8 @@ import Screen from '../components/Screen.jsx'
 import NumberPicker from '../components/NumberPicker.jsx'
 import { useSession } from '../context/SessionContext.jsx'
 
+const LIGHT = 4  // same as "light" on the breathing screen
+
 export default function CheckIn() {
   const navigate = useNavigate()
   const { session, recordLevel } = useSession()
@@ -10,8 +12,9 @@ export default function CheckIn() {
   function pick(level) {
     const previous = session.lastLevel
     recordLevel(level)
-    const lower = previous == null ? level < 8 : level < previous
-    if (lower) navigate('/closing')
+    // finish when it eased, or when it's light anyway (after a 1 there's no lower number to give)
+    const better = level <= LIGHT || (previous == null ? level < 8 : level < previous)
+    if (better) navigate('/closing')
     else navigate('/breathe', { state: { soft: true } })
   }
 

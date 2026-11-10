@@ -1,8 +1,10 @@
 import Screen from '../components/Screen.jsx'
 import Button from '../components/Button.jsx'
+import { useSession } from '../context/SessionContext.jsx'
 
 // TODO: calm check
 export default function Closing() {
+  const { session } = useSession()
   return (
     <Screen>
       <div className="mt-12 flex h-28 w-28 items-center justify-center rounded-full bg-pistachio" aria-hidden>
@@ -12,6 +14,13 @@ export default function Closing() {
       </div>
       <h1 className="mt-6 text-3xl font-bold">You did it.</h1>
       <p className="mt-1 text-lg">It passed.</p>
+      {session.crisisShown && (
+        <div className="mt-6 w-full rounded-2xl border border-alert/40 bg-alert/5 p-4 text-center text-sm">
+          <p>If the thoughts of hurting yourself come back, please don&apos;t stay alone with them.
+            Call someone you trust or emergency services.</p>
+          <Button to="/urgent" variant="link" className="mt-1 text-alert">Show emergency numbers</Button>
+        </div>
+      )}
       <p className="mt-10">Want a one-minute calm check?</p>
       <div className="mt-6 flex w-full flex-col items-center gap-2">
         <Button to="/calm-check" className="opacity-50 pointer-events-none" aria-disabled>Start calm check</Button>

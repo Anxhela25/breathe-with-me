@@ -132,3 +132,37 @@ def test_ai_receives_only_instructions_level_and_messages(client, fake_ai):
 
 def test_empty_message_is_rejected(client):
     assert client.post("/api/chat", json={"message": ""}).status_code == 422
+
+
+# the messages from the screenshot that got through before
+@pytest.mark.parametrize("text", ["i wantttt toooo dyeeeee", "i will kill myselve", "kms"])
+def test_stretched_and_misspelled_crisis_never_calls_ai(client, fake_ai, text):
+    assert send(client, text)["kind"] == "crisis" and fake_ai.calls == []
+
+
+def test_ai_risk_check_asks_the_user(client, fake_ai, risk_check):
+    risk_check.answer = True
+    out = send(client, "nobody would even notice if i was gone")
+    assert out["kind"] == "check" and out["reply"] is None and out["next_step"] == "urgent"
+
+
+def test_ai_risk_check_reads_the_recent_conversation(client, fake_ai, risk_check):
+    history = [{"role": "user", "content": "i cant do this anymore"}, {"role": "assistant", "content": "I'm here."}]
+    send(client, "nobody would notice", history=history)
+    assert risk_check.seen[-1] == ["i cant do this anymore", "nobody would notice"]
+
+
+def test_risk_check_unavailable_still_replies(client, fake_ai, risk_check):
+    risk_check.answer = None  # no provider answered: the rules and the reply check still apply
+    assert send(client, "my heart is very fast")["kind"] == "reply"
+
+
+@pytest.mark.parametrize("reply", [
+    "I can't help with this. You need professional support right now.",
+    "I'm not a therapist. Please reach out to a trusted person.",
+    "Please contact a crisis line in your area.",
+])
+def test_crisis_like_ai_reply_asks_the_user(client, fake_ai, reply):
+    fake_ai.replies = {"main-model": reply, "backup-model": GOOD_REPLY}
+    out = send(client, "everything is too much")
+    assert out["kind"] == "check" and out["reply"] is None

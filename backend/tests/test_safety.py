@@ -58,6 +58,38 @@ def test_crisis_is_always_caught(text):
     assert check_message(text).level is SafetyLevel.crisis
 
 
+# people in distress type fast; a typo must not hide a crisis
+MISSPELLED_CRISIS = [
+    "i want to diee", "i wnat to die", "i wan to die", "i want too die", "i wantt to dei",
+    "i will kill myselv", "i wanna kill myslef", "i will kil my self", "i will kiill mysef",
+    "thinking about sucide", "i am suicidle", "i want to end my lfe", "i dont wnat to live",
+    "i want to hrut myself", "i wish i was ded", "I WNAT TO DIEE",
+]
+
+MISSPELLED_FEAR = ["i dont wnat to diee", "im so scard i am dyingg", "i dont wana die", "i think im dieing"]
+
+# one letter from a key word but meaning something else
+NOT_TYPOS = [
+    "I love my life", "I went to the doctor", "I will wait", "I like this", "dye my hair",
+    "I can see the window", "this is a big deal", "my dad is here",
+]
+
+
+@pytest.mark.parametrize("text", MISSPELLED_CRISIS)
+def test_misspelled_crisis_is_caught(text):
+    assert check_message(text).level is SafetyLevel.crisis
+
+
+@pytest.mark.parametrize("text", MISSPELLED_FEAR)
+def test_misspelled_fear_of_dying_is_not_a_crisis(text):
+    assert check_message(text).level is SafetyLevel.fear_of_dying
+
+
+@pytest.mark.parametrize("text", NOT_TYPOS)
+def test_other_words_are_not_changed(text):
+    assert check_message(text).level is SafetyLevel.ok
+
+
 @pytest.mark.parametrize("text", MEDICAL_WORRY)
 def test_medical_worry_gets_emergency_note(text):
     assert check_message(text).level is SafetyLevel.medical_worry

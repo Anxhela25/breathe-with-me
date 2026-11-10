@@ -8,6 +8,8 @@ import { sendChat } from '../lib/api.js'
 // used when the backend can't be reached
 const OFFLINE_REPLY = "I'm here. Let's keep following the circle together."
 const EMERGENCY_NOTE = 'If you think this is a real medical emergency, call emergency services.'
+const CHECK_NO_REPLY = "Thank you for telling me. Let's follow the circle together. " +
+  'If those thoughts come, the urgent help button is always at the bottom.'
 
 export default function Chat() {
   const navigate = useNavigate()
@@ -16,6 +18,8 @@ export default function Chat() {
   const [text, setText] = useState('')
   const [waiting, setWaiting] = useState(false)
   const [nextStep, setNextStep] = useState(null)
+  // the safety check wasn't sure: ask the user directly before anything else
+  const [asking, setAsking] = useState(false)
   const bottom = useRef(null)
 
   useEffect(() => { bottom.current?.scrollIntoView({ behavior: 'smooth' }) }, [lines, waiting])
@@ -28,7 +32,8 @@ export default function Chat() {
         <p className="mt-2 text-center text-sage/80">Please reach out to someone now.</p>
         <div className="mt-8 flex w-full flex-col items-center gap-2">
           <Button to="/urgent">Show emergency numbers</Button>
-          <Button to="/breathe" variant="link">Back to breathing</Button>
+          <Button to="/breathe" variant="outline">Back to breathing</Button>
+          <Button to="/check-in" variant="link">I feel a bit better</Button>
         </div>
       </Screen>
     )
@@ -37,7 +42,7 @@ export default function Chat() {
   async function send(event) {
     event.preventDefault()
     const message = text.trim()
-    if (!message || waiting) return
+    if (!message || waiting || asking) return
     const history = lines.map(({ role, content }) => ({ role, content }))
     setLines(l => [...l, { role: 'user', content: message }])
     setText('')
@@ -50,6 +55,11 @@ export default function Chat() {
         navigate('/urgent', { replace: true })
         return
       }
+      if (out.kind === 'check') {
+        setAsking(true)
+        setNextStep(null)
+        return
+      }
       setLines(l => [...l, { role: 'assistant', content: out.reply, note: out.emergency_note }])
       setNextStep(out.next_step)
     } catch {
@@ -58,6 +68,17 @@ export default function Chat() {
     } finally {
       setWaiting(false)
     }
+  }
+
+  function answerCheck(atRisk) {
+    setAsking(false)
+    if (atRisk) {
+      mark({ crisisShown: true })
+      navigate('/urgent', { replace: true })
+      return
+    }
+    setLines(l => [...l, { role: 'assistant', content: CHECK_NO_REPLY }])
+    setNextStep('breathing')
   }
 
   const started = lines.length > 0
@@ -84,6 +105,22 @@ export default function Chat() {
           </div>
         ))}
         {waiting && <p className="w-fit rounded-2xl border border-sage/15 bg-white px-4 py-2 text-sage/60">…</p>}
+        {asking && (
+          <div role="alertdialog" aria-labelledby="check-question"
+            className="flex w-full flex-col gap-3 rounded-2xl border-2 border-alert bg-white p-4">
+            <p id="check-question" className="font-bold">
+              I want to make sure you're okay. Are you thinking about ending your life or hurting yourself?
+            </p>
+            <button type="button" onClick={() => answerCheck(true)}
+              className="rounded-2xl bg-alert px-4 py-3 font-bold text-white">
+              Yes, I need help now
+            </button>
+            <button type="button" onClick={() => answerCheck(false)}
+              className="rounded-2xl border border-sage px-4 py-3 text-sage">
+              No, it's the panic
+            </button>
+          </div>
+        )}
         <div ref={bottom} />
       </div>
 
@@ -106,7 +143,7 @@ export default function Chat() {
           maxLength={2000}
           className="w-full resize-none rounded-2xl border border-sage/20 bg-white p-3 text-base outline-none focus:border-sage"
         />
-        <Button type="submit" variant={started ? 'outline' : 'primary'} disabled={!text.trim() || waiting}
+        <Button type="submit" variant={started ? 'outline' : 'primary'} disabled={!text.trim() || waiting || asking}
           className="disabled:opacity-50">
           Send
         </Button>

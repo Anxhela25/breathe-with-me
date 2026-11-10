@@ -15,7 +15,7 @@ class ChatIn(BaseModel):
 
 
 class ChatOut(BaseModel):
-    kind: Literal["crisis", "reply"]
+    kind: Literal["crisis", "check", "reply"]  # check: possible crisis, the app asks the user
     reply: str | None
     emergency_note: bool
     next_step: Literal["breathing", "grounding", "urgent"]
