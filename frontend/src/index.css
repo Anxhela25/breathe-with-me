@@ -7,7 +7,8 @@
   --color-soft-blue: #C9DCEB;
   --color-lavender: #DCD6EC;
   --color-cream: #F7F6F1;
-  --color-alert: #B4413C;  /* emergencies only */
+  --color-alert: #B4413C;  /* emergencies, deleting data and form problems */
+  --color-ok: #2E7D4F;  /* success, e.g. password long enough */
   --font-sans: "Lato", ui-sans-serif, system-ui, sans-serif;
 }
 

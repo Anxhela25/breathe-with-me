@@ -32,6 +32,8 @@ export default function Settings() {
   const [phoneCountry, setPhoneCountry] = useState(user.country_code || 'AL')
   const [error, setError] = useState('')
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
   const [status, setStatus] = useState('')
   const statusTimer = useRef(null)
 
@@ -81,8 +83,15 @@ export default function Settings() {
   }
 
   async function removeEverything() {
-    await deleteAccount()
-    navigate('/', { replace: true })
+    setDeleting(true)
+    setDeleteError('')
+    try {
+      await deleteAccount()
+      navigate('/', { replace: true })
+    } catch {
+      setDeleteError("Couldn't delete your account. Please check your connection and try again.")
+      setDeleting(false)
+    }
   }
 
   return (
@@ -147,15 +156,27 @@ export default function Settings() {
 
       <section className="w-full py-5">
         {!confirmDelete ? (
-          <button type="button" onClick={() => setConfirmDelete(true)} className="font-bold text-sage-dark underline">Delete all my data</button>
+          <button type="button" onClick={() => setConfirmDelete(true)}
+            className="w-full rounded-3xl border-2 border-alert px-6 py-3 font-bold text-alert active:scale-[0.98]">
+            Delete my account
+          </button>
         ) : (
-          <div className="rounded-2xl border border-sage-dark/40 bg-white p-4">
-            <p>This deletes your account, history, contacts and settings. It can't be undone.</p>
-            <div className="mt-3 flex gap-3">
-              <button type="button" onClick={removeEverything} className="rounded-2xl bg-sage-dark px-4 py-2 font-bold text-white">
-                Delete everything
+          <div role="alertdialog" aria-labelledby="delete-title" aria-describedby="delete-text"
+            className="rounded-2xl border-2 border-alert bg-white p-4">
+            <h2 id="delete-title" className="text-lg font-bold text-alert">Are you sure?</h2>
+            <p id="delete-text" className="mt-1">
+              This deletes your account, history, contacts and settings. It can't be undone.
+            </p>
+            {deleteError && <p role="alert" className="mt-2 text-sm font-bold text-alert">{deleteError}</p>}
+            <div className="mt-4 flex flex-col gap-2">
+              <button type="button" onClick={removeEverything} disabled={deleting}
+                className="rounded-2xl bg-alert px-4 py-3 font-bold text-white disabled:opacity-50">
+                {deleting ? 'Deleting…' : 'Yes, delete my account'}
               </button>
-              <button type="button" onClick={() => setConfirmDelete(false)} className="px-4 py-2 text-sage underline">Cancel</button>
+              <button type="button" onClick={() => { setConfirmDelete(false); setDeleteError('') }} autoFocus
+                className="rounded-2xl border border-sage px-4 py-3 text-sage">
+                No, keep my account
+              </button>
             </div>
           </div>
         )}

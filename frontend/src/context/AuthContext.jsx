@@ -24,7 +24,7 @@ export function AuthProvider({ children }) {
   }, [])
 
   const register = useCallback(
-    (email, password, consent) => signIn(api.register, email, password, consent), [signIn],
+    (email, password, code, consent) => signIn(api.register, email, password, code, consent), [signIn],
   )
   const login = useCallback((email, password) => signIn(api.login, email, password), [signIn])
   const resetPassword = useCallback(

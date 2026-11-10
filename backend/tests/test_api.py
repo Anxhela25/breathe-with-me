@@ -2,23 +2,89 @@ from datetime import datetime, timezone
 
 import pytest
 
-CONSENT = {"is_adult": True, "health_data_consent": True}
+from tests.helpers import CONSENT, PASSWORD, auth_header, last_code
 
 
 def _register(client, email="maria@example.com"):
-    r = client.post("/api/auth/register", json={"email": email, "password": "quiet-river-lamp", **CONSENT})
-    assert r.status_code == 201
-    return {"Authorization": f"Bearer {r.json()['access_token']}"}
+    return auth_header(client, email)
+
+
+def _start(client, email="new@example.com", password=PASSWORD):
+    return client.post("/api/auth/register/start", json={"email": email, "password": password})
+
+
+def _finish(client, code, email="new@example.com", password=PASSWORD, **extra):
+    return client.post("/api/auth/register", json={"email": email, "password": password, "code": code, **CONSENT, **extra})
 
 
 def test_health(client):
     assert client.get("/api/health").json() == {"status": "ok"}
 
 
+def test_register_rejects_email_domain_without_mail_servers(client, monkeypatch):
+    from email_validator import EmailUndeliverableError
+    from app.services import email_check
+
+    def no_mail_servers(email, **kwargs):
+        raise EmailUndeliverableError("The domain name gmail.con does not exist.")
+
+    monkeypatch.setattr(email_check.settings, "check_email_domain", True)
+    monkeypatch.setattr(email_check, "validate_email", no_mail_servers)
+    r = _start(client, "maria@gmail.con")
+    assert r.status_code == 422 and "can't receive emails" in r.json()["detail"]
+    assert client.outbox == []
+
+
+def test_sign_up_sends_a_code_and_needs_it(client):
+    assert _start(client).status_code == 202
+    to, _, text = client.outbox[-1]
+    assert to == "new@example.com" and "finish creating your account" in text
+    code = last_code(client)
+    wrong = "000000" if code != "000000" else "111111"
+    assert _finish(client, wrong).status_code == 400
+    assert client.post("/api/auth/login", json={"email": "new@example.com", "password": PASSWORD}).status_code == 401
+    assert _finish(client, code).status_code == 201
+
+
+def test_sign_up_without_asking_for_a_code_fails(client):
+    assert _finish(client, "123456").status_code == 400
+
+
+def test_sign_up_code_belongs_to_its_email(client):
+    _start(client)
+    assert _finish(client, last_code(client), email="someone-else@example.com").status_code == 400
+
+
+def test_sign_up_code_works_once_and_only_the_newest(client):
+    _start(client)
+    first = last_code(client)
+    _start(client)
+    second = last_code(client)
+    if first != second:
+        assert _finish(client, first).status_code == 400
+    assert _finish(client, second).status_code == 201
+    assert _finish(client, second).status_code == 409  # the account exists now
+
+
+def test_five_wrong_sign_up_codes_cancel_the_code(client):
+    _start(client)
+    code = last_code(client)
+    wrong = "000000" if code != "000000" else "111111"
+    for _ in range(5):
+        _finish(client, wrong)
+    assert _finish(client, code).status_code == 400
+
+
+def test_at_most_three_sign_up_codes_per_hour(client):
+    for _ in range(3):
+        assert _start(client).status_code == 202
+    assert _start(client).status_code == 429
+    assert len(client.outbox) == 3
+
+
 def test_register_login_and_me(client):
     _register(client)
-    assert client.post("/api/auth/register",
-                       json={"email": "maria@example.com", "password": "quiet-river-lamp", **CONSENT}).status_code == 409
+    assert _start(client, "maria@example.com").status_code == 409
     assert client.post("/api/auth/login", json={"email": "maria@example.com", "password": "wrong-pass"}).status_code == 401
     token = client.post("/api/auth/login", json={"email": "Maria@Example.com", "password": "quiet-river-lamp"}).json()["access_token"]
     me = client.get("/api/me", headers={"Authorization": f"Bearer {token}"}).json()
@@ -52,10 +118,13 @@ def test_episode_keeps_real_start_time_and_crisis_flag(client):
 
 @pytest.mark.parametrize("missing", ["is_adult", "health_data_consent"])
 def test_register_needs_adult_and_consent(client, missing):
-    body = {"email": "new@example.com", "password": "quiet-river-lamp", **CONSENT, missing: False}
-    assert client.post("/api/auth/register", json=body).status_code == 422
+    _start(client)
+    code = last_code(client)
+    assert _finish(client, code, **{missing: False}).status_code == 422
+    body = {"email": "new@example.com", "password": PASSWORD, "code": code, **CONSENT}
     body.pop(missing)
     assert client.post("/api/auth/register", json=body).status_code == 422
+    assert _finish(client, code).status_code == 201  # the code wasn't used up by the refused attempts
 
 
 def test_consent_time_is_stored(client):

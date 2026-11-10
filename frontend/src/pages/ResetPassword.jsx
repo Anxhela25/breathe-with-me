@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import Screen from '../components/Screen.jsx'
 import Button from '../components/Button.jsx'
 import PasswordInput from '../components/PasswordInput.jsx'
+import PasswordHint from '../components/PasswordHint.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { forgotPassword } from '../lib/api.js'
 
@@ -56,11 +57,7 @@ export default function ResetPassword() {
           className={`${inputClass} text-center text-2xl tracking-[0.4em]`} />
         <PasswordInput id="new-password" autoComplete="new-password" placeholder="New password"
           value={password} onChange={e => setPassword(e.target.value)} />
-        <p className="-mt-1 px-1 text-xs text-sage/70">
-          {password.length < MIN_PASSWORD
-            ? `At least ${MIN_PASSWORD} characters (${password.length} so far). A few unrelated words work well.`
-            : '✓ Long enough'}
-        </p>
+        <PasswordHint password={password} min={MIN_PASSWORD} />
         {error && <p role="alert" className="px-1 text-sm font-bold">{error}</p>}
         <Button type="submit" disabled={busy || code.length !== 6 || !password} className="mt-3 disabled:opacity-50">
           Save new password

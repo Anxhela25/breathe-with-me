@@ -6,22 +6,47 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import User
-from app.schemas.user import ForgotPasswordIn, LoginIn, RegisterIn, ResetPasswordIn, SettingsIn, TokenOut, UserOut
+from app.schemas.user import (
+    ForgotPasswordIn, LoginIn, RegisterIn, RegisterStartIn, ResetPasswordIn, SettingsIn, TokenOut, UserOut,
+)
 from app.services.auth import create_token, get_current_user, hash_password, verify_password
-from app.services import password_reset
+from app.services import email_verification, password_reset
 from app.services.email import send_email
+from app.services.email_check import email_problem
 from app.services.passwords import password_problem
 
 router = APIRouter(prefix="/api", tags=["account"])
 
 
-@router.post("/auth/register", response_model=TokenOut, status_code=status.HTTP_201_CREATED)
-def register(data: RegisterIn, db: Session = Depends(get_db)):
-    email = data.email.lower()
+def _check_new_account(db: Session, email: str, password: str) -> None:
     if db.scalar(select(User).where(User.email == email)):
         raise HTTPException(status.HTTP_409_CONFLICT, "This email already has an account.")
-    if problem := password_problem(data.password, email):
+    if problem := password_problem(password, email):
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, problem)
+
+
+@router.post("/auth/register/start", status_code=status.HTTP_202_ACCEPTED)
+def register_start(data: RegisterStartIn, background: BackgroundTasks, db: Session = Depends(get_db)):
+    """Step 1 of sign-up: checks the email and password, then emails a 6-digit code."""
+    email = data.email.lower()
+    if problem := email_problem(email):
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, problem)
+    _check_new_account(db, email, data.password)
+    code = email_verification.create_code(db, email)
+    if code is None:
+        raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS,
+                            "You asked for several codes. Please check your email or try again in an hour.")
+    background.add_task(send_email, email, "Your Breathe With Me code", email_verification.email_text(code))
+    return {"detail": f"We've sent a 6-digit code to {email}."}
+
+
+@router.post("/auth/register", response_model=TokenOut, status_code=status.HTTP_201_CREATED)
+def register(data: RegisterIn, db: Session = Depends(get_db)):
+    """Step 2 of sign-up: creates the account once the emailed code is right."""
+    email = data.email.lower()
+    _check_new_account(db, email, data.password)
+    if not email_verification.use_code(db, email, data.code):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "This code is not valid or has expired. Ask for a new one.")
     now = datetime.now(timezone.utc)
     user = User(
         email=email, password_hash=hash_password(data.password),

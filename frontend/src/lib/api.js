@@ -39,8 +39,10 @@ async function request(method, path, body) {
 
 export const sendChat = ({ message, history, level }) => request('POST', '/api/chat', { message, history, level })
 
-export const register = (email, password, consent) =>
-  request('POST', '/api/auth/register', { email, password, ...consent })
+// sign-up has two steps: email a code, then create the account with it
+export const startRegister = (email, password) => request('POST', '/api/auth/register/start', { email, password })
+export const register = (email, password, code, consent) =>
+  request('POST', '/api/auth/register', { email, password, code, ...consent })
 export const login = (email, password) => request('POST', '/api/auth/login', { email, password })
 export const getMe = () => request('GET', '/api/me')
 export const updateMe = fields => request('PATCH', '/api/me', fields)

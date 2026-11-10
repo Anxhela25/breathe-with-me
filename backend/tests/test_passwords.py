@@ -37,8 +37,7 @@ def test_breached_passwords_are_rejected(monkeypatch):
     assert "data breach" in password_problem("quiet-river-lamp", EMAIL)
 
 
-def test_register_returns_the_reason(client):
-    r = client.post("/api/auth/register", json={
-        "email": "new@example.com", "password": "short", "is_adult": True, "health_data_consent": True,
-    })
+def test_register_returns_the_reason_before_sending_a_code(client):
+    r = client.post("/api/auth/register/start", json={"email": "new@example.com", "password": "short"})
     assert r.status_code == 422 and "at least 12" in r.json()["detail"]
+    assert client.outbox == []

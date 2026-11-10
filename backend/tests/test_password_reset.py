@@ -1,23 +1,15 @@
 import re
 
-import pytest
-
-from app.routers import auth
+from tests.helpers import auth_header
 
 EMAIL = "maria@example.com"
 OLD, NEW = "quiet-river-lamp", "green-window-cloud"
 
 
-@pytest.fixture()
-def outbox(monkeypatch):
-    sent = []
-    monkeypatch.setattr(auth, "send_email", lambda to, subject, text: sent.append((to, subject, text)))
-    return sent
-
-
 def _register(client):
-    r = client.post("/api/auth/register", json={"email": EMAIL, "password": OLD, "is_adult": True, "health_data_consent": True})
-    return {"Authorization": f"Bearer {r.json()['access_token']}"}
+    header = auth_header(client, EMAIL, OLD)
+    client.outbox.clear()  # only the reset emails count from here
+    return header
 
 
 def _code(outbox):

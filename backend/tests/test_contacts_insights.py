@@ -1,11 +1,10 @@
 import pytest
 
-CONSENT = {"is_adult": True, "health_data_consent": True}
+from tests.helpers import auth_header
 
 
 def _register(client, email="maria@example.com"):
-    r = client.post("/api/auth/register", json={"email": email, "password": "quiet-river-lamp", **CONSENT})
-    return {"Authorization": f"Bearer {r.json()['access_token']}"}
+    return auth_header(client, email)
 
 
 def _episode(client, h, started_at, **answers):
