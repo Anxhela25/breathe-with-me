@@ -12,8 +12,12 @@
   },
   "dependencies": {
     "@capacitor/core": "^8.6.0",
+    "@capacitor/filesystem": "^8.1.5",
     "@capacitor/ios": "^8.6.0",
+    "@capacitor/share": "^8.0.3",
     "@tailwindcss/vite": "^4.3.4",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.9",
     "libphonenumber-js": "^1.12.9",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

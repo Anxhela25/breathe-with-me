@@ -42,6 +42,7 @@ export default function Summary() {
   const [episodes, setEpisodes] = useState(null)
   const [includeNotes, setIncludeNotes] = useState(false)
   const [status, setStatus] = useState('')
+  const [busy, setBusy] = useState(false)
 
   useEffect(() => {
     Promise.all([getInsights(), listEpisodes()])
@@ -53,6 +54,20 @@ export default function Summary() {
     () => (insights && episodes?.length ? buildText(insights, episodes, includeNotes) : ''),
     [insights, episodes, includeNotes],
   )
+
+  async function makePdf() {
+    setStatus('')
+    setBusy(true)
+    try {
+      const { buildSummaryPdf, deliverPdf } = await import('../lib/summaryPdf.js')
+      const result = await deliverPdf(buildSummaryPdf(insights, episodes, includeNotes))
+      if (result === 'downloaded') setStatus('The PDF is in your downloads. You choose who you send it to.')
+    } catch {
+      setStatus("The PDF couldn't be created. You can still share or copy the text below.")
+    } finally {
+      setBusy(false)
+    }
+  }
 
   async function share() {
     setStatus('')
@@ -80,7 +95,10 @@ export default function Summary() {
             Include my notes
           </label>
           <pre className="mt-3 w-full whitespace-pre-wrap rounded-2xl border border-sage/15 bg-white p-4 font-sans text-sm">{text}</pre>
-          <Button onClick={share} className="mt-6">Share or copy</Button>
+          <Button onClick={makePdf} disabled={busy} className="mt-6 disabled:opacity-50">
+            {busy ? 'Creating PDF…' : 'Download PDF'}
+          </Button>
+          <Button onClick={share} variant="outline" className="mt-3">Share or copy as text</Button>
         </>
       )}
       {status && <p role="status" className="mt-3 text-center text-sm">{status}</p>}
