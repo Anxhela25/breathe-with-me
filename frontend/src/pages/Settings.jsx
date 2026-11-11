@@ -184,8 +184,7 @@ export default function Settings() {
       <div className="flex w-full flex-col items-center gap-1 pt-2">
         <Button onClick={() => navigate('/')}>Done</Button>
         <Button to="/history" variant="link">My history</Button>
-        {/* developer test for the calm check camera; remove once the calm check is built */}
-        <Button to="/calm-test" variant="link" className="text-xs text-sage/60">Calm check camera test</Button>
+        <Button to="/calm-check" variant="link">Calm check | 1 min</Button>
       </div>
     </Screen>
   )

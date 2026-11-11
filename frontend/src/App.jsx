@@ -15,7 +15,6 @@ import History from './pages/History.jsx'
 import Insights from './pages/Insights.jsx'
 import Summary from './pages/Summary.jsx'
 import Settings from './pages/Settings.jsx'
-import CalmTest from './pages/CalmTest.jsx'
 import CalmCheck from './pages/CalmCheck.jsx'
 import RequireAuth from './components/RequireAuth.jsx'
 
@@ -39,7 +38,6 @@ export default function App() {
       <Route path="/insights" element={<RequireAuth><Insights /></RequireAuth>} />
       <Route path="/summary" element={<RequireAuth><Summary /></RequireAuth>} />
       <Route path="/settings" element={<RequireAuth><Settings /></RequireAuth>} />
-      <Route path="/calm-test" element={<CalmTest />} />
       <Route path="/calm-check" element={<CalmCheck />} />
       <Route path="*" element={<Home />} />
     </Routes>
