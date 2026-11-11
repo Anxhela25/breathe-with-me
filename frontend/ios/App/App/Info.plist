@@ -71,6 +71,8 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>The calm check uses the camera and flash to read your pulse from your fingertip. No video is saved or sent anywhere.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Breathe With Me connects to its server on your local network during development.</string>
 </dict>
