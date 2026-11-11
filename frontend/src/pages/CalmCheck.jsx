@@ -58,17 +58,18 @@ export default function CalmCheck() {
     setOutcome(result)
     setSaved('idle')
     setPhase('result')
+    // saved automatically for logged-in users; failed readings are never saved
+    if (result.key !== RESULT.retry && user) save(result)
   }
 
-  // saved only when she taps "Save to my history"; failed readings are never saved
-  async function save() {
+  async function save(result) {
     setSaved('saving')
     try {
       await saveCalmCheck({
         source,
-        level: Math.round(outcome.level * 1000) / 1000,
-        message_key: outcome.key,
-        heart_rate: outcome.heartRate,
+        level: Math.round(result.level * 1000) / 1000,
+        message_key: result.key,
+        heart_rate: result.heartRate,
         episode_id: fromSession ? await episodeId() : null,
       })
       setSaved('saved')
@@ -159,26 +160,23 @@ export default function CalmCheck() {
       </div>
       <div className="mt-auto flex w-full flex-col items-center gap-2 pt-8">
         {!steady && <Button onClick={() => setPhase('slower')}>Breathe a little longer</Button>}
-        {user ? (
-          saved === 'saved' ? (
-            <p role="status" className="flex items-center gap-2 py-3 font-bold text-ok">
-              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.5"
-                strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
-              Saved to your history
-            </p>
-          ) : (
-            <Button variant={steady ? 'primary' : 'outline'} onClick={save} disabled={saved === 'saving'}
-              className="disabled:opacity-50">
-              {saved === 'saving' ? 'Saving…' : 'Save to my history'}
-            </Button>
-          )
-        ) : (
+        {!user && (
           <p className="py-2 text-center text-sm text-sage/70">Log in to keep your calm checks in your history.</p>
         )}
-        {saved === 'failed' && (
-          <p role="alert" className="text-center text-sm">Couldn&apos;t save. Please check your connection and try again.</p>
+        {saved === 'saved' && (
+          <p role="status" className="flex items-center gap-2 py-2 text-sm font-bold text-ok">
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.5"
+              strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+            Saved to your history
+          </p>
         )}
-        <Button variant={steady && saved === 'saved' ? 'primary' : 'link'} onClick={leave}>Done</Button>
+        {saved === 'failed' && (
+          <p role="alert" className="py-2 text-center text-sm">
+            Couldn&apos;t save it.{' '}
+            <button type="button" onClick={() => save(outcome)} className="font-bold underline">Try again</button>
+          </p>
+        )}
+        <Button variant={steady ? 'primary' : 'link'} onClick={leave}>Done</Button>
       </div>
     </Screen>
   )
