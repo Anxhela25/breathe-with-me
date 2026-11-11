@@ -13,7 +13,7 @@ export default function Home() {
   }
 
   return (
-    <Screen footer={<p className="text-xs text-sage/60">Support tool, not treatment.</p>}>
+    <Screen home={false} footer={<p className="text-xs text-sage/60">Support tool, not treatment.</p>}>
       <div className="mt-10 flex h-20 w-20 items-center justify-center rounded-full bg-pistachio" aria-hidden>
         <svg viewBox="0 0 24 24" className="h-8 w-8 stroke-sage" fill="none" strokeWidth="1.5" strokeLinecap="round">
           <path d="M3 8h11a3 3 0 1 0-3-3M3 12h15a3 3 0 1 1-3 3M3 16h8" />

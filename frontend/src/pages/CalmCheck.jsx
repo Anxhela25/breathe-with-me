@@ -42,6 +42,7 @@ export default function CalmCheck() {
   const [history, setHistory] = useState({ count: null, baseline: null })
   const [tries, setTries] = useState(0)
   const [outcome, setOutcome] = useState(null)
+  const [saved, setSaved] = useState('idle')  // idle | saving | saved | failed
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -51,21 +52,29 @@ export default function CalmCheck() {
   const firstTime = !fromSession && history.count === 0
   const source = fromSession ? 'end_of_session' : firstTime ? 'baseline' : 'practice'
 
-  async function finish(samples) {
+  function finish(samples) {
     const result = calmResult(analyzePulse(samples), BREATH_S, history.baseline)
     if (result.key === RESULT.retry) setTries(t => t + 1)
     setOutcome(result)
+    setSaved('idle')
     setPhase('result')
-    if (result.key === RESULT.retry || !user) return  // failed readings, and anything without an account, aren't saved
+  }
+
+  // saved only when she taps "Save to my history"; failed readings are never saved
+  async function save() {
+    setSaved('saving')
     try {
       await saveCalmCheck({
         source,
-        level: Math.round(result.level * 1000) / 1000,
-        message_key: result.key,
-        heart_rate: result.heartRate,
+        level: Math.round(outcome.level * 1000) / 1000,
+        message_key: outcome.key,
+        heart_rate: outcome.heartRate,
         episode_id: fromSession ? await episodeId() : null,
       })
-    } catch { /* the result is still shown; saving is not worth interrupting her */ }
+      setSaved('saved')
+    } catch {
+      setSaved('failed')
+    }
   }
 
   if (phase === 'unavailable') {
@@ -149,12 +158,27 @@ export default function CalmCheck() {
         <StatTile icon={<BreathIcon />} label="Breaths" value={`${BREATHS} slow ones`} />
       </div>
       <div className="mt-auto flex w-full flex-col items-center gap-2 pt-8">
-        {steady ? <Button onClick={leave}>Done</Button> : (
-          <>
-            <Button onClick={() => setPhase('slower')}>Breathe a little longer</Button>
-            <Button variant="link" onClick={leave}>Done</Button>
-          </>
+        {!steady && <Button onClick={() => setPhase('slower')}>Breathe a little longer</Button>}
+        {user ? (
+          saved === 'saved' ? (
+            <p role="status" className="flex items-center gap-2 py-3 font-bold text-ok">
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.5"
+                strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+              Saved to your history
+            </p>
+          ) : (
+            <Button variant={steady ? 'primary' : 'outline'} onClick={save} disabled={saved === 'saving'}
+              className="disabled:opacity-50">
+              {saved === 'saving' ? 'Saving…' : 'Save to my history'}
+            </Button>
+          )
+        ) : (
+          <p className="py-2 text-center text-sm text-sage/70">Log in to keep your calm checks in your history.</p>
         )}
+        {saved === 'failed' && (
+          <p role="alert" className="text-center text-sm">Couldn&apos;t save. Please check your connection and try again.</p>
+        )}
+        <Button variant={steady && saved === 'saved' ? 'primary' : 'link'} onClick={leave}>Done</Button>
       </div>
     </Screen>
   )
@@ -359,26 +383,28 @@ function ResultRing({ heartRate, steady }) {
 }
 
 /** Back of a phone with the camera, a fingertip resting on the lens and the flash glowing softly. */
+/**
+ * A short looping animation: the back of a phone lying on its side, then a finger slides in from the
+ * right and rests on the camera, and the flash glows through it. Still picture with Reduce Motion.
+ */
 function FingerIllustration() {
   return (
-    <svg viewBox="0 0 160 200" className="h-44 w-36" aria-hidden>
-      <defs>
-        <clipPath id="phone-back"><rect x="20" y="8" width="120" height="184" rx="26" /></clipPath>
-      </defs>
-      <rect x="20" y="8" width="120" height="184" rx="26" fill="white" />
-      <g clipPath="url(#phone-back)">
-        {/* camera module: two lenses and the flash */}
-        <rect x="32" y="22" width="62" height="64" rx="18" fill="#E2EADA" />
-        <circle cx="50" cy="40" r="10" fill="#2F4136" fillOpacity="0.85" />
-        <circle cx="50" cy="68" r="10" fill="#2F4136" fillOpacity="0.85" />
-        <circle cx="76" cy="40" r="5" fill="#F5E6B8" />
-        {/* the flash shining through the fingertip */}
-        <circle cx="63" cy="42" r="30" fill="#F5D9A8" className="animate-glow" />
-        {/* finger coming up from below, its tip resting on the top lens and the flash */}
-        <path d="M44 200 L44 52 Q44 24 66 24 Q88 24 88 52 L88 200 Z" fill="#E8C4B0" stroke="#C99A85" strokeWidth="2" />
-        <path d="M54 46 Q54 34 66 34 Q78 34 78 46 L78 54 Q66 58 54 54 Z" fill="#F2D7C8" stroke="#C99A85" strokeWidth="1.5" />
+    <svg viewBox="0 0 240 150" className="h-36 w-56" aria-hidden>
+      {/* phone, lying horizontally, seen from the back */}
+      <rect x="8" y="14" width="196" height="122" rx="26" fill="white" />
+      {/* camera module in the top-left corner: two lenses and the flash */}
+      <rect x="22" y="28" width="74" height="56" rx="18" fill="#E2EADA" />
+      <circle cx="42" cy="46" r="10" fill="#2F4136" fillOpacity="0.85" />
+      <circle cx="42" cy="70" r="9" fill="#2F4136" fillOpacity="0.85" />
+      <circle cx="70" cy="46" r="5" fill="#F5E6B8" />
+      {/* the flash shining through the fingertip */}
+      <circle cx="54" cy="46" r="30" fill="#F5D9A8" className="finger-glow" />
+      {/* finger sliding in from the right, its tip resting on the top lens and the flash */}
+      <g className="finger-slide">
+        <path d="M260 26 L56 26 Q30 26 30 46 Q30 66 56 66 L260 66 Z" fill="#E8C4B0" stroke="#C99A85" strokeWidth="2" />
+        <path d="M44 36 Q36 36 36 46 Q36 56 44 56 L56 56 Q60 46 56 36 Z" fill="#F2D7C8" stroke="#C99A85" strokeWidth="1.5" />
       </g>
-      <rect x="20" y="8" width="120" height="184" rx="26" fill="none" stroke="#4A6355" strokeOpacity="0.35" strokeWidth="3" />
+      <rect x="8" y="14" width="196" height="122" rx="26" fill="none" stroke="#4A6355" strokeOpacity="0.35" strokeWidth="3" />
     </svg>
   )
 }

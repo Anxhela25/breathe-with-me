@@ -41,3 +41,23 @@ body { @apply bg-cream text-sage-dark font-sans antialiased; }
   .animate-fade-in, .animate-draw, .animate-glow { animation: none; }
   .animate-draw { stroke-dashoffset: 0; }
 }
+
+/* calm check: the phone first, then the finger slides onto the camera and the flash glows (loops) */
+@keyframes finger-slide {
+  0%, 22% { transform: translateX(200px); opacity: 0; }
+  45%, 88% { transform: translateX(0); opacity: 1; }
+  100% { transform: translateX(0); opacity: 0; }
+}
+@keyframes finger-glow {
+  0%, 42% { opacity: 0; }
+  55% { opacity: 0.9; }
+  70% { opacity: 0.5; }
+  82% { opacity: 0.9; }
+  100% { opacity: 0; }
+}
+.finger-slide { animation: finger-slide 5s ease-in-out infinite; }
+.finger-glow { animation: finger-glow 5s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .finger-slide { animation: none; }
+  .finger-glow { animation: none; opacity: 0.7; }
+}
