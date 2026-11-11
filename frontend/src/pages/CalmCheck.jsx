@@ -6,19 +6,29 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import Screen from '../components/Screen.jsx'
 import Button from '../components/Button.jsx'
 import BreathingCircle from '../components/BreathingCircle.jsx'
+import StatTile from '../components/StatTile.jsx'
+import { BreathIcon, ClockIcon, HeartIcon, RhythmIcon } from '../components/Icons.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useSession } from '../context/SessionContext.jsx'
 import { calmCameraAvailable, lockCalmExposure, startCalmCamera } from '../lib/calmCamera.js'
-import { analyzePulse, calmResult, fingerOnLens, RESULT } from '../lib/pulse.js'
+import { analyzePulse, calmResult, fingerOnLens, pulseWave, RESULT } from '../lib/pulse.js'
 import { getCalmBaseline, saveCalmCheck } from '../lib/api.js'
+import { useReducedMotion } from '../lib/motion.js'
 
 const MEASURE_S = 60  // seconds with the finger on the lens
 const GUIDE = { inhaleMs: 4000, exhaleMs: 6000 }  // the same pace as the breathing screen
 const SLOWER = { inhaleMs: 5000, exhaleMs: 7000 }  // "breathe a little longer": a longer out-breath
+const BREATH_S = (GUIDE.inhaleMs + GUIDE.exhaleMs) / 1000
+const BREATHS = Math.round(MEASURE_S / BREATH_S)
 const MAX_TRIES = 2
 const WAVE_S = 5
 
 const SAFETY = 'If you feel dizzy or unwell, stop and contact a doctor or emergency services.'
+
+const timeLeft = seconds => {
+  const s = Math.max(0, Math.ceil(seconds))
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+}
 
 export default function CalmCheck() {
   const navigate = useNavigate()
@@ -42,16 +52,11 @@ export default function CalmCheck() {
   const source = fromSession ? 'end_of_session' : firstTime ? 'baseline' : 'practice'
 
   async function finish(samples) {
-    const result = calmResult(analyzePulse(samples), (GUIDE.inhaleMs + GUIDE.exhaleMs) / 1000, history.baseline)
-    if (result.key === RESULT.retry) {
-      setTries(t => t + 1)
-      setOutcome(result)
-      setPhase('result')
-      return
-    }
+    const result = calmResult(analyzePulse(samples), BREATH_S, history.baseline)
+    if (result.key === RESULT.retry) setTries(t => t + 1)
     setOutcome(result)
     setPhase('result')
-    if (!user) return  // nothing is saved without an account
+    if (result.key === RESULT.retry || !user) return  // failed readings, and anything without an account, aren't saved
     try {
       await saveCalmCheck({
         source,
@@ -65,8 +70,8 @@ export default function CalmCheck() {
 
   if (phase === 'unavailable') {
     return (
-      <Screen>
-        <div className="mt-12 h-28 w-28 rounded-full bg-pistachio" aria-hidden />
+      <Screen calm key="unavailable">
+        <div className="mt-10"><FingerIllustration /></div>
         <h1 className="mt-8 text-center text-2xl font-bold">The calm check works in the iPhone app.</h1>
         <p className="mt-2 text-center text-sage/80">It needs the phone&apos;s camera and flash.</p>
         <div className="mt-auto w-full pt-8"><Button onClick={leave}>Continue</Button></div>
@@ -76,10 +81,8 @@ export default function CalmCheck() {
 
   if (phase === 'intro') {
     return (
-      <Screen>
-        <div className="mt-10 flex h-40 w-28 items-start justify-center rounded-3xl border-2 border-sage/30 bg-white pt-4" aria-hidden>
-          <div className="h-12 w-12 rounded-full bg-[#E8C4B0] shadow-[0_0_0_6px_rgba(226,234,218,0.9)]" />
-        </div>
+      <Screen calm key="intro">
+        <div className="mt-8"><FingerIllustration /></div>
         <h1 className="mt-8 text-center text-2xl font-bold">
           {firstTime ? "Let's learn your calm rhythm." : 'Rest your fingertip on the camera.'}
         </h1>
@@ -88,9 +91,13 @@ export default function CalmCheck() {
           Rest your fingertip gently on the back camera and the flash. Do not press hard.
           Then breathe with the circle for one minute.
         </p>
+        <div className="mt-5 grid w-full grid-cols-2 gap-2">
+          <StatTile icon={<ClockIcon />} label="Takes" value="1 minute" tone="blue" />
+          <StatTile icon={<BreathIcon />} label="Breaths" value={`${BREATHS} slow ones`} tone="lavender" />
+        </div>
         <p className="mt-4 text-center text-xs text-sage/70">{SAFETY}</p>
-        {error && <p role="alert" className="mt-4 text-center text-sm font-bold">{error}</p>}
-        <div className="mt-auto flex w-full flex-col items-center gap-2 pt-8">
+        {error && <p role="alert" className="mt-3 text-center text-sm font-bold">{error}</p>}
+        <div className="mt-auto flex w-full flex-col items-center gap-2 pt-6">
           <Button onClick={() => { setError(''); setPhase('measuring') }}>I&apos;m ready</Button>
           <Button variant="link" onClick={leave}>Not now</Button>
         </div>
@@ -104,15 +111,14 @@ export default function CalmCheck() {
 
   if (phase === 'slower') return <SlowerGuide onDone={leave} />
 
-  // result
   if (outcome?.key === RESULT.retry) {
     const canRetry = tries < MAX_TRIES
     return (
-      <Screen>
-        <div className="mt-12 h-28 w-28 rounded-full bg-pistachio" aria-hidden />
+      <Screen calm key={`retry-${tries}`}>
+        <div className="mt-8"><FingerIllustration /></div>
         <h1 className="mt-8 text-center text-2xl font-bold">{canRetry ? "Let's try again." : "That's okay."}</h1>
         <p className="mt-2 text-center text-sage/80">
-          {canRetry ? 'Rest your finger gently and keep it still.' : "We'll skip it this time."}
+          {canRetry ? 'Rest your finger gently and keep it still. Warm fingers read best.' : "We'll skip it this time."}
         </p>
         <div className="mt-auto flex w-full flex-col items-center gap-2 pt-8">
           {canRetry ? (
@@ -128,20 +134,20 @@ export default function CalmCheck() {
 
   const steady = outcome?.key === RESULT.steady
   return (
-    <Screen>
-      {outcome?.heartRate && (
-        <div className="mt-12 flex h-44 w-44 flex-col items-center justify-center rounded-full border-[10px] border-pistachio bg-white"
-          aria-label={`Average heart rate ${outcome.heartRate} beats per minute`}>
-          <span className="text-6xl font-bold text-sage">{outcome.heartRate}</span>
-          <span className="text-sm text-sage/70">bpm</span>
-        </div>
-      )}
-      <p className="mt-8 text-center text-xl">
+    <Screen calm key="result">
+      <div className="mt-8"><ResultRing heartRate={outcome?.heartRate} steady={steady} /></div>
+      <p className="mt-6 text-center text-xl">
         {steady
           ? (history.count ? 'Your rhythm looks steadier than before.' : 'Your rhythm is following your breathing.')
           : 'Well done for taking this time.'}
       </p>
-      {!steady && <p className="mt-2 text-center text-sage/80">A few slower breaths can help even more.</p>}
+      {!steady && <p className="mt-1 text-center text-sage/80">A few slower breaths can help even more.</p>}
+      <div className="mt-6 grid w-full grid-cols-2 gap-2">
+        <StatTile icon={<HeartIcon />} label="Heart rate" value={outcome?.heartRate ? `${outcome.heartRate} bpm` : '-'} />
+        <StatTile icon={<RhythmIcon />} label="Rhythm" value={steady ? 'Steadier' : 'Settling'} tone="lavender" />
+        <StatTile icon={<ClockIcon />} label="Time" value="1 minute" tone="blue" />
+        <StatTile icon={<BreathIcon />} label="Breaths" value={`${BREATHS} slow ones`} />
+      </div>
       <div className="mt-auto flex w-full flex-col items-center gap-2 pt-8">
         {steady ? <Button onClick={leave}>Done</Button> : (
           <>
@@ -159,11 +165,12 @@ function Measuring({ onDone, onStop, onError }) {
   const callbacks = useRef({ onDone, onError })
   useEffect(() => { callbacks.current = { onDone, onError } })
   const samples = useRef([])
+  const channel = useRef('r')  // red or green, whichever gives the cleaner pulse on this phone
   const stopCamera = useRef(null)
   const fingerSeconds = useRef(0)
   const locked = useRef(false)
   const finished = useRef(false)
-  const [view, setView] = useState({ progress: 0, finger: true, wave: [] })
+  const [view, setView] = useState({ progress: 0, finger: true, bpm: null })
 
   useEffect(() => {
     let cancelled = false
@@ -197,13 +204,20 @@ function Measuring({ onDone, onStop, onError }) {
   }, [])
 
   useEffect(() => {
+    let ticks = 0
     const timer = setInterval(async () => {
       const all = samples.current
       if (!all.length || finished.current) return
       const last = all[all.length - 1]
       const progress = Math.min(1, fingerSeconds.current / MEASURE_S)
-      const recent = analyzePulse(all.filter(s => s.t >= last.t - 8))
-      setView({ progress, finger: fingerOnLens(last), wave: recent?.wave.filter(p => p.t >= last.t - WAVE_S) ?? [] })
+      // heart rate and the best colour channel, once a second from the last 15 seconds
+      let bpm
+      if (++ticks % 4 === 0) {
+        const recent = analyzePulse(all.filter(s => s.t >= last.t - 15))
+        if (recent) channel.current = recent.channel
+        bpm = recent && recent.quality >= 0.6 ? recent.bpm : null
+      }
+      setView(v => ({ progress, finger: fingerOnLens(last), bpm: bpm === undefined ? v.bpm : bpm }))
       if (progress >= 1) {
         finished.current = true
         const stop = stopCamera.current
@@ -215,36 +229,156 @@ function Measuring({ onDone, onStop, onError }) {
     return () => clearInterval(timer)
   }, [])
 
+  const secondsIn = view.progress * MEASURE_S
   return (
-    <Screen>
-      <div className="mt-6"><BreathingCircle {...GUIDE} /></div>
-      <p className="mt-2 text-center" aria-live="polite">
+    <Screen calm key="measuring">
+      <div className="mt-4"><BreathingCircle {...GUIDE} progress={view.progress} /></div>
+      <p className="mt-3 h-6 text-center" aria-live="polite">
         {view.finger ? 'Keep your finger still. Breathe with the circle.' : 'Rest your finger gently on the camera.'}
       </p>
-      <div className="mt-6 h-1.5 w-2/3 overflow-hidden rounded-full bg-pistachio" role="progressbar"
-        aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(view.progress * 100)}>
-        <div className="h-full rounded-full bg-sage transition-[width] duration-300" style={{ width: `${view.progress * 100}%` }} />
+      <div className="mt-4 grid w-full grid-cols-3 gap-2">
+        <StatTile icon={<HeartIcon />} label="Heart" value={view.bpm ? `${view.bpm}` : '…'} />
+        <StatTile icon={<ClockIcon />} label="Left" value={timeLeft(MEASURE_S - secondsIn)} tone="blue" />
+        <StatTile icon={<BreathIcon />} label="Breaths"
+          value={`${Math.min(BREATHS, Math.floor(secondsIn / BREATH_S))}/${BREATHS}`} tone="lavender" />
       </div>
-      <SoftWave wave={view.wave} faded={!view.finger} />
-      <div className="mt-auto pt-4"><Button variant="link" onClick={onStop}>Stop</Button></div>
+      <LiveWave samples={samples} channel={channel} faded={!view.finger} />
+      <div className="mt-auto pt-3"><Button variant="link" onClick={onStop}>Stop</Button></div>
     </Screen>
   )
 }
 
-/** The live pulse, smoothed and pale: it shows the reading works without counting beats. */
-function SoftWave({ wave, faded }) {
-  if (wave.length < 10) return <div className="mt-6 h-20 w-full" />
-  const start = wave[0].t
-  const span = wave[wave.length - 1].t - start || 1
-  const values = wave.map(p => p.v)
-  const low = Math.min(...values)
-  const range = Math.max(...values) - low || 1
-  const points = wave.map(p => `${(((p.t - start) / span) * 300).toFixed(1)},${(70 - ((p.v - low) / range) * 60).toFixed(1)}`).join(' ')
+/**
+ * The live pulse, drawn smoothly on every screen frame: a soft line with a pale fill under it.
+ * It shows the reading works without marking each heartbeat.
+ */
+function LiveWave({ samples, channel, faded }) {
+  const canvas = useRef(null)
+  const reduced = useReducedMotion()
+
+  useEffect(() => {
+    let frame
+    let lastDraw = 0
+    const draw = now => {
+      frame = requestAnimationFrame(draw)
+      if (now - lastDraw < (reduced ? 500 : 30)) return  // about 30 times a second; twice with Reduce Motion
+      lastDraw = now
+      const el = canvas.current
+      const all = samples.current
+      if (!el || all.length < 30) return
+      const last = all[all.length - 1].t
+      const wave = pulseWave(all.slice(-Math.min(all.length, 8 * 30)), channel.current).filter(p => p.t >= last - WAVE_S)
+      const ratio = window.devicePixelRatio || 1
+      const width = el.clientWidth
+      const height = el.clientHeight
+      if (el.width !== width * ratio) { el.width = width * ratio; el.height = height * ratio }
+      const ctx = el.getContext('2d')
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0)
+      ctx.clearRect(0, 0, width, height)
+      if (wave.length < 10) return
+      const values = wave.map(p => p.v)
+      const low = Math.min(...values)
+      const range = Math.max(...values) - low || 1
+      const x = t => ((t - (last - WAVE_S)) / WAVE_S) * width
+      const y = v => height - 10 - ((v - low) / range) * (height - 20)
+      ctx.beginPath()
+      wave.forEach((p, i) => (i ? ctx.lineTo(x(p.t), y(p.v)) : ctx.moveTo(x(p.t), y(p.v))))
+      // fill under the line
+      ctx.lineTo(x(wave[wave.length - 1].t), height)
+      ctx.lineTo(x(wave[0].t), height)
+      ctx.closePath()
+      const fill = ctx.createLinearGradient(0, 0, 0, height)
+      fill.addColorStop(0, 'rgba(201, 220, 235, 0.65)')
+      fill.addColorStop(1, 'rgba(226, 234, 218, 0)')
+      ctx.fillStyle = fill
+      ctx.fill()
+      // the line itself
+      ctx.beginPath()
+      wave.forEach((p, i) => (i ? ctx.lineTo(x(p.t), y(p.v)) : ctx.moveTo(x(p.t), y(p.v))))
+      ctx.strokeStyle = 'rgba(74, 99, 85, 0.75)'
+      ctx.lineWidth = 2.5
+      ctx.lineJoin = 'round'
+      ctx.lineCap = 'round'
+      ctx.stroke()
+    }
+    frame = requestAnimationFrame(draw)
+    return () => cancelAnimationFrame(frame)
+  }, [samples, channel, reduced])
+
   return (
-    <svg viewBox="0 0 300 80" className={`mt-6 h-20 w-full rounded-2xl bg-pistachio/50 transition-opacity duration-500 ${faded ? 'opacity-20' : 'opacity-100'}`}
-      aria-hidden>
-      <polyline points={points} fill="none" stroke="#4A6355" strokeOpacity="0.7" strokeWidth="2.5"
-        strokeLinejoin="round" strokeLinecap="round" />
+    <canvas ref={canvas} aria-hidden
+      className={`mt-4 h-20 w-full rounded-2xl bg-white/60 transition-opacity duration-500 ${faded ? 'opacity-25' : 'opacity-100'}`} />
+  )
+}
+
+/** The heart rate in a pistachio ring that fills in, counting up softly. A check appears when steady. */
+function ResultRing({ heartRate, steady }) {
+  const reduced = useReducedMotion()
+  const [shown, setShown] = useState(reduced ? heartRate : 0)
+
+  useEffect(() => {
+    if (!heartRate || reduced) { setShown(heartRate); return undefined }
+    let frame
+    const start = performance.now()
+    const tick = now => {
+      // a frame's time can be slightly before `start`, so clamp at 0 (or the number goes negative)
+      const t = Math.min(1, Math.max(0, (now - start) / 1200))
+      setShown(Math.round(heartRate * (1 - (1 - t) ** 3)))  // eases out
+      if (t < 1) frame = requestAnimationFrame(tick)
+    }
+    frame = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frame)
+  }, [heartRate, reduced])
+
+  return (
+    <div className="relative h-48 w-48">
+      <svg className="absolute inset-0 -rotate-90" viewBox="0 0 192 192" aria-hidden>
+        <circle cx="96" cy="96" r="86" fill="white" fillOpacity="0.85" stroke="#E2EADA" strokeWidth="10" />
+        <circle cx="96" cy="96" r="86" fill="none" stroke="#C9DCEB" strokeWidth="10" strokeLinecap="round"
+          pathLength="1" className="animate-draw" />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center"
+        aria-label={heartRate ? `Average heart rate ${heartRate} beats per minute` : undefined}>
+        {heartRate ? (
+          <>
+            <span className="text-6xl font-bold tabular-nums text-sage">{shown}</span>
+            <span className="text-sm text-sage/70">bpm</span>
+          </>
+        ) : <span className="text-sage/70">Done</span>}
+      </div>
+      {steady && (
+        <span className="absolute -bottom-2 left-1/2 flex h-11 w-11 -translate-x-1/2 items-center justify-center rounded-full bg-pistachio shadow-md shadow-sage/10">
+          <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="#4A6355" strokeWidth="2.5"
+            strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M5 12.5l4.5 4.5L19 7.5" pathLength="1" className="animate-draw" style={{ animationDelay: '900ms' }} />
+          </svg>
+        </span>
+      )}
+    </div>
+  )
+}
+
+/** Back of a phone with the camera, a fingertip resting on the lens and the flash glowing softly. */
+function FingerIllustration() {
+  return (
+    <svg viewBox="0 0 160 200" className="h-44 w-36" aria-hidden>
+      <defs>
+        <clipPath id="phone-back"><rect x="20" y="8" width="120" height="184" rx="26" /></clipPath>
+      </defs>
+      <rect x="20" y="8" width="120" height="184" rx="26" fill="white" />
+      <g clipPath="url(#phone-back)">
+        {/* camera module: two lenses and the flash */}
+        <rect x="32" y="22" width="62" height="64" rx="18" fill="#E2EADA" />
+        <circle cx="50" cy="40" r="10" fill="#2F4136" fillOpacity="0.85" />
+        <circle cx="50" cy="68" r="10" fill="#2F4136" fillOpacity="0.85" />
+        <circle cx="76" cy="40" r="5" fill="#F5E6B8" />
+        {/* the flash shining through the fingertip */}
+        <circle cx="63" cy="42" r="30" fill="#F5D9A8" className="animate-glow" />
+        {/* finger coming up from below, its tip resting on the top lens and the flash */}
+        <path d="M44 200 L44 52 Q44 24 66 24 Q88 24 88 52 L88 200 Z" fill="#E8C4B0" stroke="#C99A85" strokeWidth="2" />
+        <path d="M54 46 Q54 34 66 34 Q78 34 78 46 L78 54 Q66 58 54 54 Z" fill="#F2D7C8" stroke="#C99A85" strokeWidth="1.5" />
+      </g>
+      <rect x="20" y="8" width="120" height="184" rx="26" fill="none" stroke="#4A6355" strokeOpacity="0.35" strokeWidth="3" />
     </svg>
   )
 }
@@ -257,11 +391,12 @@ function SlowerGuide({ onDone }) {
   }, [])
   const done = seconds >= MEASURE_S
   return (
-    <Screen>
-      <div className="mt-6"><BreathingCircle {...SLOWER} /></div>
-      <p className="mt-2 text-center">Make the out-breath a little longer.</p>
-      <div className="mt-6 h-1.5 w-2/3 overflow-hidden rounded-full bg-pistachio">
-        <div className="h-full rounded-full bg-sage transition-[width] duration-1000" style={{ width: `${(seconds / MEASURE_S) * 100}%` }} />
+    <Screen calm key="slower">
+      <div className="mt-4"><BreathingCircle {...SLOWER} progress={seconds / MEASURE_S} /></div>
+      <p className="mt-3 text-center">Make the out-breath a little longer.</p>
+      <div className="mt-4 grid w-full grid-cols-2 gap-2">
+        <StatTile icon={<ClockIcon />} label="Left" value={timeLeft(MEASURE_S - seconds)} tone="blue" />
+        <StatTile icon={<BreathIcon />} label="Pace" value="5 in, 7 out" tone="lavender" />
       </div>
       <div className="mt-auto flex flex-col items-center pt-4">
         {done ? <Button onClick={onDone}>Done</Button> : <Button variant="link" onClick={onDone}>Stop</Button>}

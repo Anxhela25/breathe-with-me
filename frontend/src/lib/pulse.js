@@ -49,6 +49,14 @@ function pulseBand(values, rate) {
   return biquad(biquad(values.map(v => v - mean), 'high', 0.7, rate), 'low', 3.5, rate)
 }
 
+/** Just the filtered pulse wave, for drawing. Cheap enough to run on every screen frame. */
+export function pulseWave(samples, channel = 'r') {
+  if (samples.length < 30) return []
+  const times = samples.map(s => s.t)
+  const rate = (samples.length - 1) / (times[times.length - 1] - times[0])
+  return pulseBand(samples.map(s => -s[channel]), rate).map((v, i) => ({ t: times[i], v }))
+}
+
 /**
  * samples: [{ t (seconds), r, g, b }], about 30 per second.
  * Returns the pulse wave, the beat times and the time between beats, or null if too short.
