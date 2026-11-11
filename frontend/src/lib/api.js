@@ -67,3 +67,4 @@ export const resetPassword = (email, code, password) =>
 
 export const getCalmBaseline = () => request('GET', '/api/calm-checks/baseline')
 export const saveCalmCheck = fields => request('POST', '/api/calm-checks', fields)
+export const listCalmChecks = () => request('GET', '/api/calm-checks')
