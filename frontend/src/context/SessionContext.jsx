@@ -82,9 +82,12 @@ export function SessionProvider({ children }) {
     return id
   }, [])
 
+  // the saved episode of this session, if any (for linking a calm check to it)
+  const episodeId = useCallback(async () => (episode.current ? episode.current : null), [])
+
   const value = useMemo(
-    () => ({ session, start, recordLevel, mark, save }),
-    [session, start, recordLevel, mark, save],
+    () => ({ session, start, recordLevel, mark, save, episodeId }),
+    [session, start, recordLevel, mark, save, episodeId],
   )
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>
 }

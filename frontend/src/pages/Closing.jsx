@@ -2,7 +2,7 @@ import Screen from '../components/Screen.jsx'
 import Button from '../components/Button.jsx'
 import { useSession } from '../context/SessionContext.jsx'
 
-// TODO: calm check
+// Only reached once the panic eased, so the calm check is never offered during a strong attack.
 export default function Closing() {
   const { session } = useSession()
   return (
@@ -23,7 +23,7 @@ export default function Closing() {
       )}
       <p className="mt-10">Want a one-minute calm check?</p>
       <div className="mt-6 flex w-full flex-col items-center gap-2">
-        <Button to="/calm-check" className="opacity-50 pointer-events-none" aria-disabled>Start calm check</Button>
+        <Button to="/calm-check?from=session">Start calm check</Button>
         <Button to="/questions" variant="link">Skip for now</Button>
       </div>
     </Screen>

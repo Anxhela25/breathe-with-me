@@ -13,43 +13,59 @@ export function fingerOnLens({ r, g, b }) {
   return r > 60 && r > 2 * g && r > 2 * b
 }
 
-function movingAverage(values, size) {
-  const half = Math.floor(size / 2)
-  const result = new Array(values.length)
-  let sum = 0
-  let from = 0
-  let to = -1
-  for (let i = 0; i < values.length; i++) {
-    const start = Math.max(0, i - half)
-    const end = Math.min(values.length - 1, i + half)
-    while (to < end) sum += values[++to]
-    while (from < start) sum -= values[from++]
-    result[i] = sum / (to - from + 1)
-  }
-  return result
-}
-
-const median = list => {
+export const median = list => {
   if (!list.length) return null
   const sorted = [...list].sort((a, b) => a - b)
   const mid = Math.floor(sorted.length / 2)
   return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2
 }
 
+// Second-order filter (Butterworth), from the Audio EQ Cookbook. Run forwards and backwards so the
+// beats don't shift in time.
+function biquad(values, type, cutoff, rate) {
+  const w = (2 * Math.PI * cutoff) / rate
+  const alpha = Math.sin(w) / Math.SQRT2
+  const cos = Math.cos(w)
+  const [b0, b1, b2] = type === 'low'
+    ? [(1 - cos) / 2, 1 - cos, (1 - cos) / 2]
+    : [(1 + cos) / 2, -(1 + cos), (1 + cos) / 2]
+  const [a0, a1, a2] = [1 + alpha, -2 * cos, 1 - alpha]
+  const run = input => {
+    const out = new Array(input.length)
+    let [x1, x2, y1, y2] = [input[0], input[0], type === 'low' ? input[0] : 0, type === 'low' ? input[0] : 0]
+    for (let i = 0; i < input.length; i++) {
+      const y = (b0 * input[i] + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2) / a0
+      ;[x2, x1, y2, y1] = [x1, input[i], y1, y]
+      out[i] = y
+    }
+    return out
+  }
+  return run(run(values).reverse()).reverse()
+}
+
+/** Keeps only changes at heartbeat speed (about 40 to 210 beats per minute). */
+function pulseBand(values, rate) {
+  const mean = values.reduce((a, b) => a + b, 0) / values.length
+  return biquad(biquad(values.map(v => v - mean), 'high', 0.7, rate), 'low', 3.5, rate)
+}
+
 /**
  * samples: [{ t (seconds), r, g, b }], about 30 per second.
  * Returns the pulse wave, the beat times and the time between beats, or null if too short.
+ * With channel 'auto', both red and green are tried and the cleaner one is used (it depends on the phone).
  */
-export function analyzePulse(samples, { channel = 'r' } = {}) {
+export function analyzePulse(samples, { channel = 'auto' } = {}) {
+  if (channel === 'auto') {
+    const [red, green] = ['r', 'g'].map(c => analyzePulse(samples, { channel: c }))
+    if (!red || !green) return red ?? green
+    const score = result => result.quality * result.clean.length
+    return score(green) > score(red) ? green : red
+  }
   if (samples.length < 90) return null
   const times = samples.map(s => s.t)
   const rate = (samples.length - 1) / (times[times.length - 1] - times[0])
-  // remove the slow drift (1 s average), and flip it: more blood = darker = a peak upwards
-  const raw = samples.map(s => s[channel])
-  const trend = movingAverage(raw, Math.round(rate))
-  const pulse = raw.map((value, i) => trend[i] - value)
-  // smooth out camera noise (about 0.1 s)
-  const wave = movingAverage(pulse, Math.max(3, Math.round(rate * 0.1)))
+  // flip it: more blood = darker image = a peak upwards; then keep only heartbeat-speed changes
+  const wave = pulseBand(samples.map(s => -s[channel]), rate)
 
   // candidate beats: the highest point within 0.25 s on each side, above the drift line
   const half = Math.max(1, Math.round(rate * 0.25))
@@ -79,6 +95,7 @@ export function analyzePulse(samples, { channel = 'r' } = {}) {
     && Math.abs(x.ms - usual) / usual <= MAX_JUMP)
 
   return {
+    channel,
     rate,
     wave: wave.map((v, i) => ({ t: times[i], v })),
     beats,
@@ -87,4 +104,68 @@ export function analyzePulse(samples, { channel = 'r' } = {}) {
     bpm: clean.length ? Math.round(60000 / median(clean.map(x => x.ms))) : null,
     quality: ibis.length ? clean.length / ibis.length : 0,  // share of beats that look right
   }
+}
+
+/**
+ * How well the heart rhythm follows the breathing guide, from 0 (not at all) to 1.
+ * When we breathe slowly the heart speeds up on the in-breath and slows on the out-breath. We measure
+ * how much of the change in the time between beats happens at the circle's pace (one breath every
+ * `breathSeconds`), compared with all slow changes (0.04 to 0.4 Hz). This is a standard heart rate
+ * variability measure ("coherence"). Returns null without enough clean beats.
+ */
+export function rhythmLevel(clean, breathSeconds = 10) {
+  if (clean.length < 25) return null
+  const start = clean[0].t
+  const end = clean[clean.length - 1].t
+  if (end - start < 30) return null
+  // the beats are uneven in time: read the rhythm 4 times a second, joining the dots
+  const step = 0.25
+  const series = []
+  let k = 0
+  for (let t = start; t <= end; t += step) {
+    while (k < clean.length - 2 && clean[k + 1].t < t) k++
+    const [a, b] = [clean[k], clean[k + 1]]
+    series.push(a.ms + ((b.ms - a.ms) * (t - a.t)) / (b.t - a.t || 1))
+  }
+  // remove the average and any steady drift
+  const n = series.length
+  const meanT = (n - 1) / 2
+  const meanV = series.reduce((s, v) => s + v, 0) / n
+  let slopeTop = 0
+  let slopeBottom = 0
+  series.forEach((v, i) => { slopeTop += (i - meanT) * (v - meanV); slopeBottom += (i - meanT) ** 2 })
+  const slope = slopeTop / slopeBottom
+  const flat = series.map((v, i) => v - meanV - slope * (i - meanT))
+
+  const guide = 1 / breathSeconds
+  let inStep = 0
+  let total = 0
+  for (let f = 0.04; f <= 0.4; f += 0.005) {
+    let re = 0
+    let im = 0
+    flat.forEach((v, i) => {
+      const angle = 2 * Math.PI * f * i * step
+      re += v * Math.cos(angle)
+      im -= v * Math.sin(angle)
+    })
+    const power = re * re + im * im
+    total += power
+    if (Math.abs(f - guide) <= 0.02) inStep += power
+  }
+  return total ? inStep / total : null
+}
+
+export const RESULT = { steady: 'steady', gentle: 'gentle', retry: 'retry' }
+
+/**
+ * The words she sees come from this. Never a number for the level, never "low" or "failed".
+ * baseline: her usual level from earlier checks, or null the first times.
+ * The thresholds are first guesses, to be tuned with real checks.
+ */
+export function calmResult(result, breathSeconds, baseline) {
+  if (!result || result.quality < 0.6 || result.clean.length < 25) return { key: RESULT.retry }
+  const level = rhythmLevel(result.clean, breathSeconds)
+  if (level == null) return { key: RESULT.retry }
+  const steady = baseline == null ? level >= 0.35 : level >= Math.min(0.5, baseline * 0.9)
+  return { key: steady ? RESULT.steady : RESULT.gentle, level, heartRate: result.bpm }
 }

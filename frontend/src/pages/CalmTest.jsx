@@ -35,7 +35,7 @@ export default function CalmTest() {
   const samples = useRef([])
   const stopCamera = useRef(null)
   const [running, setRunning] = useState(false)
-  const [channel, setChannel] = useState('r')
+  const [channel, setChannel] = useState('auto')
   const [view, setView] = useState(null)
   const [message, setMessage] = useState('')
 
@@ -135,7 +135,7 @@ export default function CalmTest() {
       </dl>
 
       <div className="mt-3 flex w-full gap-2 text-sm">
-        {[['r', 'Use red'], ['g', 'Use green']].map(([value, label]) => (
+        {[['auto', 'Auto'], ['r', 'Red'], ['g', 'Green']].map(([value, label]) => (
           <button key={value} type="button" onClick={() => setChannel(value)} aria-pressed={channel === value}
             className={`flex-1 rounded-2xl border px-3 py-2 ${channel === value ? 'border-sage bg-pistachio font-bold' : 'border-sage/20 bg-white'}`}>
             {label}

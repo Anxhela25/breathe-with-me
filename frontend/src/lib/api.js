@@ -64,3 +64,6 @@ export function getInsights() {
 export const forgotPassword = email => request('POST', '/api/auth/forgot-password', { email })
 export const resetPassword = (email, code, password) =>
   request('POST', '/api/auth/reset-password', { email, code, password })
+
+export const getCalmBaseline = () => request('GET', '/api/calm-checks/baseline')
+export const saveCalmCheck = fields => request('POST', '/api/calm-checks', fields)

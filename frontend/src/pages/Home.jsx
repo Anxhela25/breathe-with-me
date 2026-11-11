@@ -21,6 +21,8 @@ export default function Home() {
       </div>
       <div className="mt-auto mb-auto flex w-full flex-col items-center gap-4">
         <Button onClick={needHelp} className="py-6 text-xl">I need help now.</Button>
+        {/* daily practice when calm; it also builds her usual rhythm (baseline) */}
+        <Button to="/calm-check" variant="outline">Calm check | 1 min</Button>
         <Button to="/history" variant="link">Review my history.</Button>
       </div>
     </Screen>
