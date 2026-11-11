@@ -10,7 +10,7 @@ const card = 'rounded-2xl border border-alert/40 bg-alert/5 p-4 text-center text
 
 export default function UrgentHelp() {
   const { user } = useAuth()
-  const { emergency, crisis } = getEmergency(user?.country_code)
+  const emergency = getEmergency(user?.country_code)
   const [contacts, setContacts] = useState([])
 
   useEffect(() => {
@@ -25,12 +25,6 @@ export default function UrgentHelp() {
         <a href={telLink(emergency)} className={card}>
           Emergency services: <strong className="text-xl">{emergency}</strong>
         </a>
-        {crisis && (
-          <a href={telLink(crisis.number)} className={card}>
-            {crisis.name}: <strong className="text-xl">{crisis.number}</strong>
-            <span className="block text-sm opacity-80">Someone to talk to · {crisis.hours}</span>
-          </a>
-        )}
       </div>
 
       <div className="mt-auto flex w-full flex-col items-center gap-2 pt-8">
