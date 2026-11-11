@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import Screen from '../components/Screen.jsx'
 import Button from '../components/Button.jsx'
-import { getEmergency } from '../data/emergency.js'
+import { getEmergency, telLink } from '../data/emergency.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { listContacts } from '../lib/api.js'
 import { formatPhone } from '../lib/phone.js'
@@ -10,7 +10,7 @@ const card = 'rounded-2xl border border-alert/40 bg-alert/5 p-4 text-center text
 
 export default function UrgentHelp() {
   const { user } = useAuth()
-  const { emergency, crisisLine } = getEmergency(user?.country_code)
+  const { emergency, crisis } = getEmergency(user?.country_code)
   const [contacts, setContacts] = useState([])
 
   useEffect(() => {
@@ -22,12 +22,13 @@ export default function UrgentHelp() {
       <h1 className="mt-10 text-3xl font-bold">You are not alone.</h1>
       <p className="mt-2 text-center text-sage/80">Please reach out to someone now.</p>
       <div className="mt-8 flex w-full flex-col gap-3">
-        <a href={`tel:${emergency}`} className={card}>
+        <a href={telLink(emergency)} className={card}>
           Emergency services: <strong className="text-xl">{emergency}</strong>
         </a>
-        {crisisLine && (
-          <a href={`tel:${crisisLine}`} className={card}>
-            Crisis line: <strong className="text-xl">{crisisLine}</strong>
+        {crisis && (
+          <a href={telLink(crisis.number)} className={card}>
+            {crisis.name}: <strong className="text-xl">{crisis.number}</strong>
+            <span className="block text-sm opacity-80">Someone to talk to · {crisis.hours}</span>
           </a>
         )}
       </div>
