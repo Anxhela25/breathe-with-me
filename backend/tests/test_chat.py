@@ -62,6 +62,16 @@ def test_worries_show_emergency_note_and_grounding(client, fake_ai, text, note):
     assert note in fake_ai.messages[0]["content"]
 
 
+@pytest.mark.parametrize("text", ["I'm going to die", "it is getting worse"])
+def test_earlier_physical_symptom_keeps_medical_worry(client, fake_ai, text):
+    history = [{"role": "user", "content": "I think I have chest pain"},
+               {"role": "assistant", "content": "I hear your fear. Let's notice three things you can see."}]
+    out = send(client, text, history)
+    assert out["emergency_note"] is True and out["next_step"] == "grounding"
+    assert ai.MEDICAL_WORRY_NOTE in fake_ai.messages[0]["content"]
+    assert ai.FEAR_OF_DYING_NOTE not in fake_ai.messages[0]["content"]
+
+
 def test_first_provider_fails_second_answers(client, fake_ai):
     fake_ai.replies = {"main-model": httpx.HTTPError("429 too many requests"), "backup-model": GOOD_REPLY}
     out = send(client, "my heart is very fast")

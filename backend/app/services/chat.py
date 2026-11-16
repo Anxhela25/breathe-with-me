@@ -25,6 +25,11 @@ def run_chat(message: str, history: list[dict], level: int | None) -> ChatResult
     if safety.level is SafetyLevel.crisis:
         return ChatResult(kind="crisis", next_step="urgent")
     worry = safety.level.value if safety.level in (SafetyLevel.medical_worry, SafetyLevel.fear_of_dying) else None
+    # once a physical symptom is mentioned, the rest of the chat is a medical worry, so the AI never
+    # links anything to panic (e.g. "chest pain" then "I'm going to die")
+    earlier = (check_message(m["content"]).level for m in history if m["role"] == "user")
+    if any(level is SafetyLevel.medical_worry for level in earlier):
+        worry = SafetyLevel.medical_worry.value
     medical_worry = worry is not None
     next_step = "grounding" if medical_worry else "breathing"
 
