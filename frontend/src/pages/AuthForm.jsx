@@ -73,7 +73,7 @@ export default function AuthForm({ mode }) {
     setBusy(true)
     try {
       await register(codeSentTo, password, code, { is_adult: isAdult, health_data_consent: consent })
-      navigate(`/chat-texts?next=${encodeURIComponent(next)}`, { replace: true })
+      navigate(next, { replace: true })
     } catch (err) {
       showError(err)
     } finally {

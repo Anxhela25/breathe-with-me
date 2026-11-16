@@ -46,10 +46,8 @@ class UserOut(BaseModel):
 
     id: int
     email: EmailStr
-    save_chat_texts: bool
     country_code: str | None
 
 
 class SettingsIn(BaseModel):
-    save_chat_texts: bool | None = None
     country_code: str | None = Field(default=None, min_length=2, max_length=2)

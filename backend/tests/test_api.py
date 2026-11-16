@@ -88,7 +88,7 @@ def test_register_login_and_me(client):
     assert client.post("/api/auth/login", json={"email": "maria@example.com", "password": "wrong-pass"}).status_code == 401
     token = client.post("/api/auth/login", json={"email": "Maria@Example.com", "password": "quiet-river-lamp"}).json()["access_token"]
     me = client.get("/api/me", headers={"Authorization": f"Bearer {token}"}).json()
-    assert me["email"] == "maria@example.com" and me["save_chat_texts"] is False
+    assert me["email"] == "maria@example.com" and "save_chat_texts" not in me
 
 
 def test_episode_flow_and_privacy(client):

@@ -154,14 +154,6 @@ export default function Settings() {
         {error && <p role="alert" className="mt-2 text-sm font-bold">{error}</p>}
       </Section>
 
-      <Section title="Chat texts">
-        <label className="flex items-center justify-between gap-4">
-          <span>Save my chat texts <span className="block text-sm text-sage/70">When off, only the topic of each message is kept.</span></span>
-          <input id="save-chat" type="checkbox" checked={user.save_chat_texts}
-            onChange={e => saved(() => updateSettings({ save_chat_texts: e.target.checked }))} className="h-6 w-6 shrink-0 accent-sage" />
-        </label>
-      </Section>
-
       <Section title="Country">
         <label htmlFor="country" className="mb-2 block text-sm text-sage/70">Used to show the right emergency numbers.</label>
         <select id="country" value={user.country_code ?? ''} className={input}
@@ -173,7 +165,7 @@ export default function Settings() {
       <Section title="Privacy">
         <ul className="list-disc space-y-1 pl-5 text-sm text-sage/80">
           <li>Your entries are private health information. Only you can see them.</li>
-          <li>The AI chat never receives your email or name.</li>
+          <li>The AI chat never receives your email or name, and chat messages are never saved.</li>
           <li>You can delete everything at any time.</li>
         </ul>
         <p className="mt-3 text-sm text-sage/70">Signed in as {user.email}</p>

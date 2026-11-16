@@ -37,6 +37,3 @@ class Episode(Base):
     note: Mapped[str | None] = mapped_column(Text)
 
     user: Mapped["User"] = relationship(back_populates="episodes")  # noqa: F821
-    messages: Mapped[list["ChatMessage"]] = relationship(  # noqa: F821
-        back_populates="episode", cascade="all, delete-orphan", order_by="ChatMessage.id"
-    )
