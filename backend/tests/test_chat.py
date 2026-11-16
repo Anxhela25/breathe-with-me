@@ -4,8 +4,10 @@ import pytest
 from app.config import settings
 from app.services import ai
 from app.services.reply_check import (
-    CALM_MESSAGE, CHAT_LIMIT_MESSAGE, MEDICINE_MESSAGE, check_reply,
+    CALM_MESSAGE, CHAT_LIMIT_MESSAGE, ENGLISH_ONLY_MESSAGE, MEDICINE_MESSAGE, check_reply,
 )
+
+REAL_CLASSIFY_RISK = ai.classify_risk  # conftest replaces it in every test
 
 GOOD_REPLY = "That sounds really frightening. Panic rises and then eases, so let's follow the circle slowly together."
 
@@ -20,7 +22,7 @@ def fake_ai(monkeypatch):
         calls: list[str] = []
         replies: dict = {"main-model": GOOD_REPLY, "backup-model": GOOD_REPLY}
 
-    def call(provider, messages):
+    def call(provider, messages, timeout=None):
         Fake.calls.append(provider.model)
         Fake.messages = messages
         result = Fake.replies[provider.model]
@@ -162,9 +164,127 @@ def test_ai_risk_check_reads_the_recent_conversation(client, fake_ai, risk_check
     assert risk_check.seen[-1] == ["i cant do this anymore", "nobody would notice"]
 
 
-def test_risk_check_unavailable_still_replies(client, fake_ai, risk_check):
-    risk_check.answer = None  # no provider answered: the rules and the reply check still apply
-    assert send(client, "my heart is very fast")["kind"] == "reply"
+def test_risk_check_unavailable_asks_the_user(client, fake_ai, risk_check):
+    risk_check.answer = None  # no provider answered in time: fail closed
+    out = send(client, "my heart is very fast")
+    assert out["kind"] == "check" and out["next_step"] == "urgent" and fake_ai.calls == []
+
+
+def test_risk_check_unavailable_after_user_said_no_replies(client, fake_ai, risk_check):
+    # asked once per chat: after "No, it's the panic", an outage doesn't ask again
+    risk_check.answer = None
+    r = client.post("/api/chat", json={"message": "my heart is very fast", "safe_confirmed": True})
+    assert r.json()["kind"] == "reply"
+
+
+def test_clear_risk_asks_even_after_user_said_no(client, fake_ai, risk_check):
+    risk_check.answer = True
+    r = client.post("/api/chat", json={"message": "nobody would notice if i was gone", "safe_confirmed": True})
+    assert r.json()["kind"] == "check"
+
+
+def test_non_english_message_without_risk_gets_fixed_message(client, fake_ai, risk_check):
+    risk_check.lang = "sq"
+    out = send(client, "me rreh zemra shume shpejt dhe kam frike")
+    assert out == {"kind": "reply", "reply": ENGLISH_ONLY_MESSAGE, "emergency_note": False,
+                   "next_step": "choose", "source": "fixed"}
+    assert fake_ai.calls == []  # never sent to the reply model
+
+
+def test_non_english_message_with_risk_asks_the_user(client, fake_ai, risk_check):
+    risk_check.answer, risk_check.lang = True, "sq"
+    out = send(client, "nuk e shoh me kuptimin e asgjeje")
+    assert out["kind"] == "check" and fake_ai.calls == []
+
+
+@pytest.mark.parametrize("text", ["po vdes", "ndihmë", "zemra ime shpejt"])
+def test_short_messages_are_treated_as_english(client, fake_ai, risk_check, text):
+    risk_check.lang = "sq"
+    out = send(client, text)
+    assert out["reply"] != ENGLISH_ONLY_MESSAGE and fake_ai.calls == ["main-model"]
+
+
+def test_unsure_language_is_treated_as_english(client, fake_ai, risk_check):
+    risk_check.lang = "unsure"
+    out = send(client, "my heart is very fast and I feel weird")
+    assert out["reply"] == GOOD_REPLY
+
+
+@pytest.mark.parametrize("text", ["Dua të vdes", "s’dua të jetoj më", "mendoj për vetëvrasje", "do ta vras veten"])
+def test_albanian_crisis_phrases_never_call_ai(client, fake_ai, text):
+    assert send(client, text)["kind"] == "crisis" and fake_ai.calls == []
+
+
+def test_non_english_ai_reply_is_replaced(client, fake_ai):
+    fake_ai.replies = {"main-model": "Merr frymë ngadalë dhe ndiq rrethin në ekran.", "backup-model": GOOD_REPLY}
+    out = send(client, "my heart is very fast")
+    assert out["reply"] == CALM_MESSAGE and out["source"] == "fixed"
+
+
+@pytest.mark.parametrize("answer, expected", [
+    ('{"risk": "NO", "lang": "sq"}', ai.RiskResult(False, "sq")),
+    ('Sure: {"risk": "yes", "lang": "EN"}', ai.RiskResult(True, "en")),
+    ('{"risk": "NO", "lang": "albanian"}', ai.RiskResult(False, "unsure")),
+    ('{"risk": "MAYBE", "lang": "en"}', None),
+    ("NO", None),
+    ("", None),
+])
+def test_parse_risk(answer, expected):
+    assert ai.parse_risk(answer) == expected
+
+
+class FakeClock:
+    """time.monotonic for the ai module; every HTTP call 'takes' its full timeout and then times out."""
+
+    def __init__(self, monkeypatch):
+        self.now = 1000.0
+        self.timeouts = []
+        monkeypatch.setattr(ai.time, "monotonic", lambda: self.now)
+
+        def slow_post(url, json, headers, timeout):
+            self.timeouts.append(timeout)
+            self.now += timeout
+            raise httpx.TimeoutException("slow")
+        monkeypatch.setattr(ai.httpx, "post", slow_post)
+
+
+@pytest.fixture()
+def three_providers(monkeypatch):
+    monkeypatch.setattr(settings, "groq_api_key", "test-key")
+    monkeypatch.setattr(settings, "groq_models", ["main-model", "backup-model"])
+    monkeypatch.setattr(settings, "gemini_api_key", "test-key")
+    monkeypatch.setattr(settings, "ai_attempt_seconds", 4.0)
+    monkeypatch.setattr(settings, "ai_total_seconds", 10.0)
+
+
+def test_each_attempt_has_4_seconds_and_the_reply_10_in_total(monkeypatch, three_providers):
+    clock = FakeClock(monkeypatch)
+    assert ai.generate_reply([{"role": "user", "content": "hi"}], None) is None
+    assert clock.timeouts == [4.0, 4.0, 2.0]  # the third model only gets what is left
+
+
+def test_risk_check_and_reply_share_one_deadline(monkeypatch, three_providers):
+    clock = FakeClock(monkeypatch)
+    deadline = ai.Deadline()
+    assert REAL_CLASSIFY_RISK(["hi"], deadline) is None
+    assert ai.generate_reply([{"role": "user", "content": "hi"}], None, deadline=deadline) is None
+    assert clock.timeouts == [4.0, 4.0, 2.0]  # no time left for the reply
+
+
+def test_all_models_failing_asks_the_user(client, monkeypatch, three_providers):
+    # with no answer from any model the risk check fails closed, and nothing waits longer than 10 s
+    monkeypatch.setattr(ai, "classify_risk", REAL_CLASSIFY_RISK)  # not the conftest fake
+    clock = FakeClock(monkeypatch)
+    out = send(client, "my heart is very fast")
+    assert out["kind"] == "check" and out["next_step"] == "urgent"
+    assert sum(clock.timeouts) <= 10.0
+
+
+def test_all_models_failing_after_user_said_no_gives_calm_message(client, monkeypatch, three_providers):
+    monkeypatch.setattr(ai, "classify_risk", REAL_CLASSIFY_RISK)
+    FakeClock(monkeypatch)
+    r = client.post("/api/chat", json={"message": "my heart is very fast", "safe_confirmed": True})
+    assert r.json()["reply"] == CALM_MESSAGE and r.json()["source"] == "fixed"
 
 
 @pytest.mark.parametrize("reply", [

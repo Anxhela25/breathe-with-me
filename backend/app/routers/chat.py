@@ -12,4 +12,4 @@ router = APIRouter(prefix="/api/chat", tags=["chat"])
 def chat(data: ChatIn):
     # TODO: save messages once login is in place
     history = [line.model_dump() for line in data.history]
-    return asdict(run_chat(data.message, history, data.level))
+    return asdict(run_chat(data.message, history, data.level, data.safe_confirmed))

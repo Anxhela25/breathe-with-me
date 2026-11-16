@@ -14,6 +14,11 @@ CHAT_LIMIT_MESSAGE = (
     "and if you can, reach out to someone you trust."
 )
 
+ENGLISH_ONLY_MESSAGE = (
+    "Chat currently works in English only. You can keep using the breathing circle or grounding below "
+    "— they work without words."
+)
+
 # word count matters more than sentence count
 MAX_SENTENCES = 5
 MAX_WORDS = 45
@@ -67,6 +72,28 @@ class ReplyCheck:
     crisis: bool = False  # the reply suggests the user may be at risk
 
 
+# Replies must be in English: the checks above only know English words. A reply passes if it has no
+# letters outside a-z (ë, ç, Cyrillic...) and, when long enough, enough very common English words.
+_ENGLISH_WORDS = {
+    "a", "about", "all", "an", "and", "are", "as", "at", "be", "breath", "breathe", "breathing", "but", "can",
+    "circle", "do", "does", "feel", "feeling", "feels", "follow", "for", "gently", "have", "here", "how", "i",
+    "i'm", "if", "in", "is", "it", "it's", "its", "just", "let", "let's", "look", "may", "me", "my", "not",
+    "notice", "now", "of", "on", "or", "panic", "slow", "slowly", "so", "that", "the", "them", "then", "there",
+    "they", "this", "to", "together", "we", "what", "when", "with", "you", "you're", "your",
+}
+MIN_WORDS_FOR_LANGUAGE = 6
+MIN_ENGLISH_SHARE = 0.25
+
+
+def _looks_english(text: str) -> bool:
+    if any(c.isalpha() and not c.isascii() for c in text):
+        return False
+    words = re.findall(r"[a-z']+", text.lower())
+    if len(words) < MIN_WORDS_FOR_LANGUAGE:
+        return True
+    return sum(w in _ENGLISH_WORDS for w in words) / len(words) >= MIN_ENGLISH_SHARE
+
+
 def _sentences(text: str) -> int:
     return len([s for s in re.split(r"(?<=[.!?])\s+", text.strip()) if s])
 
@@ -75,6 +102,8 @@ def check_reply(reply: str | None) -> ReplyCheck:
     text = (reply or "").strip().replace("’", "'")
     if not text:
         return ReplyCheck(False, CALM_MESSAGE, "empty")
+    if not _looks_english(text):
+        return ReplyCheck(False, CALM_MESSAGE, "not english")
     if any(p.search(text) for p in _CRISIS_RE):
         return ReplyCheck(False, CALM_MESSAGE, "crisis topic", crisis=True)
     if any(p.search(text) for p in _MEDICINE_RE):

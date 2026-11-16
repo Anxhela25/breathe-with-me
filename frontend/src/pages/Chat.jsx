@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import Screen from '../components/Screen.jsx'
 import Button from '../components/Button.jsx'
 import { useSession } from '../context/SessionContext.jsx'
@@ -20,6 +20,8 @@ export default function Chat() {
   const [nextStep, setNextStep] = useState(null)
   // the safety check wasn't sure: ask the user directly before anything else
   const [asking, setAsking] = useState(false)
+  // she answered "No, it's the panic": an unavailable safety check won't ask again in this chat
+  const [safeConfirmed, setSafeConfirmed] = useState(false)
   const bottom = useRef(null)
 
   useEffect(() => { bottom.current?.scrollIntoView({ behavior: 'smooth' }) }, [lines, waiting])
@@ -49,7 +51,7 @@ export default function Chat() {
     setWaiting(true)
     mark({ usedChat: true })
     try {
-      const out = await sendChat({ message, history, level: session.lastLevel })
+      const out = await sendChat({ message, history, level: session.lastLevel, safeConfirmed })
       if (out.kind === 'crisis') {
         mark({ crisisShown: true })
         navigate('/urgent', { replace: true })
@@ -77,6 +79,7 @@ export default function Chat() {
       navigate('/urgent', { replace: true })
       return
     }
+    setSafeConfirmed(true)
     setLines(l => [...l, { role: 'assistant', content: CHECK_NO_REPLY }])
     setNextStep('breathing')
   }
@@ -84,7 +87,7 @@ export default function Chat() {
   const started = lines.length > 0
 
   return (
-    <Screen footer={<Button to="/urgent" variant="link" className="text-xs text-sage/70">I need urgent help</Button>}>
+    <Screen>
       <p className="mt-3 rounded-full bg-pistachio px-3 py-1 text-xs text-sage">You are talking to an AI, not a person.</p>
 
       {!started && <p className="mt-10 text-center text-xl">Do you want to tell me what you feel?</p>}
@@ -126,9 +129,14 @@ export default function Chat() {
 
       {nextStep && !waiting && (
         <div className="mt-4 flex w-full flex-col items-center gap-1">
-          {nextStep === 'grounding'
-            ? <Button to="/grounding">Start grounding</Button>
-            : <Button to="/breathe">Back to breathing</Button>}
+          {nextStep === 'choose' && (
+            <>
+              <Button to="/breathe">Breathing circle</Button>
+              <Button to="/grounding" variant="outline">Grounding</Button>
+            </>
+          )}
+          {nextStep === 'grounding' && <Button to="/grounding">Start grounding</Button>}
+          {nextStep === 'breathing' && <Button to="/breathe">Back to breathing</Button>}
         </div>
       )}
 
@@ -149,6 +157,14 @@ export default function Chat() {
         </Button>
         {!started && <Button to="/breathe" variant="link">No, just breathe</Button>}
       </form>
+
+      {/* always on screen, whatever she writes and however long the chat gets */}
+      <div className="sticky bottom-0 z-10 mt-3 w-full bg-cream pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        <Link to="/urgent"
+          className="block w-full rounded-3xl border-2 border-alert px-6 py-3 text-center font-bold text-alert active:scale-[0.98]">
+          I need urgent help
+        </Link>
+      </div>
     </Screen>
   )
 }

@@ -15,7 +15,10 @@ class SafetyLevel(str, Enum):
 
 # "don't want to die" is fear of dying, not a wish to die. It's stripped before the crisis check so it
 # doesn't match "want to die"; any other crisis phrase in the message still counts.
-_NOT_WANTING_TO_DIE = r"\b(dont|do not|didnt|did not|never) (want|wanna)( to)? die\b"
+_NOT_WANTING_TO_DIE = (
+    r"\b(dont|do not|didnt|did not|never) (want|wanna)( to)? die\b"
+    r"|\b(nuk dua|sdua|s dua) (te|me) vde(s|k)\b"  # Albanian: "nuk dua të vdes", "s'dua me vdek"
+)
 
 _CRISIS_PATTERNS = [
     r"\b(want|wanna|wish i (could|would)|ready) (to )?die\b",
@@ -33,6 +36,13 @@ _CRISIS_PATTERNS = [
     r"\b(dont|do not) want to (live|be alive|be here)( anymore)?\b",
     r"\bno (reason|point) (to|in) (live|living)\b",
     r"\boverdos",
+    # Albanian (Albania and Kosovo, our main users), after accents are removed: "dua të vdes",
+    # "dua me vdek", "vetëvrasje", "të vras veten", "s'dua të jetoj", "t'i jap fund jetës"
+    r"\b(dua|deshiroj) (te |me )?vde(s|k)\b",
+    r"\bvete? ?vras",
+    r"\bvra(s|j|sh)? veten\b",
+    r"\b(nuk dua|sdua|s dua) (te|me) jet(oj|u)\b",
+    r"\b(jap|jape|vej|vendos) fund (jetes|vetes)\b",
 ]
 
 _MEDICAL_WORRY_PATTERNS = [
@@ -53,6 +63,7 @@ _FEAR_OF_DYING_PATTERNS = [
     r"\b(going|gonna) (to )?die\b",
     r"\bwill die\b",
     r"\b(scared|afraid|terrified|frightened) (of )?(dying|death)\b",
+    r"\b(po|do|do te) vdes\b",  # Albanian: "po vdes" (I'm dying), "do të vdes" (I will die)
 ]
 
 _NOT_WANTING_TO_DIE_RE = re.compile(_NOT_WANTING_TO_DIE)

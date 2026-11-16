@@ -18,18 +18,21 @@ from app.routers import auth  # noqa: E402
 
 @pytest.fixture(autouse=True)
 def risk_check(monkeypatch):
-    """The AI risk check answers NO unless a test sets risk_check.answer; tests never call a real AI."""
+    """The AI risk check answers NO, in English, unless a test sets risk_check.answer; tests never call a real AI."""
     from app.services import ai
 
     class RiskCheck:
-        answer: bool | None = False
+        answer: bool | None = False  # None: no provider answered
+        lang: str = "en"
         seen: list[list[str]] = []
 
-    def fake(user_messages):
+    def fake(user_messages, deadline=None):
         RiskCheck.seen.append(list(user_messages))
-        return RiskCheck.answer
+        return None if RiskCheck.answer is None else ai.RiskResult(RiskCheck.answer, RiskCheck.lang)
 
     RiskCheck.seen = []
+    RiskCheck.answer = False
+    RiskCheck.lang = "en"
     monkeypatch.setattr(ai, "classify_risk", fake)
     return RiskCheck
 

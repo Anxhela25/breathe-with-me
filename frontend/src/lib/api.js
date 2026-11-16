@@ -37,7 +37,8 @@ async function request(method, path, body) {
   return data
 }
 
-export const sendChat = ({ message, history, level }) => request('POST', '/api/chat', { message, history, level })
+export const sendChat = ({ message, history, level, safeConfirmed = false }) =>
+  request('POST', '/api/chat', { message, history, level, safe_confirmed: safeConfirmed })
 
 // sign-up has two steps: email a code, then create the account with it
 export const startRegister = (email, password) => request('POST', '/api/auth/register/start', { email, password })

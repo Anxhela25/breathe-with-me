@@ -11,11 +11,13 @@ class Settings(BaseSettings):
 
     # providers without a key are skipped
     groq_api_key: str = ""
-    groq_models: list[str] = ["qwen/qwen3.8-27b", "openai/gpt-oss-20b"]  # in fallback order
+    # in fallback order: gpt-oss-20b is a production model and ~10x cheaper; Qwen 3.8 is a preview model
+    groq_models: list[str] = ["openai/gpt-oss-20b", "qwen/qwen3.8-27b"]
     gemini_api_key: str = ""
     # gemini-3.8-flash was too slow; flash-lite answers in ~1s
     gemini_model: str = "gemini-3.5-flash-lite"
-    ai_timeout_seconds: float = 8.0
+    ai_attempt_seconds: float = 4.0  # one call to one model
+    ai_total_seconds: float = 10.0  # the risk check and the reply together, then the fixed calm message
     chat_max_user_messages: int = 6
 
     check_breached_passwords: bool = True  # Have I Been Pwned range API

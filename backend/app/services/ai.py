@@ -1,6 +1,8 @@
 # Groq and Gemini both expose an OpenAI-compatible API, so one request format covers both.
 # The prompt follows docs/clinical-decisions.md and still needs clinical review.
+import json
 import logging
+import re
 import time
 from dataclasses import dataclass, field
 
@@ -14,6 +16,8 @@ SYSTEM_PROMPT = """\
 You are the calm support companion inside "Breathe With Me", a self-help app for moments of panic.
 You are an AI, not a person and not a therapist. The user may be in the middle of a panic attack,
 so they can only read a little.
+
+Always reply in English, even if the user writes in another language.
 
 How to reply:
 - Write 1 or 2 short, simple sentences, at most 40 words. Plain words. No lists, no emojis.
@@ -96,65 +100,112 @@ def build_messages(history: list[dict], level: int | None, worry: str | None = N
     return messages
 
 
-def call_provider(provider: Provider, messages: list[dict]) -> str:
-    body = {"model": provider.model, "messages": messages, "max_tokens": 200, "temperature": 0.4, **provider.extra}
+class Deadline:
+    """One time budget for a whole chat turn. Each call gets at most ai_attempt_seconds, and never
+    more than what is left, so a slow provider can't keep someone waiting."""
+
+    MIN_SECONDS = 0.5  # less than this isn't worth starting a call
+
+    def __init__(self, seconds: float | None = None):
+        self.end = time.monotonic() + (settings.ai_total_seconds if seconds is None else seconds)
+
+    def next_timeout(self) -> float | None:
+        left = self.end - time.monotonic()
+        return None if left < self.MIN_SECONDS else min(settings.ai_attempt_seconds, left)
+
+
+def _post(provider: Provider, body: dict, timeout: float) -> str:
     response = httpx.post(
         f"{provider.base_url}/chat/completions",
         json=body,
         headers={"Authorization": f"Bearer {provider.api_key}"},
-        timeout=settings.ai_timeout_seconds,
+        timeout=timeout,
     )
     response.raise_for_status()
     return response.json()["choices"][0]["message"]["content"] or ""
+
+
+def call_provider(provider: Provider, messages: list[dict], timeout: float) -> str:
+    body = {"model": provider.model, "messages": messages, "max_tokens": 200, "temperature": 0.4, **provider.extra}
+    return _post(provider, body, timeout)
 
 
 RISK_PROMPT = """\
 You are a safety classifier for a panic-attack self-help app. Read the user's recent messages.
-Answer YES if they express any wish to die, suicidal thoughts or plans, wanting to hurt themselves,
+risk is YES if they express any wish to die, suicidal thoughts or plans, wanting to hurt themselves,
 or not wanting to live, even when misspelled, in slang, hinted at, or in any language
 (the app is used in Albania, so translate Albanian first: "dua te vdes" means "I want to die").
-Answer NO if they only express fear of dying or of a physical symptom (for example "I'm going to die",
+risk is NO if they only express fear of dying or of a physical symptom (for example "I'm going to die",
 "I don't want to die", "my heart will stop"), which is common during panic, or anything else.
-Reply with exactly one word: YES or NO."""
+lang is the two-letter ISO 639-1 code of the language of the LAST message (for example "en", "sq", "it"),
+or "unsure" if you can't tell.
+Reply with only this JSON and nothing else: {"risk": "YES" or "NO", "lang": "<code>"}"""
 
 
-def _ask_classifier(provider: Provider, messages: list[dict]) -> str:
+@dataclass
+class RiskResult:
+    risk: bool
+    lang: str  # "en", another ISO 639-1 code, or "unsure"
+
+
+def parse_risk(answer: str) -> RiskResult | None:
+    match = re.search(r"\{.*\}", answer, re.S)
+    try:
+        data = json.loads(match.group(0)) if match else None
+    except ValueError:
+        return None
+    if not isinstance(data, dict):
+        return None
+    risk = str(data.get("risk", "")).strip().upper()
+    if risk not in ("YES", "NO"):
+        return None
+    lang = str(data.get("lang", "")).strip().lower()
+    return RiskResult(risk == "YES", lang if re.fullmatch(r"[a-z]{2}", lang) else "unsure")
+
+
+def _ask_classifier(provider: Provider, messages: list[dict], timeout: float) -> str:
     body = {"model": provider.model, "messages": messages, "temperature": 0,
             "max_tokens": 300, **provider.extra}  # reasoning models need room before the answer
-    response = httpx.post(
-        f"{provider.base_url}/chat/completions",
-        json=body,
-        headers={"Authorization": f"Bearer {provider.api_key}"},
-        timeout=settings.ai_timeout_seconds,
-    )
-    response.raise_for_status()
-    return response.json()["choices"][0]["message"]["content"] or ""
+    return _post(provider, body, timeout)
 
 
-def classify_risk(user_messages: list[str]) -> bool | None:
-    """True if the recent user messages suggest suicide or self-harm risk; None if no provider answered.
-    A second layer behind the rule-based check in safety.py, for wording the rules can't know."""
+def classify_risk(user_messages: list[str], deadline: Deadline | None = None) -> RiskResult | None:
+    """Risk of suicide or self-harm in the recent user messages, and the language of the newest one.
+    None if no provider gave a clear answer in time: the caller must treat that as possible risk.
+    A second layer behind the rule-based check in safety.py, for wording and languages the rules can't know."""
+    deadline = deadline or Deadline()
     recent = "\n".join(f"- {m}" for m in user_messages[-3:])
     messages = [{"role": "system", "content": RISK_PROMPT}, {"role": "user", "content": recent}]
     for provider in providers():
+        timeout = deadline.next_timeout()
+        if timeout is None:
+            log.warning("Risk check ran out of time")
+            break
         try:
-            answer = _ask_classifier(provider, messages).strip().upper()
+            answer = _ask_classifier(provider, messages, timeout)
         except Exception as error:  # noqa: BLE001
             log.warning("Risk check failed: %s/%s (%s)", provider.name, provider.model, type(error).__name__)
             continue
-        if answer.startswith(("YES", "NO")):
-            return answer.startswith("YES")
+        result = parse_risk(answer)
+        if result is not None:
+            return result
         log.warning("Risk check gave an unclear answer from %s/%s", provider.name, provider.model)
     return None
 
 
-def generate_reply(history: list[dict], level: int | None, worry: str | None = None) -> tuple[str, str] | None:
-    """Returns (reply, "provider/model"), or None if every provider failed."""
+def generate_reply(history: list[dict], level: int | None, worry: str | None = None,
+                   deadline: Deadline | None = None) -> tuple[str, str] | None:
+    """Returns (reply, "provider/model"), or None if every provider failed or time ran out."""
+    deadline = deadline or Deadline()
     messages = build_messages(history, level, worry)
     for i, provider in enumerate(providers()):
+        timeout = deadline.next_timeout()
+        if timeout is None:
+            log.warning("AI reply ran out of time")
+            break
         start = time.monotonic()
         try:
-            reply = call_provider(provider, messages)
+            reply = call_provider(provider, messages, timeout)
         except Exception as error:  # noqa: BLE001
             log.warning("AI provider failed: %s/%s (%s)", provider.name, provider.model, type(error).__name__)
             continue
