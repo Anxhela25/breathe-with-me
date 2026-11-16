@@ -133,11 +133,10 @@ def call_provider(provider: Provider, messages: list[dict], timeout: float) -> s
 RISK_PROMPT = """\
 You are a safety classifier for a panic-attack self-help app. Read the user's recent messages.
 risk is YES if they express any wish to die, suicidal thoughts or plans, wanting to hurt themselves,
-or not wanting to live, even when misspelled, in slang, hinted at, or in any language
-(the app is used in Albania, so translate Albanian first: "dua te vdes" means "I want to die").
+or not wanting to live, even when misspelled, in slang, hinted at, or in any language.
 risk is NO if they only express fear of dying or of a physical symptom (for example "I'm going to die",
 "I don't want to die", "my heart will stop"), which is common during panic, or anything else.
-lang is the two-letter ISO 639-1 code of the language of the LAST message (for example "en", "sq", "it"),
+lang is the two-letter ISO 639-1 code of the language of the LAST message (for example "en", "it", "es"),
 or "unsure" if you can't tell.
 Reply with only this JSON and nothing else: {"risk": "YES" or "NO", "lang": "<code>"}"""
 

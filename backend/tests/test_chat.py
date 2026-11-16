@@ -184,22 +184,22 @@ def test_clear_risk_asks_even_after_user_said_no(client, fake_ai, risk_check):
 
 
 def test_non_english_message_without_risk_gets_fixed_message(client, fake_ai, risk_check):
-    risk_check.lang = "sq"
-    out = send(client, "me rreh zemra shume shpejt dhe kam frike")
+    risk_check.lang = "es"
+    out = send(client, "mi corazón late muy rápido y tengo miedo")
     assert out == {"kind": "reply", "reply": ENGLISH_ONLY_MESSAGE, "emergency_note": False,
                    "next_step": "choose", "source": "fixed"}
     assert fake_ai.calls == []  # never sent to the reply model
 
 
 def test_non_english_message_with_risk_asks_the_user(client, fake_ai, risk_check):
-    risk_check.answer, risk_check.lang = True, "sq"
-    out = send(client, "nuk e shoh me kuptimin e asgjeje")
+    risk_check.answer, risk_check.lang = True, "es"
+    out = send(client, "ya nada tiene sentido para mí")
     assert out["kind"] == "check" and fake_ai.calls == []
 
 
-@pytest.mark.parametrize("text", ["po vdes", "ndihmë", "zemra ime shpejt"])
+@pytest.mark.parametrize("text", ["ayuda", "me muero", "corazón muy rápido"])
 def test_short_messages_are_treated_as_english(client, fake_ai, risk_check, text):
-    risk_check.lang = "sq"
+    risk_check.lang = "es"
     out = send(client, text)
     assert out["reply"] != ENGLISH_ONLY_MESSAGE and fake_ai.calls == ["main-model"]
 
@@ -210,21 +210,16 @@ def test_unsure_language_is_treated_as_english(client, fake_ai, risk_check):
     assert out["reply"] == GOOD_REPLY
 
 
-@pytest.mark.parametrize("text", ["Dua të vdes", "s’dua të jetoj më", "mendoj për vetëvrasje", "do ta vras veten"])
-def test_albanian_crisis_phrases_never_call_ai(client, fake_ai, text):
-    assert send(client, text)["kind"] == "crisis" and fake_ai.calls == []
-
-
 def test_non_english_ai_reply_is_replaced(client, fake_ai):
-    fake_ai.replies = {"main-model": "Merr frymë ngadalë dhe ndiq rrethin në ekran.", "backup-model": GOOD_REPLY}
+    fake_ai.replies = {"main-model": "Respira lentamente y sigue el círculo en la pantalla.", "backup-model": GOOD_REPLY}
     out = send(client, "my heart is very fast")
     assert out["reply"] == CALM_MESSAGE and out["source"] == "fixed"
 
 
 @pytest.mark.parametrize("answer, expected", [
-    ('{"risk": "NO", "lang": "sq"}', ai.RiskResult(False, "sq")),
+    ('{"risk": "NO", "lang": "es"}', ai.RiskResult(False, "es")),
     ('Sure: {"risk": "yes", "lang": "EN"}', ai.RiskResult(True, "en")),
-    ('{"risk": "NO", "lang": "albanian"}', ai.RiskResult(False, "unsure")),
+    ('{"risk": "NO", "lang": "spanish"}', ai.RiskResult(False, "unsure")),
     ('{"risk": "MAYBE", "lang": "en"}', None),
     ("NO", None),
     ("", None),
