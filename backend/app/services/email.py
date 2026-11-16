@@ -39,8 +39,26 @@ def _send_with_resend(to: str, subject: str, text: str) -> None:
         log.error("Email to %s failed (Resend): %s", to, detail)
 
 
+def _send_with_brevo(to: str, subject: str, text: str) -> None:
+    try:
+        response = httpx.post(
+            "https://api.brevo.com/v3/smtp/email",
+            headers={"api-key": settings.brevo_api_key},
+            json={"sender": {"name": "Breathe With Me", "email": settings.brevo_sender},
+                  "to": [{"email": to}], "subject": subject, "textContent": text},
+            timeout=10,
+        )
+        response.raise_for_status()
+    except httpx.HTTPError as error:
+        response = getattr(error, "response", None)
+        detail = f"{response.status_code} {response.text[:300]}" if response is not None else type(error).__name__
+        log.error("Email to %s failed (Brevo): %s", to, detail)
+
+
 def send_email(to: str, subject: str, text: str) -> None:
-    if settings.gmail_address and settings.gmail_app_password:
+    if settings.brevo_api_key and settings.brevo_sender:
+        _send_with_brevo(to, subject, text)
+    elif settings.gmail_address and settings.gmail_app_password:
         _send_with_gmail(to, subject, text)
     elif settings.resend_api_key:
         _send_with_resend(to, subject, text)

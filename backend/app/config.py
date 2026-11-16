@@ -1,3 +1,4 @@
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -24,11 +25,23 @@ class Settings(BaseSettings):
     check_breached_passwords: bool = True  # Have I Been Pwned range API
     check_email_domain: bool = True  # sign-up email domain must have mail servers (DNS lookup)
 
-    # Gmail is used when set, then Resend; with neither, emails are written to the server log
+    # Brevo is used when set, then Gmail, then Resend; with none, emails are written to the server log.
+    # On Render's free plan only Brevo and Resend work: it blocks Gmail's SMTP ports
+    brevo_api_key: str = ""
+    brevo_sender: str = ""  # the address verified in Brevo, e.g. your Gmail
     gmail_address: str = ""
     gmail_app_password: str = ""
     resend_api_key: str = ""
     email_from: str = "Breathe With Me <onboarding@resend.dev>"
+
+    @field_validator("database_url")
+    @classmethod
+    def _psycopg_driver(cls, url: str) -> str:
+        # Neon and Render give postgresql://..., SQLAlchemy needs to be told to use psycopg 3
+        for prefix in ("postgresql://", "postgres://"):
+            if url.startswith(prefix):
+                return "postgresql+psycopg://" + url[len(prefix):]
+        return url
 
 
 settings = Settings()

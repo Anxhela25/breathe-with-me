@@ -129,6 +129,58 @@ The first time you open the app:
 With a free Apple ID, the app stops opening after 7 days. Press Run in Xcode again to reinstall it.
 If your Mac's Wi-Fi address changes, update `.env.production.local` and run `npm run ios` again.
 
+## Put it online for a presentation (free)
+
+With the backend on your Mac, the app only works on your home Wi-Fi while the Mac is on. To show it
+anywhere, put the backend online. Everything below is free:
+
+| Part | Service | Free plan limit |
+|---|---|---|
+| Backend | [Render](https://render.com) | Sleeps after 15 minutes without use; waking up takes up to a minute |
+| Database | [Neon](https://neon.tech) | About 0.5 GB, plenty for this app |
+| Emails (sign-up codes) | [Brevo](https://www.brevo.com) | 300 emails a day. Gmail can't be used: Render's free plan blocks it |
+
+### 1. Database (Neon)
+1. Sign up at neon.tech and create a project. Choose the region **Europe Central (Frankfurt)**.
+2. Open **Connect**, turn **Connection pooling off**, and copy the connection string
+   (`postgresql://...neon.tech/neondb?sslmode=require`). The app adds the driver part itself.
+
+### 2. Emails (Brevo)
+1. Sign up at brevo.com.
+2. **Senders, Domains & Dedicated IPs → Senders → Add a sender** with your own Gmail address, and
+   confirm it from the email Brevo sends you.
+3. **SMTP & API → API Keys → Generate a new API key**, and copy it.
+
+### 3. Backend (Render)
+1. Push the code to GitHub: `git push origin main`.
+2. Sign up at render.com with your GitHub account.
+3. **New → Blueprint**, choose the `breathe-with-me` repository. Render reads `render.yaml`.
+4. Fill in the values it asks for:
+   - `DATABASE_URL`: the Neon connection string
+   - `GROQ_API_KEY`, `GEMINI_API_KEY`: the same keys as in your `backend/.env`
+   - `BREVO_API_KEY`: the Brevo key
+   - `BREVO_SENDER`: the Gmail address you confirmed in Brevo
+5. Click **Apply** and wait for the deploy to finish (a few minutes). The tables are created
+   automatically.
+6. Open `https://<your-service>.onrender.com/api/health` in a browser. It should show `{"status":"ok"}`.
+   Render shows the exact address at the top of the service page.
+
+### 4. Point the iPhone app to it
+Change `frontend/.env.production.local` to the Render address (https, no port):
+```
+VITE_API_URL=https://breathe-with-me-api.onrender.com
+```
+Then run `npm run ios` in `frontend/` and press **Run** (▶) in Xcode. The app now works on any
+Wi-Fi or mobile data, with your Mac off.
+
+### On the day of the presentation
+- **Reinstall the app the day before** if you use a free Apple ID (it stops opening after 7 days).
+- **A few minutes before you start, open the `/api/health` address** in a browser, so the backend
+  is awake and the first screen doesn't wait a minute.
+- The online database starts empty. Create an account in the app and record a few episodes before
+  you present, so history and patterns have something to show.
+- Problems? Render's **Logs** tab shows every failed request and why.
+
 ## Tests
 
 ```bash
@@ -147,7 +199,7 @@ The tests use the `breathe_with_me_test` database. They never send real emails o
 | `connection refused` or `database "breathe_with_me" does not exist` | Start PostgreSQL (`brew services start postgresql@16`) and run the `createdb` commands. |
 | `relation ... does not exist` | Run `alembic upgrade head` in `backend/`. Do this again after pulling new code. |
 | "Can't reach the server" in the app | Check that the backend is running. On the iPhone, also check the Wi-Fi address and the local network permission. |
-| No sign-up code arrives | Without Gmail set up, look for the code in the backend terminal. With Gmail, check the spam folder. |
+| No sign-up code arrives | Without an email provider set up, look for the code in the backend terminal (on Render: the Logs tab). Otherwise check the spam folder. |
 
 ## Progress
 
@@ -155,6 +207,6 @@ The tests use the `breathe_with_me_test` database. They never send real emails o
       Breathing / Grounding / Check-in / Closing / Urgent help
 - [x] Part 2: login and sign-up (with an email code), sessions saved to the backend, quick questions
 - [x] Part 3: chat with AI (Groq, Gemini, fallback), rule-based and AI crisis checks, reply check
-- [ ] Part 4: calm check (camera test first)
+- [x] Part 4: calm check (camera and flash on the iPhone)
 - [x] Part 5: history, insights, doctor summary as a PDF
-- [ ] Part 6: Docker and deployment
+- [ ] Part 6: deployment (ready for a free presentation setup, see "Put it online for a presentation")
