@@ -136,15 +136,17 @@ risk is YES if they express any wish to die, suicidal thoughts or plans, wanting
 or not wanting to live, even when misspelled, in slang, hinted at, or in any language.
 risk is NO if they only express fear of dying or of a physical symptom (for example "I'm going to die",
 "I don't want to die", "my heart will stop"), which is common during panic, or anything else.
-lang is the two-letter ISO 639-1 code of the language of the LAST message (for example "en", "it", "es"),
-or "unsure" if you can't tell.
-Reply with only this JSON and nothing else: {"risk": "YES" or "NO", "lang": "<code>"}"""
+english is YES if the LAST message is written in English (typos, slang and texting style still count
+as English), and NO if it is written in another language.
+Reply with only this JSON and nothing else: {"risk": "YES" or "NO", "english": "YES" or "NO"}"""
 
 
 @dataclass
 class RiskResult:
     risk: bool
-    lang: str  # "en", another ISO 639-1 code, or "unsure"
+    # None when the model didn't say. A yes/no question, because small models often can't name the
+    # language of short, informal text ("Ti spo m kupton" came back as "unsure", Serbian or Greek)
+    english: bool | None
 
 
 def parse_risk(answer: str) -> RiskResult | None:
@@ -158,8 +160,8 @@ def parse_risk(answer: str) -> RiskResult | None:
     risk = str(data.get("risk", "")).strip().upper()
     if risk not in ("YES", "NO"):
         return None
-    lang = str(data.get("lang", "")).strip().lower()
-    return RiskResult(risk == "YES", lang if re.fullmatch(r"[a-z]{2}", lang) else "unsure")
+    english = str(data.get("english", "")).strip().upper()
+    return RiskResult(risk == "YES", {"YES": True, "NO": False}.get(english))
 
 
 def _ask_classifier(provider: Provider, messages: list[dict], timeout: float) -> str:
@@ -169,7 +171,7 @@ def _ask_classifier(provider: Provider, messages: list[dict], timeout: float) ->
 
 
 def classify_risk(user_messages: list[str], deadline: Deadline | None = None) -> RiskResult | None:
-    """Risk of suicide or self-harm in the recent user messages, and the language of the newest one.
+    """Risk of suicide or self-harm in the recent user messages, and whether the newest one is in English.
     None if no provider gave a clear answer in time: the caller must treat that as possible risk.
     A second layer behind the rule-based check in safety.py, for wording and languages the rules can't know."""
     deadline = deadline or Deadline()

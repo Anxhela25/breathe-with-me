@@ -184,28 +184,34 @@ def test_clear_risk_asks_even_after_user_said_no(client, fake_ai, risk_check):
 
 
 def test_non_english_message_without_risk_gets_fixed_message(client, fake_ai, risk_check):
-    risk_check.lang = "es"
+    risk_check.english = False
     out = send(client, "mi corazón late muy rápido y tengo miedo")
     assert out == {"kind": "reply", "reply": ENGLISH_ONLY_MESSAGE, "emergency_note": False,
                    "next_step": "choose", "source": "fixed"}
     assert fake_ai.calls == []  # never sent to the reply model
 
 
+def test_four_word_message_not_in_english_gets_fixed_message(client, fake_ai, risk_check):
+    risk_check.english = False  # "Ti spo m kupton": the model said "unsure" when asked for a language code
+    out = send(client, "Ti spo m kupton")
+    assert out["reply"] == ENGLISH_ONLY_MESSAGE and fake_ai.calls == []
+
+
 def test_non_english_message_with_risk_asks_the_user(client, fake_ai, risk_check):
-    risk_check.answer, risk_check.lang = True, "es"
+    risk_check.answer, risk_check.english = True, False
     out = send(client, "ya nada tiene sentido para mí")
     assert out["kind"] == "check" and fake_ai.calls == []
 
 
 @pytest.mark.parametrize("text", ["ayuda", "me muero", "corazón muy rápido"])
 def test_short_messages_are_treated_as_english(client, fake_ai, risk_check, text):
-    risk_check.lang = "es"
+    risk_check.english = False
     out = send(client, text)
     assert out["reply"] != ENGLISH_ONLY_MESSAGE and fake_ai.calls == ["main-model"]
 
 
 def test_unsure_language_is_treated_as_english(client, fake_ai, risk_check):
-    risk_check.lang = "unsure"
+    risk_check.english = None
     out = send(client, "my heart is very fast and I feel weird")
     assert out["reply"] == GOOD_REPLY
 
@@ -217,10 +223,11 @@ def test_non_english_ai_reply_is_replaced(client, fake_ai):
 
 
 @pytest.mark.parametrize("answer, expected", [
-    ('{"risk": "NO", "lang": "es"}', ai.RiskResult(False, "es")),
-    ('Sure: {"risk": "yes", "lang": "EN"}', ai.RiskResult(True, "en")),
-    ('{"risk": "NO", "lang": "spanish"}', ai.RiskResult(False, "unsure")),
-    ('{"risk": "MAYBE", "lang": "en"}', None),
+    ('{"risk": "NO", "english": "NO"}', ai.RiskResult(False, False)),
+    ('Sure: {"risk": "yes", "english": "yes"}', ai.RiskResult(True, True)),
+    ('{"risk": "NO", "english": "maybe"}', ai.RiskResult(False, None)),
+    ('{"risk": "NO"}', ai.RiskResult(False, None)),
+    ('{"risk": "MAYBE", "english": "YES"}', None),
     ("NO", None),
     ("", None),
 ])

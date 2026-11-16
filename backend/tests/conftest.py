@@ -23,16 +23,16 @@ def risk_check(monkeypatch):
 
     class RiskCheck:
         answer: bool | None = False  # None: no provider answered
-        lang: str = "en"
+        english: bool | None = True
         seen: list[list[str]] = []
 
     def fake(user_messages, deadline=None):
         RiskCheck.seen.append(list(user_messages))
-        return None if RiskCheck.answer is None else ai.RiskResult(RiskCheck.answer, RiskCheck.lang)
+        return None if RiskCheck.answer is None else ai.RiskResult(RiskCheck.answer, RiskCheck.english)
 
     RiskCheck.seen = []
     RiskCheck.answer = False
-    RiskCheck.lang = "en"
+    RiskCheck.english = True
     monkeypatch.setattr(ai, "classify_risk", fake)
     return RiskCheck
 

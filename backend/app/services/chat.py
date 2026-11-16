@@ -23,8 +23,9 @@ class ChatResult:
     source: str = "fixed"  # "ai" or "fixed"
 
 
-def treat_as_english(message: str, lang: str) -> bool:
-    return lang in ("en", "unsure") or len(message.split()) < MIN_WORDS_FOR_LANGUAGE
+def treat_as_english(message: str, english: bool | None) -> bool:
+    # unsure (None) counts as English
+    return english is not False or len(message.split()) < MIN_WORDS_FOR_LANGUAGE
 
 
 def run_chat(message: str, history: list[dict], level: int | None, safe_confirmed: bool = False) -> ChatResult:
@@ -56,8 +57,8 @@ def run_chat(message: str, history: list[dict], level: int | None, safe_confirme
         return ChatResult(kind="check", next_step="urgent")
     if risk is not None and risk.risk:
         return ChatResult(kind="check", next_step="urgent")
-    if risk is not None and not treat_as_english(message, risk.lang):
-        log.info("Message in '%s'; English-only message shown", risk.lang)
+    if risk is not None and not treat_as_english(message, risk.english):
+        log.info("Message not in English; English-only message shown")
         return ChatResult(kind="reply", reply=ENGLISH_ONLY_MESSAGE, emergency_note=medical_worry, next_step="choose")
 
     answer = ai.generate_reply([*history, {"role": "user", "content": message}], level, worry, deadline)
