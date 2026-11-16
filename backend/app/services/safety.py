@@ -1,5 +1,5 @@
-# Rule-based, runs before any AI call. The phrase lists need clinical review and translations
-# before real users.
+# Rule-based, runs before any AI call. English only. The phrase lists need clinical review before
+# real users.
 import re
 import unicodedata
 from dataclasses import dataclass, field

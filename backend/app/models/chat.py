@@ -8,7 +8,8 @@ from app.models.enums import ChatRole, MessageLabel
 
 
 class ChatMessage(Base):
-    # text is cleared after the session if the user doesn't keep chats; label is kept for patterns
+    # not used yet, chat messages aren't saved. The plan: text cleared after the session if she
+    # doesn't keep chats, label kept for patterns
 
     __tablename__ = "chat_messages"
 

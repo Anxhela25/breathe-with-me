@@ -22,7 +22,7 @@ class User(Base):
     # tokens issued before this are no longer accepted
     password_changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
-    # cascade so "Delete all my data" removes everything
+    # cascade so "Delete my account" removes everything
     emergency_contacts: Mapped[list["EmergencyContact"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )

@@ -101,10 +101,9 @@ def build_messages(history: list[dict], level: int | None, worry: str | None = N
 
 
 class Deadline:
-    """One time budget for a whole chat turn. Each call gets at most ai_attempt_seconds, and never
-    more than what is left, so a slow provider can't keep someone waiting."""
+    """Time left for one chat message. Each call gets at most ai_attempt_seconds."""
 
-    MIN_SECONDS = 0.5  # less than this isn't worth starting a call
+    MIN_SECONDS = 0.5  # not worth starting a call with less
 
     def __init__(self, seconds: float | None = None):
         self.end = time.monotonic() + (settings.ai_total_seconds if seconds is None else seconds)
@@ -123,6 +122,22 @@ def _post(provider: Provider, body: dict, timeout: float) -> str:
     )
     response.raise_for_status()
     return response.json()["choices"][0]["message"]["content"] or ""
+
+
+def _why(error: Exception) -> str:
+    """What went wrong, short enough for one log line: 429 is a rate limit, 401 a wrong key."""
+    if isinstance(error, httpx.HTTPStatusError):
+        return f"HTTP {error.response.status_code}: {error.response.text[:200]}"
+    if isinstance(error, httpx.TimeoutException):
+        return "timed out"
+    return f"{type(error).__name__}: {error}"
+
+
+def _no_providers() -> bool:
+    if providers():
+        return False
+    log.error("No AI provider set: add GROQ_API_KEY or GEMINI_API_KEY to backend/.env")
+    return True
 
 
 def call_provider(provider: Provider, messages: list[dict], timeout: float) -> str:
@@ -144,8 +159,8 @@ Reply with only this JSON and nothing else: {"risk": "YES" or "NO", "english": "
 @dataclass
 class RiskResult:
     risk: bool
-    # None when the model didn't say. A yes/no question, because small models often can't name the
-    # language of short, informal text ("Ti spo m kupton" came back as "unsure", Serbian or Greek)
+    # None if the model didn't say. Asked as yes/no: asked for a language code, small models
+    # got short informal texts wrong ("Ti spo m kupton" came back "unsure", Serbian or Greek)
     english: bool | None
 
 
@@ -171,49 +186,58 @@ def _ask_classifier(provider: Provider, messages: list[dict], timeout: float) ->
 
 
 def classify_risk(user_messages: list[str], deadline: Deadline | None = None) -> RiskResult | None:
-    """Risk of suicide or self-harm in the recent user messages, and whether the newest one is in English.
-    None if no provider gave a clear answer in time: the caller must treat that as possible risk.
-    A second layer behind the rule-based check in safety.py, for wording and languages the rules can't know."""
+    """Risk in the last 3 user messages and whether the newest is in English, or None if no provider
+    answered clearly in time. Catches what the rules in safety.py can't: hints, slang, other languages."""
+    if _no_providers():
+        return None
     deadline = deadline or Deadline()
     recent = "\n".join(f"- {m}" for m in user_messages[-3:])
     messages = [{"role": "system", "content": RISK_PROMPT}, {"role": "user", "content": recent}]
     for provider in providers():
         timeout = deadline.next_timeout()
         if timeout is None:
-            log.warning("Risk check ran out of time")
+            log.warning("Risk check ran out of time before %s/%s", provider.name, provider.model)
             break
+        start = time.monotonic()
         try:
             answer = _ask_classifier(provider, messages, timeout)
         except Exception as error:  # noqa: BLE001
-            log.warning("Risk check failed: %s/%s (%s)", provider.name, provider.model, type(error).__name__)
+            log.warning("Risk check failed: %s/%s after %.2fs (%s)", provider.name, provider.model,
+                        time.monotonic() - start, _why(error))
             continue
         result = parse_risk(answer)
         if result is not None:
+            log.debug("Risk check from %s/%s in %.2fs: %s", provider.name, provider.model,
+                      time.monotonic() - start, result)
             return result
-        log.warning("Risk check gave an unclear answer from %s/%s", provider.name, provider.model)
+        log.warning("Risk check gave an unclear answer from %s/%s: %r", provider.name, provider.model, answer[:120])
+    log.error("Risk check: no provider answered clearly")
     return None
 
 
 def generate_reply(history: list[dict], level: int | None, worry: str | None = None,
                    deadline: Deadline | None = None) -> tuple[str, str] | None:
     """Returns (reply, "provider/model"), or None if every provider failed or time ran out."""
+    if _no_providers():
+        return None
     deadline = deadline or Deadline()
     messages = build_messages(history, level, worry)
     for i, provider in enumerate(providers()):
         timeout = deadline.next_timeout()
         if timeout is None:
-            log.warning("AI reply ran out of time")
+            log.warning("AI reply ran out of time before %s/%s", provider.name, provider.model)
             break
         start = time.monotonic()
         try:
             reply = call_provider(provider, messages, timeout)
         except Exception as error:  # noqa: BLE001
-            log.warning("AI provider failed: %s/%s (%s)", provider.name, provider.model, type(error).__name__)
+            log.warning("AI reply failed: %s/%s after %.2fs (%s)", provider.name, provider.model,
+                        time.monotonic() - start, _why(error))
             continue
         log.info(
             "AI reply from %s/%s in %.2fs%s", provider.name, provider.model,
             time.monotonic() - start, " (fallback used)" if i > 0 else "",
         )
         return reply, f"{provider.name}/{provider.model}"
-    log.error("All AI providers failed or none configured; using the fixed calm message.")
+    log.error("AI reply: every provider failed; the fixed calm message is shown")
     return None

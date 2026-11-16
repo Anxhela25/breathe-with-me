@@ -1,11 +1,46 @@
-from fastapi import FastAPI
+import logging
+import time
+
+from fastapi import FastAPI, Request
+from fastapi.encoders import jsonable_encoder
+from fastapi.exception_handlers import request_validation_exception_handler
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.config import settings
 from app.routers import auth, calm_checks, chat, contacts, episodes, insights, safety
 
+# without this, Python only prints warnings and errors, with no time or module name
+logging.basicConfig(
+    level=settings.log_level.upper(),
+    format="%(asctime)s %(levelname)-7s %(name)s: %(message)s",
+    datefmt="%H:%M:%S",
+)
+log = logging.getLogger("breathe.api")
+
 # Tables are managed by Alembic: run `alembic upgrade head` after pulling new migrations.
 app = FastAPI(title="Breathe With Me API", version="0.1.0")
+
+
+# Added before CORS so CORS wraps it: a crash still gets CORS headers, and the phone shows the error
+# instead of "offline".
+@app.middleware("http")
+async def log_failed_requests(request: Request, call_next):
+    start = time.monotonic()
+    try:
+        response = await call_next(request)
+    except Exception:
+        log.exception("%s %s crashed after %.2fs", request.method, request.url.path, time.monotonic() - start)
+        return JSONResponse({"detail": "Something went wrong. Please try again."}, status_code=500)
+    took = time.monotonic() - start
+    if response.status_code >= 500:
+        log.error("%s %s -> %d (%.2fs)", request.method, request.url.path, response.status_code, took)
+    elif response.status_code >= 400:
+        log.info("%s %s -> %d (%.2fs)", request.method, request.url.path, response.status_code, took)
+    return response
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -13,6 +48,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(RequestValidationError)
+async def log_invalid_request(request: Request, error: RequestValidationError):
+    # which field and why, never the value: it can be a password or a chat message
+    problems = [f"{'.'.join(map(str, e['loc']))}: {e['msg']}" for e in jsonable_encoder(error.errors())]
+    log.info("%s %s rejected: %s", request.method, request.url.path, "; ".join(problems))
+    return await request_validation_exception_handler(request, error)
+
 
 app.include_router(auth.router)
 app.include_router(episodes.router)

@@ -27,8 +27,8 @@ def _is_breached(password: str) -> bool:
         response = httpx.get(f"https://api.pwnedpasswords.com/range/{digest[:5]}", timeout=3,
                              headers={"Add-Padding": "true"})
         response.raise_for_status()
-    except httpx.HTTPError:
-        log.warning("Breached-password check unavailable; skipped")
+    except httpx.HTTPError as error:
+        log.warning("Breached-password check unavailable (%s); skipped", type(error).__name__)
         return False
     return any(line.split(":")[0] == digest[5:] and not line.endswith(":0") for line in response.text.splitlines())
 

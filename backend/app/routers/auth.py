@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
@@ -16,12 +17,16 @@ from app.services.email_check import email_problem
 from app.services.passwords import password_problem
 
 router = APIRouter(prefix="/api", tags=["account"])
+# never log emails or passwords; user ids are enough to find the account
+log = logging.getLogger("breathe.auth")
 
 
 def _check_new_account(db: Session, email: str, password: str) -> None:
     if db.scalar(select(User).where(User.email == email)):
+        log.info("Sign-up refused: the email already has an account")
         raise HTTPException(status.HTTP_409_CONFLICT, "This email already has an account.")
     if problem := password_problem(password, email):
+        log.info("Sign-up refused: %s", problem)
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, problem)
 
 
@@ -30,10 +35,12 @@ def register_start(data: RegisterStartIn, background: BackgroundTasks, db: Sessi
     """Step 1 of sign-up: checks the email and password, then emails a 6-digit code."""
     email = data.email.lower()
     if problem := email_problem(email):
+        log.info("Sign-up refused: the email domain can't receive mail")
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, problem)
     _check_new_account(db, email, data.password)
     code = email_verification.create_code(db, email)
     if code is None:
+        log.warning("Sign-up code refused: too many codes for one email in the last hour")
         raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS,
                             "You asked for several codes. Please check your email or try again in an hour.")
     background.add_task(send_email, email, "Your Breathe With Me code", email_verification.email_text(code))
@@ -46,6 +53,7 @@ def register(data: RegisterIn, db: Session = Depends(get_db)):
     email = data.email.lower()
     _check_new_account(db, email, data.password)
     if not email_verification.use_code(db, email, data.code):
+        log.info("Sign-up refused: wrong or expired code")
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "This code is not valid or has expired. Ask for a new one.")
     now = datetime.now(timezone.utc)
     user = User(
@@ -54,13 +62,18 @@ def register(data: RegisterIn, db: Session = Depends(get_db)):
     )
     db.add(user)
     db.commit()
+    log.info("Account %d created", user.id)
     return TokenOut(access_token=create_token(user))
 
 
 @router.post("/auth/login", response_model=TokenOut)
 def login(data: LoginIn, db: Session = Depends(get_db)):
     user = db.scalar(select(User).where(User.email == data.email.lower()))
-    if not user or not verify_password(data.password, user.password_hash):
+    if not user:
+        log.info("Login failed: no account with this email")
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Email or password is not correct.")
+    if not verify_password(data.password, user.password_hash):
+        log.info("Login failed: wrong password for account %d", user.id)
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Email or password is not correct.")
     return TokenOut(access_token=create_token(user))
 
@@ -77,11 +90,14 @@ def forgot_password(data: ForgotPasswordIn, background: BackgroundTasks, db: Ses
 @router.post("/auth/reset-password", response_model=TokenOut)
 def reset_password(data: ResetPasswordIn, db: Session = Depends(get_db)):
     if problem := password_problem(data.password, data.email):
+        log.info("Password reset refused: %s", problem)
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, problem)
     user = password_reset.check_code(db, data.email, data.code)
     if user is None:
+        log.info("Password reset refused: wrong or expired code")
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "This code is not valid or has expired. Ask for a new one.")
     password_reset.finish(db, user, hash_password(data.password))
+    log.info("Password reset for account %d", user.id)
     return TokenOut(access_token=create_token(user))
 
 
@@ -100,5 +116,7 @@ def update_settings(data: SettingsIn, user: User = Depends(get_current_user), db
 
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
 def delete_all_my_data(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    user_id = user.id
     db.delete(user)
     db.commit()
+    log.info("Account %d deleted with all its data", user_id)

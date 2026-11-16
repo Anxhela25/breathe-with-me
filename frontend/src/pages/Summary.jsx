@@ -62,7 +62,8 @@ export default function Summary() {
       const { buildSummaryPdf, deliverPdf } = await import('../lib/summaryPdf.js')
       const result = await deliverPdf(buildSummaryPdf(insights, episodes, includeNotes))
       if (result === 'downloaded') setStatus('The PDF is in your downloads. You choose who you send it to.')
-    } catch {
+    } catch (err) {
+      console.warn('[summary] PDF failed:', err)
       setStatus("The PDF couldn't be created. You can still share or copy the text below.")
     } finally {
       setBusy(false)

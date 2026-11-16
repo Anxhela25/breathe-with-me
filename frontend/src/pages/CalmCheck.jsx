@@ -206,12 +206,13 @@ function Measuring({ onDone, onStop, onError }) {
       if (previous && fingerOnLens(frame)) fingerSeconds.current += Math.min(0.1, frame.t - previous.t)
       if (!locked.current && fingerSeconds.current > 1.5) {
         locked.current = true
-        lockCalmExposure().catch(() => {})
+        lockCalmExposure().catch(err => console.warn('[calm check] exposure lock failed:', err?.message ?? err))
       }
     }).then(stop => {
       if (cancelled) stop()
       else stopCamera.current = stop
     }).catch(err => {
+      console.warn('[calm check] camera failed to start:', err?.code, err?.message ?? err)
       if (!cancelled) {
         callbacks.current.onError(err?.code === 'PERMISSION_DENIED'
           ? 'Camera access is off. You can turn it on in Settings > Breathe With Me > Camera.'

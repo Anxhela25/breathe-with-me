@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timedelta, timezone
 
 import bcrypt
@@ -11,6 +12,7 @@ from app.database import get_db
 from app.models import User
 
 _bearer = HTTPBearer(auto_error=False)
+log = logging.getLogger("breathe.auth")
 
 
 def hash_password(password: str) -> str:
@@ -38,14 +40,19 @@ def get_current_user(
 ) -> User:
     unauthorized = HTTPException(status.HTTP_401_UNAUTHORIZED, "Please log in again.")
     if creds is None:
+        log.info("No login token sent")
         raise unauthorized
     try:
         payload = jwt.decode(creds.credentials, settings.jwt_secret, algorithms=["HS256"])
         user = db.get(User, int(payload["sub"]))
-    except (jwt.PyJWTError, KeyError, ValueError):
+    except (jwt.PyJWTError, KeyError, ValueError) as error:
+        # ExpiredSignatureError is the usual one; InvalidSignatureError means JWT_SECRET changed
+        log.info("Login token rejected: %s", type(error).__name__)
         raise unauthorized
     if user is None:
+        log.info("Login token rejected: account %s no longer exists", payload["sub"])
         raise unauthorized
     if payload.get("pv", 0) != _password_version(user):
+        log.info("Login token rejected: account %d changed its password since", user.id)
         raise unauthorized
     return user

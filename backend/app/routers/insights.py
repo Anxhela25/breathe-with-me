@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -10,6 +11,8 @@ from app.database import get_db
 from app.models import Episode, User
 from app.services.auth import get_current_user
 from app.services.insights import summarize
+
+log = logging.getLogger("breathe.insights")
 
 router = APIRouter(prefix="/api/insights", tags=["insights"])
 
@@ -39,6 +42,7 @@ def insights(
     try:
         zone = ZoneInfo(tz)
     except (ZoneInfoNotFoundError, ValueError):
+        log.warning("Unknown time zone %r, using UTC; times of day may be off", tz)
         zone = ZoneInfo("UTC")
     episodes = db.scalars(select(Episode).where(Episode.user_id == user.id)).all()
     return summarize(list(episodes), zone)

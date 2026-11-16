@@ -21,17 +21,30 @@ export class ApiError extends Error {
   }
 }
 
+// FastAPI's 422 list also has the sent values (maybe a password), so only field and reason
+const fieldErrors = list => (Array.isArray(list) ? list.map(e => `${e.loc?.join('.')}: ${e.msg}`).join('; ') : '')
+
+// every failed call is logged here, so the pages don't have to. Shows in the Xcode console
+// and Safari's Web Inspector. Never the body: it can hold a password or a chat message
 async function request(method, path, body) {
   const headers = { 'Content-Type': 'application/json' }
   const token = getToken()
   if (token) headers.Authorization = `Bearer ${token}`
-  const response = await fetch(`${BASE}${path}`, {
-    method, headers, body: body === undefined ? undefined : JSON.stringify(body),
-  })
+  let response
+  try {
+    response = await fetch(`${BASE}${path}`, {
+      method, headers, body: body === undefined ? undefined : JSON.stringify(body),
+    })
+  } catch (err) {
+    // no answer at all: backend down, wrong VITE_API_URL, or no internet
+    console.warn(`[api] ${method} ${path} failed: ${err?.message ?? err} (backend: ${BASE || 'vite proxy'})`)
+    throw err
+  }
   if (response.status === 204) return null
   const data = await response.json().catch(() => null)
   if (!response.ok) {
     const detail = typeof data?.detail === 'string' ? data.detail : null
+    console.warn(`[api] ${method} ${path} -> ${response.status}: ${detail ?? fieldErrors(data?.detail)}`)
     throw new ApiError(response.status, detail ?? `Request failed: ${response.status}`)
   }
   return data

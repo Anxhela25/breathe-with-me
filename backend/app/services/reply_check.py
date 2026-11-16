@@ -53,7 +53,8 @@ _DIAGNOSIS_AND_PROMISES = [
 _CRISIS_TOPICS = [
     r"\bsuicid", r"\bself[- ]?harm", r"\bkill (yourself|myself)\b", r"\bend (your|my) life\b",
     r"\bhurt(ing)? yourself\b", r"\b(crisis|help) ?line\b", r"\bhotline\b", r"\bprofessional (help|support)\b",
-    r"\bcan('|no)?t help (you )?with (this|that)\b", # not "talk to a doctor or pharmacist": that is the expected answer to a medicine question
+    r"\bcan('|no)?t help (you )?with (this|that)\b",
+    # not "talk to a doctor or pharmacist": that's the right answer to a medicine question
     r"\b(reach out|talk) to (someone|somebody|a trusted|a friend|a loved one|a (mental health )?professional"
     r"|a counsel+or|a therapist|a crisis)",
     r"\bsomeone you trust\b", r"\btrusted (person|friend|adult)\b", r"\bemergency services\b",
@@ -74,8 +75,8 @@ class ReplyCheck:
     crisis: bool = False  # the reply suggests the user may be at risk
 
 
-# Replies must be in English: the checks above only know English words. A reply passes if it has no
-# letters outside a-z (ë, ç, Cyrillic...) and, when long enough, enough very common English words.
+# The checks above only know English, so replies must be in English: no letters outside a-z (ë, ç,
+# Cyrillic...) and, in longer replies, enough very common English words.
 _ENGLISH_WORDS = {
     "a", "about", "all", "an", "and", "are", "as", "at", "be", "breath", "breathe", "breathing", "but", "can",
     "circle", "do", "does", "feel", "feeling", "feels", "follow", "for", "gently", "have", "here", "how", "i",

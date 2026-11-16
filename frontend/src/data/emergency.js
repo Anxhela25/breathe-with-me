@@ -1,4 +1,4 @@
-// Emergency number by country: the one chosen in Settings, or else the phone's region. Checked on 11 November 2026.
+// Emergency number by country, from Settings or else the phone's region. Checked on 11 November 2026.
 // 112 works from mobile phones in every EU country and across the Balkans (Albania, Kosovo,
 // North Macedonia, Montenegro, Greece, Italy, Germany...). Only the UK (999, where 112 also works)
 // and the US (911, where 112 is not guaranteed) need their own number.
