@@ -92,6 +92,28 @@ def test_no_keys_gives_fixed_calm_message(client, fake_ai, monkeypatch):
     assert out["reply"] == CALM_MESSAGE and fake_ai.calls == []
 
 
+@pytest.mark.parametrize("reply", [
+    "I hear you're feeling uncertain. I can't advise on medication, but you might want to talk to a doctor "
+    "or pharmacist about it. For now, try the breathing circle on the screen.",
+    "I cannot advise on medicine. Please talk to a doctor or pharmacist about that.",
+])
+def test_medicine_question_gets_medicine_message_not_safety_check(client, fake_ai, reply):
+    # "talk to a doctor" was read as a crisis topic and showed "Are you safe?"
+    fake_ai.replies = {"main-model": reply, "backup-model": GOOD_REPLY}
+    out = send(client, "Should I take a Xanax?")
+    assert out["kind"] == "reply" and out["reply"] == MEDICINE_MESSAGE
+
+
+@pytest.mark.parametrize("reply", [
+    "Please reach out to someone you trust right now.",
+    "It may help to talk to a therapist or a mental health professional.",
+    "Talk to a trusted friend tonight.",
+])
+def test_crisis_like_reply_still_asks_the_user(client, fake_ai, reply):
+    fake_ai.replies = {"main-model": reply, "backup-model": GOOD_REPLY}
+    assert send(client, "everything is too much")["kind"] == "check"
+
+
 def test_medicine_reply_is_replaced(client, fake_ai):
     fake_ai.replies = {"main-model": "You could take a pill to calm down.", "backup-model": GOOD_REPLY}
     out = send(client, "should I take a pill?")

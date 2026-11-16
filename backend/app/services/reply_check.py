@@ -53,7 +53,9 @@ _DIAGNOSIS_AND_PROMISES = [
 _CRISIS_TOPICS = [
     r"\bsuicid", r"\bself[- ]?harm", r"\bkill (yourself|myself)\b", r"\bend (your|my) life\b",
     r"\bhurt(ing)? yourself\b", r"\b(crisis|help) ?line\b", r"\bhotline\b", r"\bprofessional (help|support)\b",
-    r"\bcan('|no)?t help (you )?with (this|that)\b", r"\b(reach out|talk) to (a |someone|somebody|a trusted)",
+    r"\bcan('|no)?t help (you )?with (this|that)\b", # not "talk to a doctor or pharmacist": that is the expected answer to a medicine question
+    r"\b(reach out|talk) to (someone|somebody|a trusted|a friend|a loved one|a (mental health )?professional"
+    r"|a counsel+or|a therapist|a crisis)",
     r"\bsomeone you trust\b", r"\btrusted (person|friend|adult)\b", r"\bemergency services\b",
     r"\bplease (call|contact)\b",
 ]
