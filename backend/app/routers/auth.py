@@ -2,11 +2,11 @@ import logging
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import User
+from app.models import CalmCheck, Episode, User
 from app.schemas.user import (
     ForgotPasswordIn, LoginIn, RegisterIn, RegisterStartIn, ResetPasswordIn, SettingsIn, TokenOut, UserOut,
 )
@@ -112,6 +112,15 @@ def update_settings(data: SettingsIn, user: User = Depends(get_current_user), db
         setattr(user, key, value.upper() if key == "country_code" and value else value)
     db.commit()
     return user
+
+
+@router.delete("/me/history", status_code=status.HTTP_204_NO_CONTENT)
+def delete_my_history(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    # sessions and calm checks (the usual rhythm is worked out from them); account and contacts stay
+    calm_checks = db.execute(delete(CalmCheck).where(CalmCheck.user_id == user.id)).rowcount
+    episodes = db.execute(delete(Episode).where(Episode.user_id == user.id)).rowcount
+    db.commit()
+    log.info("Account %d deleted its history: %d sessions, %d calm checks", user.id, episodes, calm_checks)
 
 
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)

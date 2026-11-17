@@ -3,7 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import Screen from '../components/Screen.jsx'
 import Button from '../components/Button.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
-import { addContact, deleteContact, listContacts } from '../lib/api.js'
+import { addContact, deleteContact, deleteHistory, listContacts } from '../lib/api.js'
+import ConfirmDialog from '../components/ConfirmDialog.jsx'
 import PhoneInput from '../components/PhoneInput.jsx'
 import { formatPhone, toInternational } from '../lib/phone.js'
 import { getEmergency } from '../data/emergency.js'
@@ -49,7 +50,7 @@ export default function Settings() {
   const [phone, setPhone] = useState('')
   const [phoneCountry, setPhoneCountry] = useState(user.country_code || 'AL')
   const [error, setError] = useState('')
-  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [confirming, setConfirming] = useState(null)  // 'history' | 'account': which pop-up is open
   const [adding, setAdding] = useState(false)  // the new-contact form opens from the + button
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState('')
@@ -112,6 +113,27 @@ export default function Settings() {
       setDeleteError("Couldn't delete your account. Please check your connection and try again.")
       setDeleting(false)
     }
+  }
+
+  async function removeHistory() {
+    setDeleting(true)
+    setDeleteError('')
+    try {
+      await deleteHistory()
+      setConfirming(null)
+      setStatus('History deleted ✓')
+      clearTimeout(statusTimer.current)
+      statusTimer.current = setTimeout(() => setStatus(''), 2500)
+    } catch {
+      setDeleteError("Couldn't delete your history. Please check your connection and try again.")
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  function closeConfirm() {
+    setConfirming(null)
+    setDeleteError('')
   }
 
   const initial = (user.email?.[0] ?? '?').toUpperCase()
@@ -217,6 +239,12 @@ export default function Settings() {
           <span className="text-sm text-sage/60">1 min</span>
           <Chevron />
         </Link>
+        <button type="button" onClick={() => setConfirming('history')} className={`${row} text-alert`}>
+          <Tile color="bg-alert/15 text-alert">
+            <svg {...icon}><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" /></svg>
+          </Tile>
+          <span className="flex-1">Delete my history</span>
+        </button>
       </Group>
 
       <Group title="Privacy">
@@ -239,33 +267,27 @@ export default function Settings() {
           </Tile>
           <span className="flex-1">Log out</span>
         </button>
-        {!confirmDelete ? (
-          <button type="button" onClick={() => setConfirmDelete(true)} className={`${row} text-alert`}>
-            <Tile color="bg-alert/15 text-alert">
-              <svg {...icon}><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" /></svg>
-            </Tile>
-            <span className="flex-1">Delete my account</span>
-          </button>
-        ) : (
-          <div role="alertdialog" aria-labelledby="delete-title" aria-describedby="delete-text" className="p-4">
-            <h2 id="delete-title" className="text-lg font-bold text-alert">Are you sure?</h2>
-            <p id="delete-text" className="mt-1">
-              This deletes your account, history, contacts and settings. It can&apos;t be undone.
-            </p>
-            {deleteError && <p role="alert" className="mt-2 text-sm font-bold text-alert">{deleteError}</p>}
-            <div className="mt-4 flex flex-col gap-2">
-              <button type="button" onClick={removeEverything} disabled={deleting}
-                className="rounded-2xl bg-alert px-4 py-3 font-bold text-white disabled:opacity-50">
-                {deleting ? 'Deleting…' : 'Yes, delete my account'}
-              </button>
-              <button type="button" onClick={() => { setConfirmDelete(false); setDeleteError('') }} autoFocus
-                className="rounded-2xl border border-sage px-4 py-3 text-sage">
-                No, keep my account
-              </button>
-            </div>
-          </div>
-        )}
+        <button type="button" onClick={() => setConfirming('account')} className={`${row} text-alert`}>
+          <Tile color="bg-alert/15 text-alert">
+            <svg {...icon}><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" /></svg>
+          </Tile>
+          <span className="flex-1">Delete my account</span>
+        </button>
       </Group>
+
+      {confirming === 'history' && (
+        <ConfirmDialog title="Delete your history?" confirm="Delete my history" busyText="Deleting…"
+          busy={deleting} error={deleteError} onConfirm={removeHistory} onCancel={closeConfirm}>
+          <p>All your sessions and calm checks will be deleted. <strong>You can&apos;t get them back.</strong></p>
+          <p className="mt-2 text-sm">Your account and the people you trust stay.</p>
+        </ConfirmDialog>
+      )}
+      {confirming === 'account' && (
+        <ConfirmDialog title="Delete your account?" confirm="Delete my account" busyText="Deleting…"
+          busy={deleting} error={deleteError} onConfirm={removeEverything} onCancel={closeConfirm}>
+          <p>Your account, history, contacts and settings will be deleted. <strong>You can&apos;t get them back.</strong></p>
+        </ConfirmDialog>
+      )}
 
       {/* no Done button: changes save as you go, and Back is in the header */}
       <p className="mt-10 mb-4 text-center text-xs leading-5 text-sage/50">

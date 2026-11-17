@@ -64,6 +64,7 @@ export const updateMe = fields => request('PATCH', '/api/me', fields)
 export const createEpisode = fields => request('POST', '/api/episodes', fields)
 export const updateEpisode = (id, fields) => request('PATCH', `/api/episodes/${id}`, fields)
 export const deleteMe = () => request('DELETE', '/api/me')
+export const deleteHistory = () => request('DELETE', '/api/me/history')
 export const listEpisodes = () => request('GET', '/api/episodes')
 
 export const listContacts = () => request('GET', '/api/contacts')

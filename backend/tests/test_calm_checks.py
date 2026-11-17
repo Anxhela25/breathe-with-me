@@ -46,3 +46,28 @@ def test_delete_account_removes_calm_checks(client):
     from app.models import CalmCheck
     with SessionLocal() as db:
         assert db.query(CalmCheck).count() == 0
+
+
+def test_delete_history_keeps_the_account_and_other_users_data(client):
+    h = auth_header(client)
+    other = auth_header(client, "other@example.com")
+    for headers in (h, other):
+        episode = client.post("/api/episodes", headers=headers, json={"start_level": 6}).json()
+        client.post("/api/calm-checks", headers=headers, json={**STEADY, "episode_id": episode["id"]})
+    client.post("/api/contacts", headers=h, json={"name": "Ana", "phone": "+355692571044"})
+
+    assert client.delete("/api/me/history", headers=h).status_code == 204
+    assert client.get("/api/episodes", headers=h).json() == []
+    assert client.get("/api/calm-checks", headers=h).json() == []
+    assert client.get("/api/calm-checks/baseline", headers=h).json() == {"count": 0, "baseline": None}
+    # the account and the trusted contacts stay
+    assert client.get("/api/me", headers=h).status_code == 200
+    assert len(client.get("/api/contacts", headers=h).json()) == 1
+    # nobody else's history is touched
+    assert len(client.get("/api/episodes", headers=other).json()) == 1
+    assert len(client.get("/api/calm-checks", headers=other).json()) == 1
+
+
+def test_delete_history_needs_login(client):
+    assert client.delete("/api/me/history").status_code == 401
+
