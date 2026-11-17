@@ -6,6 +6,28 @@ import UIKit
 class MainViewController: CAPBridgeViewController {
     override open func capacitorDidLoad() {
         bridge?.registerPluginInstance(CalmCameraPlugin())
+        hideKeyboardToolbar()
+    }
+
+    /// The web view puts a bar with up, down and a check mark above the keyboard. The app doesn't need it:
+    /// Return sends the chat and the forms. Same trick as Capacitor's Keyboard plugin: give the web view's
+    /// content view a subclass whose inputAccessoryView is nil.
+    private func hideKeyboardToolbar() {
+        guard let content = webView?.scrollView.subviews.first(where: {
+            String(describing: type(of: $0)).hasPrefix("WKContent")
+        }), let original = object_getClass(content) else { return }
+        let name = "\(NSStringFromClass(original))_NoToolbar"
+        var noToolbar: AnyClass? = NSClassFromString(name)
+        if noToolbar == nil, let subclass = objc_allocateClassPair(original, name, 0) {
+            let getter = #selector(getter: UIResponder.inputAccessoryView)
+            let returnsNil: @convention(block) (AnyObject) -> AnyObject? = { _ in nil }
+            if let method = class_getInstanceMethod(UIResponder.self, getter) {
+                class_addMethod(subclass, getter, imp_implementationWithBlock(returnsNil), method_getTypeEncoding(method))
+            }
+            objc_registerClassPair(subclass)
+            noToolbar = subclass
+        }
+        if let noToolbar { object_setClass(content, noToolbar) }
     }
 }
 
