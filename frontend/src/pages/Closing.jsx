@@ -7,7 +7,7 @@ export default function Closing() {
   const { session } = useSession()
   return (
     <Screen>
-      <div className="mt-12 flex h-28 w-28 items-center justify-center rounded-full bg-pistachio" aria-hidden>
+      <div className="mt-28 flex h-28 w-28 items-center justify-center rounded-full bg-pistachio" aria-hidden>
         <svg viewBox="0 0 24 24" className="h-12 w-12 stroke-sage" fill="none" strokeWidth="2" strokeLinecap="round">
           <path d="M5 12.5l4.5 4.5L19 7.5" />
         </svg>
