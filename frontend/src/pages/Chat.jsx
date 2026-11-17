@@ -142,19 +142,27 @@ export default function Chat() {
 
       <form onSubmit={send} className="mt-4 flex w-full flex-col items-center gap-2">
         <label htmlFor="chat-text" className="sr-only">Write what you feel</label>
-        <textarea
-          id="chat-text"
-          value={text}
-          onChange={e => setText(e.target.value)}
-          placeholder="Write here…"
-          rows={started ? 2 : 4}
-          maxLength={2000}
-          className="w-full resize-none rounded-2xl border border-sage/20 bg-white p-3 text-base outline-none focus:border-sage"
-        />
-        <Button type="submit" variant={started ? 'outline' : 'primary'} disabled={!text.trim() || waiting || asking}
-          className="disabled:opacity-50">
-          Send
-        </Button>
+        <div className="relative w-full">
+          <textarea
+            id="chat-text"
+            value={text}
+            onChange={e => setText(e.target.value)}
+            // Return sends, like a messaging app; the keyboard shows "send" on that key
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) send(e) }}
+            enterKeyHint="send"
+            placeholder="Write here…"
+            rows={started ? 1 : 3}
+            maxLength={2000}
+            className="block w-full resize-none rounded-3xl border border-sage/20 bg-white py-3 pr-14 pl-4 text-base outline-none focus:border-sage"
+          />
+          <button type="submit" aria-label="Send" disabled={!text.trim() || waiting || asking}
+            className="absolute right-2 bottom-2 flex h-9 w-9 items-center justify-center rounded-full bg-sage text-white transition active:scale-95 disabled:bg-sage/25">
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.2"
+              strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M12 19V5M5.5 11.5L12 5l6.5 6.5" />
+            </svg>
+          </button>
+        </div>
         {!started && <Button to="/breathe" variant="link">No, just breathe</Button>}
       </form>
 
