@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import Screen from '../components/Screen.jsx'
 import Button from '../components/Button.jsx'
 import BreathingCircle from '../components/BreathingCircle.jsx'
@@ -10,7 +10,6 @@ import { useSession } from '../context/SessionContext.jsx'
 const ASK_AFTER_S = 60  // one full minute of breathing before the first question
 const OFFER_AFTER_S = 60
 const STRONG_RECHECK_S = 120
-const STRONG_CHECKS_FOR_HELP = 2
 
 function stateFor(level) {
   if (level <= 4) return 'light'
@@ -20,15 +19,18 @@ function stateFor(level) {
 
 export default function Breathing() {
   const location = useLocation()
-  const { session, recordLevel, start } = useSession()
+  const navigate = useNavigate()
+  const { session, recordLevel, start, mark } = useSession()
   const [startedAt] = useState(() => session.startedAt ?? Date.now())
   const [now, setNow] = useState(Date.now())
   // 'start' (A) | 'light' (B) | 'medium' (C) | 'strong' (D) | 'check' (E)
   const [state, setState] = useState('start')
   const [strongSince, setStrongSince] = useState(null)
-  const [strongChecks, setStrongChecks] = useState(0)
+  const [goingDown, setGoingDown] = useState(false)
   const [offerHidden, setOfferHidden] = useState(false)
   const softMessage = location.state?.soft === true
+  // from "Not feeling better yet?": just the circle, no more questions
+  const quiet = location.state?.quiet === true
 
   useEffect(() => { if (!session.startedAt) start() }, [session.startedAt, start])
   useEffect(() => {
@@ -46,37 +48,39 @@ export default function Breathing() {
   function pick(level) {
     const previous = session.lastLevel
     recordLevel(level)
-    let next = stateFor(level)
-    // same or higher than before -> back to strong
-    if (state === 'check' && previous != null && level >= previous) next = 'strong'
-    if (next === 'strong') {
-      setStrongSince(Date.now())
-      setStrongChecks(c => c + 1)
+    const next = stateFor(level)
+    // two rounds of breathing and no lower: stop asking, offer something different
+    if (state === 'check' && previous != null && level >= previous) {
+      mark({ notBetterShown: true })
+      navigate('/not-better')
+      return
     }
+    // lower but still 8+ counts as progress: one more round
+    setGoingDown(state === 'check' && next === 'strong')
+    if (next === 'strong') setStrongSince(Date.now())
     setOfferHidden(false)
     setState(next)
   }
 
-  const showQuestion = (state === 'start' && elapsed >= ASK_AFTER_S) || state === 'check'
+  const showQuestion = !quiet && ((state === 'start' && elapsed >= ASK_AFTER_S) || state === 'check')
   const offerReady = elapsed >= OFFER_AFTER_S && !offerHidden
-  const stillStrong = state === 'strong' && strongChecks >= STRONG_CHECKS_FOR_HELP
   const chatPaused = session.crisisShown
   // a ring closes around the circle until the next question, so she can see it's going somewhere
-  const firstMinute = state === 'start' && !showQuestion
+  const firstMinute = state === 'start' && !showQuestion && !quiet
   let progress = null
   if (firstMinute) progress = elapsed / ASK_AFTER_S
   if (state === 'strong' && strongSince) progress = (now - strongSince) / 1000 / STRONG_RECHECK_S
 
   return (
     <Screen
-      footer={(state === 'strong' || softMessage || chatPaused) && (
+      footer={(state === 'strong' || softMessage || chatPaused || quiet) && (
         <Button to="/urgent" variant="link" className="text-xs text-sage/70">I need urgent help</Button>
       )}
     >
       <div className="mt-16"><BreathingCircle progress={progress} /></div>
       <p className="mt-8 text-base">
         {firstMinute && 'Breathe with me for 1 minute.'}
-        {state === 'strong' && 'Breathe with me for 2 minutes.'}
+        {state === 'strong' && (goingDown ? "It's going down. 2 more minutes." : 'Breathe with me for 2 minutes.')}
         {!firstMinute && state !== 'strong' && <>Follow the circle. I&apos;m here.</>}
       </p>
 
@@ -89,12 +93,6 @@ export default function Breathing() {
 
         {showQuestion && <NumberPicker question="How strong is it right now, 1 to 10?" onPick={pick} />}
 
-        {stillStrong && (
-          <p className="max-w-xs text-center text-base text-sage text-balance">
-            It is still very strong.<br />
-            Please call emergency services or someone you trust.
-          </p>
-        )}
       </div>
 
       {/* offers at the bottom, like the buttons on every page */}
@@ -110,6 +108,7 @@ export default function Breathing() {
         {state === 'medium' && offerReady && (
           <Offer text="Try grounding together?" action="Start grounding" to="/grounding" onKeep={() => setOfferHidden(true)} />
         )}
+        {quiet && <Button to="/check-in">I feel a bit better</Button>}
         {(state === 'light' || state === 'medium') && offerHidden && (
           <Button to="/check-in" variant="link" className="text-sage/70">I feel a bit better</Button>
         )}

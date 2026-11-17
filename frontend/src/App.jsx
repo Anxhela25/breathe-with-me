@@ -5,6 +5,7 @@ import Grounding from './pages/Grounding.jsx'
 import CheckIn from './pages/CheckIn.jsx'
 import Closing from './pages/Closing.jsx'
 import UrgentHelp from './pages/UrgentHelp.jsx'
+import NotBetter from './pages/NotBetter.jsx'
 import Chat from './pages/Chat.jsx'
 import AuthForm from './pages/AuthForm.jsx'
 import ForgotPassword from './pages/ForgotPassword.jsx'
@@ -26,6 +27,7 @@ export default function App() {
       <Route path="/check-in" element={<CheckIn />} />
       <Route path="/closing" element={<Closing />} />
       <Route path="/urgent" element={<UrgentHelp />} />
+      <Route path="/not-better" element={<NotBetter />} />
       <Route path="/chat" element={<Chat />} />
       <Route path="/questions" element={<QuickQuestions />} />
       <Route path="/register" element={<AuthForm mode="register" />} />

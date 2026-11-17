@@ -15,6 +15,8 @@ export default function CheckIn() {
     // finish when it eased, or when it's light anyway (after a 1 there's no lower number to give)
     const better = level <= LIGHT || (previous == null ? level < 8 : level < previous)
     if (better) navigate('/closing')
+    // already offered the "not feeling better" choices once: go back there, not into another loop
+    else if (session.notBetterShown) navigate('/not-better')
     else navigate('/breathe', { state: { soft: true } })
   }
 
