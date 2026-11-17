@@ -32,7 +32,7 @@ export default function Chat() {
       <Screen>
         <h1 className="mt-10 text-2xl font-bold">The chat is paused.</h1>
         <p className="mt-2 text-center text-sage/80">Please reach out to someone now.</p>
-        <div className="mt-8 flex w-full flex-col items-center gap-2">
+        <div className="mt-auto flex w-full flex-col items-center gap-2 pt-8">
           <Button to="/urgent">Show emergency numbers</Button>
           <Button to="/breathe" variant="outline">Back to breathing</Button>
           <Button to="/check-in" variant="link">I feel a bit better</Button>

@@ -21,8 +21,9 @@ export default function Closing() {
           <Button to="/urgent" variant="link" className="mt-1 text-alert">Show emergency numbers</Button>
         </div>
       )}
-      <p className="mt-10">Want a one-minute calm check?</p>
-      <div className="mt-6 flex w-full flex-col items-center gap-2">
+      {/* actions at the bottom, where the thumb is */}
+      <div className="mt-auto flex w-full flex-col items-center gap-2 pt-8">
+        <p className="mb-2">Want a one-minute calm check?</p>
         <Button to="/calm-check?from=session">Start calm check</Button>
         <Button to="/questions" variant="link">Skip for now</Button>
       </div>

@@ -81,7 +81,7 @@ function Questions() {
   return (
     <Screen>
       <p className="mt-6 text-sm text-sage/60">All questions are optional.</p>
-      <div className="mt-8 flex w-full flex-col items-center gap-3">
+      <div className="mt-auto flex w-full flex-col items-center gap-3 pt-8">
         {step === 0 && (
           <>
             <NumberPicker question="How strong was the worst moment?" onPick={n => answer({ worst_level: n })} />

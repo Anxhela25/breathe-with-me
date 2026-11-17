@@ -1,24 +1,16 @@
-import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useSession } from '../context/SessionContext.jsx'
-import { useReducedMotion } from '../lib/motion.js'
-
-const OPEN_MS = 700  // the start circle grows into the breathing circle
 
 export default function Home() {
   const navigate = useNavigate()
   const { start } = useSession()
   const { user } = useAuth()
-  const reduced = useReducedMotion()
-  const [opening, setOpening] = useState(false)
 
+  // no animation before leaving: in a panic every second waiting feels long
   function begin() {
-    if (opening) return
     start()
-    if (reduced) return navigate('/breathe')
-    setOpening(true)
-    setTimeout(() => navigate('/breathe'), OPEN_MS)
+    navigate('/breathe')
   }
 
   return (
@@ -37,26 +29,25 @@ export default function Home() {
           )}
         </header>
 
-        <div className={`flex flex-1 flex-col items-center justify-center transition-opacity duration-500 ${opening ? 'opacity-0' : ''}`}>
+        <div className="flex flex-1 flex-col items-center justify-center">
           <p className="text-3xl text-sage">Hey!</p>
           <p className="text-3xl text-sage">Let&apos;s</p>
           <h1 className="mt-1 text-center text-[2.6rem] font-bold leading-tight text-sage-dark">Breathe With Me</h1>
         </div>
 
-        {/* breathes slowly while waiting; on tap it grows and the breathing page takes over */}
+        {/* breathes slowly while waiting */}
         <button type="button" onClick={begin} aria-label="Start breathing, I need help now"
-          className="relative flex h-44 w-44 items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sage">
-          <span className={`absolute inset-0 rounded-full bg-white/40 ${opening ? '' : 'animate-halo'}`} aria-hidden />
+          className="relative flex h-44 w-44 items-center transition-transform active:scale-95 justify-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sage">
+          <span className="absolute inset-0 rounded-full bg-white/40 animate-halo" aria-hidden />
           <span
-            className={`absolute inset-0 rounded-full bg-white shadow-xl shadow-sage/15 transition-transform ease-out ${opening ? '' : 'animate-breathe'}`}
-            style={opening ? { transform: 'scale(1.5)', transitionDuration: `${OPEN_MS}ms` } : undefined}
+            className="absolute inset-0 rounded-full bg-white shadow-xl shadow-sage/15 animate-breathe"
             aria-hidden />
-          <span className={`relative text-3xl font-bold text-sage transition-opacity duration-300 ${opening ? 'opacity-0' : ''}`}>
+          <span className="relative text-3xl font-bold text-sage">
             Start
           </span>
         </button>
 
-        <div className={`flex flex-1 flex-col items-center justify-center gap-6 transition-opacity duration-500 ${opening ? 'opacity-0' : ''}`}>
+        <div className="flex flex-1 flex-col items-center justify-center gap-6">
           <p className="text-center text-xl text-sage-dark">When it feels like too much,<br />tap Start. I&apos;ll breathe with you.</p>
           {/* daily practice when calm; it also builds her usual rhythm (baseline) */}
           <div className="flex items-center gap-2 text-sm text-sage">
