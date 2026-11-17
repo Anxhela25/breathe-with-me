@@ -4,7 +4,10 @@ import Screen from '../components/Screen.jsx'
 import Button from '../components/Button.jsx'
 import BreathingCircle from '../components/BreathingCircle.jsx'
 import NumberPicker from '../components/NumberPicker.jsx'
+import { useAuth } from '../context/AuthContext.jsx'
 import { useSession } from '../context/SessionContext.jsx'
+import { getEmergency, telLink } from '../data/emergency.js'
+import { listContacts } from '../lib/api.js'
 import { nextStep } from '../lib/flow.js'
 
 // in seconds; lower them while testing
@@ -24,9 +27,12 @@ export default function Breathing() {
   const [goingDown, setGoingDown] = useState(false)
   // coming back to breathing (from the chat, grounding, urgent help, "Not feeling better yet?"...):
   // no new start, no question here; 2 minutes with the ring, then "How do you feel now?"
-  const [returning] = useState(() => location.state?.quiet === true || session.lastLevel != null)
+  const [returning] = useState(() => ['quiet', 'stay'].some(k => location.state?.[k]) || session.lastLevel != null)
+  // from "Not feeling better yet?": breathe as long as she wants, no timer and no more questions (asking
+  // every 2 minutes only kept her watching the fear); she moves on with "I feel a bit better"
+  const [stay] = useState(() => location.state?.stay === true)
   // set when she taps "Keep breathing" on an offer, or right away when returning
-  const [keepSince, setKeepSince] = useState(() => (returning ? Date.now() : null))
+  const [keepSince, setKeepSince] = useState(() => (returning && !stay ? Date.now() : null))
 
   useEffect(() => { if (!session.startedAt) start() }, [session.startedAt, start])
   useEffect(() => {
@@ -78,7 +84,7 @@ export default function Breathing() {
 
   return (
     <Screen
-      footer={(state === 'strong' || chatPaused || returning) && (
+      footer={(state === 'strong' || chatPaused || returning) && !stay && (
         <Button to="/urgent" variant="link" className="text-xs text-sage/70">I need urgent help</Button>
       )}
     >
@@ -87,7 +93,8 @@ export default function Breathing() {
         {firstMinute && 'Breathe with me for 1 minute.'}
         {state === 'strong' && (goingDown ? "It's going down. 2 more minutes." : 'Breathe with me for 2 minutes.')}
         {keepSince && 'Breathe with me for 2 more minutes.'}
-        {!firstMinute && state !== 'strong' && !keepSince && <>Follow the circle. I&apos;m here.</>}
+        {stay && "Breathe at your own pace. I'm here."}
+        {!firstMinute && state !== 'strong' && !keepSince && !stay && <>Follow the circle. I&apos;m here.</>}
       </p>
 
       <div className="mt-20 flex w-full flex-col items-center gap-3">
@@ -108,6 +115,7 @@ export default function Breathing() {
         {state === 'medium' && offerOpen && (
           <Offer text="Try grounding together?" action="Start grounding" to="/grounding" onKeep={() => setKeepSince(Date.now())} />
         )}
+        {stay && <StayHelp />}
         {returning && <Button to="/check-in">I feel a bit better</Button>}
         {(state === 'light' || state === 'medium') && !offerOpen && (
           <Button to="/check-in" variant="outline">I feel a bit better</Button>
@@ -126,3 +134,30 @@ function Offer({ text, action, to, onKeep }) {
     </div>
   )
 }
+
+// in "stay" breathing: the people she trusts and the emergency number, one tap away
+function StayHelp() {
+  const { user } = useAuth()
+  const emergency = getEmergency(user?.country_code)
+  const [contacts, setContacts] = useState([])
+
+  useEffect(() => {
+    if (user) listContacts().then(setContacts).catch(() => setContacts([]))
+  }, [user])
+
+  const small = 'flex flex-1 items-center justify-center gap-2 rounded-2xl border px-3 py-2.5 text-sm active:scale-[0.98]'
+  return (
+    <div className="flex w-full flex-col items-center gap-2">
+      <p className="max-w-xs text-center text-xs text-sage/70 text-balance">
+        If you have chest pain, or it lasts longer, contact a doctor or emergency services.
+      </p>
+      <div className="flex w-full flex-wrap gap-2">
+        {contacts.slice(0, 2).map(c => (
+          <a key={c.id} href={`tel:${c.phone}`} className={`${small} border-sage text-sage`}>Call {c.name}</a>
+        ))}
+        <a href={telLink(emergency)} className={`${small} border-alert text-alert`}>Emergency {emergency}</a>
+      </div>
+    </div>
+  )
+}
+

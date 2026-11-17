@@ -57,8 +57,8 @@ export default function NotBetter() {
           className="flex w-full items-center justify-center gap-2 rounded-3xl border border-alert px-6 py-3 text-alert active:scale-[0.98]">
           <PhoneIcon /> Emergency services <strong>{emergency}</strong>
         </a>
-        {/* 2 minutes of breathing with the ring, then "How do you feel now?" */}
-        <Button to="/breathe" state={{ quiet: true }} variant="link">Keep breathing</Button>
+        {/* stay: breathing with no timer and no more questions, help one tap away */}
+        <Button to="/breathe" state={{ stay: true }} variant="link">Keep breathing</Button>
         {user && contacts.length === 0 && (
           <Button to="/settings" variant="link" className="-mt-2 text-sage/70">Add someone you trust</Button>
         )}
