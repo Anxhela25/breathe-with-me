@@ -96,14 +96,20 @@ export default function Summary() {
             Include my notes
           </label>
           <pre className="mt-3 w-full whitespace-pre-wrap rounded-2xl border border-sage/15 bg-white p-4 font-sans text-sm">{text}</pre>
-          <Button onClick={makePdf} disabled={busy} className="mt-6 disabled:opacity-50">
-            {busy ? 'Creating PDF…' : 'Download PDF'}
-          </Button>
-          <Button onClick={share} variant="outline" className="mt-3">Share or copy as text</Button>
         </>
       )}
-      {status && <p role="status" className="mt-3 text-center text-sm">{status}</p>}
-      <Button to="/insights" variant="link" className="mt-2">Back to patterns</Button>
+      <div className="mt-auto flex w-full flex-col items-center gap-3 pt-6">
+        {status && <p role="status" className="text-center text-sm">{status}</p>}
+        {text && (
+          <>
+            <Button onClick={makePdf} disabled={busy} className="disabled:opacity-50">
+              {busy ? 'Creating PDF…' : 'Download PDF'}
+            </Button>
+            <Button onClick={share} variant="outline">Share or copy as text</Button>
+          </>
+        )}
+        <Button to="/insights" variant="link">Back to patterns</Button>
+      </div>
     </Screen>
   )
 }

@@ -80,6 +80,15 @@ export default function Breathing() {
 
         {showQuestion && <NumberPicker question="How strong is it right now, 1 to 10?" onPick={pick} />}
 
+        {stillStrong && (
+          <p className="text-center text-sm text-sage">
+            It is still very strong. Please call emergency services or someone you trust.
+          </p>
+        )}
+      </div>
+
+      {/* offers at the bottom, like the buttons on every page */}
+      <div className="mt-auto flex w-full flex-col items-center gap-3 pt-8">
         {/* the chat stays paused after a crisis, so offer a way to finish instead */}
         {state === 'light' && offerReady && !chatPaused && (
           <Offer text="Would you like to chat?" action="Chat with me" to="/chat" onKeep={() => setOfferHidden(true)} />
@@ -93,12 +102,6 @@ export default function Breathing() {
         )}
         {(state === 'light' || state === 'medium') && offerHidden && (
           <Button to="/check-in" variant="link" className="text-sage/70">I feel a bit better</Button>
-        )}
-
-        {stillStrong && (
-          <p className="text-center text-sm text-sage">
-            It is still very strong. Please call emergency services or someone you trust.
-          </p>
         )}
       </div>
     </Screen>

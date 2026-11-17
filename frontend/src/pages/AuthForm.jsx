@@ -100,14 +100,14 @@ export default function AuthForm({ mode }) {
           We sent a 6-digit code to <strong>{codeSentTo}</strong>. It expires in 15 minutes.
           If you can't find it, look in your spam folder.
         </p>
-        <form onSubmit={confirmCode} className="mt-8 flex w-full flex-col gap-3" noValidate>
+        <form onSubmit={confirmCode} className="mt-8 flex w-full flex-1 flex-col gap-3" noValidate>
           <label htmlFor="signup-code" className="sr-only">6-digit code</label>
           <input id="signup-code" inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="000000"
             value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ''))} autoFocus
             className={`${inputClass} text-center text-2xl tracking-[0.4em]`} />
           {notice && <p role="status" className="px-1 text-sm">{notice}</p>}
           {error && <p role="alert" className="px-1 text-sm font-bold">{error}</p>}
-          <Button type="submit" disabled={busy || code.length !== 6} className="mt-3 disabled:opacity-50">
+          <Button type="submit" disabled={busy || code.length !== 6} className="mt-auto disabled:opacity-50">
             Create account
           </Button>
         </form>
@@ -129,7 +129,7 @@ export default function AuthForm({ mode }) {
       </p>
     )}>
       <h1 className="mt-10 text-2xl font-bold">{isRegister ? 'Create your account' : 'Welcome back'}</h1>
-      <form onSubmit={submit} className="mt-8 flex w-full flex-col gap-3" noValidate>
+      <form onSubmit={submit} className="mt-8 flex w-full flex-1 flex-col gap-3" noValidate>
         <label htmlFor="email" className="sr-only">Email</label>
         <input id="email" type="email" autoComplete="email" inputMode="email" placeholder="Email"
           value={email} onChange={e => setEmail(e.target.value)} required className={inputClass} />
@@ -153,7 +153,7 @@ export default function AuthForm({ mode }) {
         )}
         {error && <p role="alert" className="px-1 text-sm font-bold">{error}</p>}
         <Button type="submit" disabled={busy || !email || !password || (isRegister && !(isAdult && consent))}
-          className="mt-3 disabled:opacity-50">
+          className="mt-auto disabled:opacity-50">
           {isRegister ? 'Continue' : 'Log in'}
         </Button>
       </form>

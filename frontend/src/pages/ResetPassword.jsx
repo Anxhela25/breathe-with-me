@@ -50,7 +50,7 @@ export default function ResetPassword() {
       <h1 className="mt-10 text-2xl font-bold">Check your email</h1>
       <p className="mt-2 text-center text-sage/80">{notice}</p>
       <p className="mt-1 text-center text-sm text-sage/70">{email}</p>
-      <form onSubmit={submit} className="mt-8 flex w-full flex-col gap-3" noValidate>
+      <form onSubmit={submit} className="mt-8 flex w-full flex-1 flex-col gap-3" noValidate>
         <label htmlFor="code" className="sr-only">6-digit code</label>
         <input id="code" inputMode="numeric" autoComplete="one-time-code" placeholder="6-digit code" maxLength={6}
           value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ''))}
@@ -59,7 +59,7 @@ export default function ResetPassword() {
           value={password} onChange={e => setPassword(e.target.value)} />
         <PasswordHint password={password} min={MIN_PASSWORD} />
         {error && <p role="alert" className="px-1 text-sm font-bold">{error}</p>}
-        <Button type="submit" disabled={busy || code.length !== 6 || !password} className="mt-3 disabled:opacity-50">
+        <Button type="submit" disabled={busy || code.length !== 6 || !password} className="mt-auto disabled:opacity-50">
           Save new password
         </Button>
       </form>

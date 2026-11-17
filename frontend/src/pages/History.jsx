@@ -84,7 +84,7 @@ export default function History() {
           </ul>
         </section>
       )}
-      <Button to="/" variant="link" className="mt-6">Back home</Button>
+      <Button to="/" variant="link" className="mt-auto pt-6">Back home</Button>
     </Screen>
   )
 }

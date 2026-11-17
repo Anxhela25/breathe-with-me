@@ -199,7 +199,7 @@ export default function Settings() {
           </div>
         )}
       </section>
-      <div className="flex w-full flex-col items-center gap-1 pt-2">
+      <div className="mt-auto flex w-full flex-col items-center gap-1 pt-6">
         <Button onClick={() => navigate('/')}>Done</Button>
         <Button to="/history" variant="link">My history</Button>
         <Button to="/calm-check" variant="link">Calm check | 1 min</Button>

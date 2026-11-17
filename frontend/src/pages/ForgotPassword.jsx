@@ -31,12 +31,12 @@ export default function ForgotPassword() {
     <Screen>
       <h1 className="mt-10 text-2xl font-bold">Forgot your password?</h1>
       <p className="mt-2 text-center text-sage/80">Enter your email and we'll send you a 6-digit code.</p>
-      <form onSubmit={submit} className="mt-8 flex w-full flex-col gap-3" noValidate>
+      <form onSubmit={submit} className="mt-8 flex w-full flex-1 flex-col gap-3" noValidate>
         <label htmlFor="email" className="sr-only">Email</label>
         <input id="email" type="email" autoComplete="email" inputMode="email" placeholder="Email"
           value={email} onChange={e => setEmail(e.target.value)} className={inputClass} />
         {error && <p role="alert" className="px-1 text-sm font-bold">{error}</p>}
-        <Button type="submit" disabled={busy || !email.trim()} className="mt-3 disabled:opacity-50">Send code</Button>
+        <Button type="submit" disabled={busy || !email.trim()} className="mt-auto disabled:opacity-50">Send code</Button>
       </form>
       <Button to="/login" variant="link" className="mt-3">Back to log in</Button>
     </Screen>

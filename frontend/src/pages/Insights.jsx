@@ -13,7 +13,7 @@ export default function Insights() {
     return (
       <Screen>
         <p className="mt-12 text-center">Your patterns couldn't be loaded. Please check your connection.</p>
-        <Button to="/history" variant="link" className="mt-4">Back to history</Button>
+        <Button to="/history" variant="link" className="mt-auto">Back to history</Button>
       </Screen>
     )
   }
@@ -45,8 +45,10 @@ export default function Insights() {
         </div>
       )}
 
-      {data.count > 0 && <Button to="/summary" className="mt-8">Export summary for my doctor</Button>}
-      <Button to="/history" variant="link" className="mt-2">Back to history</Button>
+      <div className="mt-auto flex w-full flex-col items-center gap-2 pt-8">
+        {data.count > 0 && <Button to="/summary">Export summary for my doctor</Button>}
+        <Button to="/history" variant="link">Back to history</Button>
+      </div>
     </Screen>
   )
 }
