@@ -268,7 +268,10 @@ export default function Settings() {
       </Group>
 
       {/* no Done button: changes save as you go, and Back is in the header */}
-      <p className="mt-10 mb-2 text-center text-xs text-sage/50">Breathe With Me · Support tool, not treatment</p>
+      <p className="mt-10 mb-4 text-center text-xs leading-5 text-sage/50">
+        <span className="block font-bold">Breathe With Me</span>
+        Support tool, not treatment
+      </p>
     </Screen>
   )
 }
