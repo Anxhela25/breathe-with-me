@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 
 const iconButton = 'flex h-11 w-11 items-center justify-center rounded-full text-sage active:bg-pistachio focus-visible:outline-2 focus-visible:outline-sage'
@@ -9,17 +9,26 @@ const iconButton = 'flex h-11 w-11 items-center justify-center rounded-full text
  * `calm` gives the screen a soft cream-to-blue background and a gentle fade-in, for quiet spaces like
  * the calm check (give each step its own `key` so it fades in again).
  */
-export default function Screen({ children, footer, calm = false, home = true }) {
+export default function Screen({ children, footer, calm = false, home = true, back = false }) {
   const { user } = useAuth()
-  const { pathname } = useLocation()
+  const navigate = useNavigate()
+  const { pathname, key } = useLocation()
   const showSettings = user && pathname !== '/settings'
 
   const page = (
     <div className="mx-auto flex min-h-full w-full max-w-md flex-1 flex-col px-6 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
       {/* keeps scrolled content from showing behind the iPhone's clock and battery */}
       <div className="fixed inset-x-0 top-0 z-20 h-[env(safe-area-inset-top)] bg-cream" aria-hidden />
-      <header className="grid grid-cols-[2.75rem_1fr_2.75rem] items-center border-b border-sage/10 pb-3">
-        {home ? (
+      <header className="grid grid-cols-[4.5rem_1fr_4.5rem] items-center border-b border-sage/10 pb-3">
+        {back ? (
+          // pages you browse (settings, history): back to where you came from, home if opened directly
+          <button type="button" onClick={() => (key === 'default' ? navigate('/') : navigate(-1))}
+            className="flex h-11 items-center gap-0.5 rounded-full pr-2 text-sage active:bg-pistachio">
+            <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2"
+              strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M15 5l-7 7 7 7" /></svg>
+            Back
+          </button>
+        ) : home ? (
           <Link to="/" aria-label="Home" className={iconButton}>
             <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8"
               strokeLinecap="round" strokeLinejoin="round" aria-hidden>

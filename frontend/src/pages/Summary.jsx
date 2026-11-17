@@ -85,7 +85,7 @@ export default function Summary() {
   }
 
   return (
-    <Screen>
+    <Screen back>
       <h1 className="mt-6 text-2xl font-bold">Summary for my doctor</h1>
       <p className="mt-2 text-center text-sm text-sage/70">You choose who sees this. Nothing is sent automatically.</p>
       {text && (
@@ -108,7 +108,6 @@ export default function Summary() {
             <Button onClick={share} variant="outline">Share or copy as text</Button>
           </>
         )}
-        <Button to="/insights" variant="link">Back to patterns</Button>
       </div>
     </Screen>
   )

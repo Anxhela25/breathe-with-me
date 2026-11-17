@@ -21,7 +21,7 @@ export default function History() {
   const empty = episodes?.length === 0 && calmChecks?.length === 0
 
   return (
-    <Screen footer={<Button to="/settings" variant="link" className="text-sage/70">Settings</Button>}>
+    <Screen back>
       <h1 className="mt-6 text-2xl font-bold">My history</h1>
       {failed && <p className="mt-6 text-center">Your history couldn't be loaded. Please check your connection.</p>}
       {empty && (
@@ -84,7 +84,6 @@ export default function History() {
           </ul>
         </section>
       )}
-      <Button to="/" variant="link" className="mt-auto pt-6">Back home</Button>
     </Screen>
   )
 }

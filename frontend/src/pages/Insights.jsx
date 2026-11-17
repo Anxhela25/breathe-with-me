@@ -11,16 +11,15 @@ export default function Insights() {
 
   if (failed) {
     return (
-      <Screen>
+      <Screen back>
         <p className="mt-12 text-center">Your patterns couldn't be loaded. Please check your connection.</p>
-        <Button to="/history" variant="link" className="mt-auto">Back to history</Button>
       </Screen>
     )
   }
-  if (!data) return <Screen />
+  if (!data) return <Screen back />
 
   return (
-    <Screen footer={<p className="text-xs text-sage/60">These are patterns, not a diagnosis.</p>}>
+    <Screen back footer={<p className="text-xs text-sage/60">These are patterns, not a diagnosis.</p>}>
       <h1 className="mt-6 text-2xl font-bold">Your patterns</h1>
 
       {!data.ready && (
@@ -47,7 +46,6 @@ export default function Insights() {
 
       <div className="mt-auto flex w-full flex-col items-center gap-2 pt-8">
         {data.count > 0 && <Button to="/summary">Export summary for my doctor</Button>}
-        <Button to="/history" variant="link">Back to history</Button>
       </div>
     </Screen>
   )

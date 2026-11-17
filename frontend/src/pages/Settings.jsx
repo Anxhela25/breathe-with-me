@@ -117,13 +117,11 @@ export default function Settings() {
   const initial = (user.email?.[0] ?? '?').toUpperCase()
 
   return (
-    <Screen>
-      <div className="mt-2 flex w-full items-center justify-between">
-        <button type="button" onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/'))}
-          className="py-2 pr-4 text-sage">‹ Back</button>
+    <Screen back>
+      <div className="mt-4 flex w-full items-baseline justify-between">
+        <h1 className="text-3xl font-bold">Settings</h1>
         <p role="status" aria-live="polite" className="text-sm font-bold text-sage">{status}</p>
       </div>
-      <h1 className="mt-1 w-full text-3xl font-bold">Settings</h1>
 
       {/* account */}
       <div className="mt-5 flex w-full items-center gap-4 rounded-2xl bg-white p-4 shadow-sm shadow-sage/5">
@@ -269,7 +267,7 @@ export default function Settings() {
         )}
       </Group>
 
-      {/* no Done button: changes save as you go, and Back is at the top */}
+      {/* no Done button: changes save as you go, and Back is in the header */}
       <p className="mt-10 mb-2 text-center text-xs text-sage/50">Breathe With Me · Support tool, not treatment</p>
     </Screen>
   )
