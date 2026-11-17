@@ -20,7 +20,7 @@ const input = 'w-full rounded-xl border border-sage/20 bg-cream px-4 py-3 text-b
 // iPhone-style grouped list: a small grey title, then a white card of rows
 function Group({ title, note, children }) {
   return (
-    <section className="mt-7 w-full">
+    <section className="mt-9 w-full">
       {title && <h2 className="mb-2 px-4 text-xs font-bold tracking-wider text-sage/60 uppercase">{title}</h2>}
       <div className="divide-y divide-sage/10 overflow-hidden rounded-2xl bg-white shadow-sm shadow-sage/5">{children}</div>
       {note && <p className="mt-2 px-4 text-xs text-sage/60">{note}</p>}
@@ -234,17 +234,19 @@ export default function Settings() {
         ))}
       </Group>
 
-      <Group>
-        <button type="button" onClick={() => { logout(); navigate('/', { replace: true }) }}
-          className={`${row} justify-center font-bold text-sage`}>
-          Log out
+      <Group title="Account">
+        <button type="button" onClick={() => { logout(); navigate('/', { replace: true }) }} className={row}>
+          <Tile color="bg-pistachio text-sage">
+            <svg {...icon}><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 16l-4-4 4-4M6 12h10" /></svg>
+          </Tile>
+          <span className="flex-1">Log out</span>
         </button>
-      </Group>
-
-      <Group>
         {!confirmDelete ? (
-          <button type="button" onClick={() => setConfirmDelete(true)} className={`${row} justify-center text-alert`}>
-            Delete my account
+          <button type="button" onClick={() => setConfirmDelete(true)} className={`${row} text-alert`}>
+            <Tile color="bg-alert/15 text-alert">
+              <svg {...icon}><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" /></svg>
+            </Tile>
+            <span className="flex-1">Delete my account</span>
           </button>
         ) : (
           <div role="alertdialog" aria-labelledby="delete-title" aria-describedby="delete-text" className="p-4">
@@ -267,9 +269,8 @@ export default function Settings() {
         )}
       </Group>
 
-      <div className="mt-auto w-full pt-8">
-        <Button onClick={() => navigate('/')}>Done</Button>
-      </div>
+      {/* no Done button: changes save as you go, and Back is at the top */}
+      <p className="mt-10 mb-2 text-center text-xs text-sage/50">Breathe With Me · Support tool, not treatment</p>
     </Screen>
   )
 }

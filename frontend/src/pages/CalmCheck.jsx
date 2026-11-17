@@ -419,9 +419,8 @@ function SlowerGuide({ onDone }) {
     <Screen calm key="slower">
       <div className="mt-8"><BreathingCircle {...SLOWER} progress={seconds / MEASURE_S} /></div>
       <p className="mt-8 text-center">Make the out-breath a little longer.</p>
-      <div className="mt-8 grid w-full grid-cols-2 gap-3">
+      <div className="mt-8 w-1/2">
         <StatTile icon={<ClockIcon />} label="Left" value={timeLeft(MEASURE_S - seconds)} tone="blue" />
-        <StatTile icon={<BreathIcon />} label="Pace" value="In 5s, out 7s" tone="lavender" />
       </div>
       <div className="mt-auto flex flex-col items-center pt-4">
         {done ? <Button onClick={onDone}>Done</Button> : <Button variant="link" onClick={onDone}>Stop</Button>}
