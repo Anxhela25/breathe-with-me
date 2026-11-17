@@ -10,6 +10,7 @@ import { useSession } from '../context/SessionContext.jsx'
 const ASK_AFTER_S = 60  // one full minute of breathing before the first question
 const OFFER_AFTER_S = 60
 const STRONG_RECHECK_S = 120
+const KEEP_S = 120  // "Keep breathing" on an offer: this long, then "How do you feel now?"
 
 function stateFor(level) {
   if (level <= 4) return 'light'
@@ -27,7 +28,9 @@ export default function Breathing() {
   const [state, setState] = useState('start')
   const [strongSince, setStrongSince] = useState(null)
   const [goingDown, setGoingDown] = useState(false)
-  const [offerHidden, setOfferHidden] = useState(false)
+  // set when she taps "Keep breathing" on an offer; the ring then runs until it's time to ask again
+  const [keepSince, setKeepSince] = useState(null)
+  const offerHidden = keepSince !== null
   const softMessage = location.state?.soft === true
   // from "Not feeling better yet?": just the circle, no more questions
   const quiet = location.state?.quiet === true
@@ -58,11 +61,16 @@ export default function Breathing() {
     // lower but still 8+ counts as progress: one more round
     setGoingDown(state === 'check' && next === 'strong')
     if (next === 'strong') setStrongSince(Date.now())
-    setOfferHidden(false)
+    setKeepSince(null)
     setState(next)
   }
 
   const showQuestion = !quiet && ((state === 'start' && elapsed >= ASK_AFTER_S) || state === 'check')
+  // after "Keep breathing": ask how she feels once the ring closes, instead of breathing with no end
+  useEffect(() => {
+    if (keepSince && (now - keepSince) / 1000 >= KEEP_S) navigate('/check-in')
+  }, [keepSince, now, navigate])
+
   const offerReady = elapsed >= OFFER_AFTER_S && !offerHidden
   const chatPaused = session.crisisShown
   // a ring closes around the circle until the next question, so she can see it's going somewhere
@@ -70,6 +78,7 @@ export default function Breathing() {
   let progress = null
   if (firstMinute) progress = elapsed / ASK_AFTER_S
   if (state === 'strong' && strongSince) progress = (now - strongSince) / 1000 / STRONG_RECHECK_S
+  if (keepSince) progress = (now - keepSince) / 1000 / KEEP_S
 
   return (
     <Screen
@@ -81,7 +90,8 @@ export default function Breathing() {
       <p className="mt-8 text-base">
         {firstMinute && 'Breathe with me for 1 minute.'}
         {state === 'strong' && (goingDown ? "It's going down. 2 more minutes." : 'Breathe with me for 2 minutes.')}
-        {!firstMinute && state !== 'strong' && <>Follow the circle. I&apos;m here.</>}
+        {keepSince && 'Breathe with me for 2 more minutes.'}
+        {!firstMinute && state !== 'strong' && !keepSince && <>Follow the circle. I&apos;m here.</>}
       </p>
 
       <div className="mt-20 flex w-full flex-col items-center gap-3">
@@ -99,18 +109,18 @@ export default function Breathing() {
       <div className="mt-auto flex w-full flex-col items-center gap-3 pt-8">
         {/* the chat stays paused after a crisis, so offer a way to finish instead */}
         {state === 'light' && offerReady && !chatPaused && (
-          <Offer text="Would you like to chat?" action="Chat with me" to="/chat" onKeep={() => setOfferHidden(true)} />
+          <Offer text="Would you like to chat?" action="Chat with me" to="/chat" onKeep={() => setKeepSince(Date.now())} />
         )}
         {state === 'light' && offerReady && chatPaused && (
           <Offer text="Are you feeling a bit calmer?" action="I feel a bit better" to="/check-in"
-            onKeep={() => setOfferHidden(true)} />
+            onKeep={() => setKeepSince(Date.now())} />
         )}
         {state === 'medium' && offerReady && (
-          <Offer text="Try grounding together?" action="Start grounding" to="/grounding" onKeep={() => setOfferHidden(true)} />
+          <Offer text="Try grounding together?" action="Start grounding" to="/grounding" onKeep={() => setKeepSince(Date.now())} />
         )}
         {quiet && <Button to="/check-in">I feel a bit better</Button>}
         {(state === 'light' || state === 'medium') && offerHidden && (
-          <Button to="/check-in" variant="link" className="text-sage/70">I feel a bit better</Button>
+          <Button to="/check-in" variant="outline">I feel a bit better</Button>
         )}
       </div>
     </Screen>
