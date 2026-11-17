@@ -20,8 +20,10 @@ export default function CheckIn() {
 
   return (
     <Screen>
-      <div className="mt-10 h-32 w-32 rounded-full bg-pistachio" aria-hidden />
-      <div className="mt-auto w-full pt-8">
+      <div className="mt-16 flex h-64 w-64 items-center justify-center" aria-hidden>
+        <div className="h-40 w-40 rounded-full bg-pistachio" />
+      </div>
+      <div className="mt-24 w-full">
         <NumberPicker question="How do you feel now, 1 to 10?" onPick={pick} />
       </div>
     </Screen>
