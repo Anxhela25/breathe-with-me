@@ -12,8 +12,10 @@ export default function CheckIn() {
 
   // where to go depends on the number now, not on what happened before
   function pick(level) {
+    const previous = session.lastLevel
     recordLevel(level)
-    if (level <= LIGHT) navigate('/closing')
+    // light, but higher than last time (3 -> 4): the closing page says so instead of "it passed"
+    if (level <= LIGHT) navigate('/closing', { state: { rising: previous != null && level > previous } })
     // grounding once; if it's still 5-7 after that, quiet breathing instead of the same exercise again
     else if (level <= MEDIUM) {
       if (session.usedGrounding) navigate('/breathe', { state: { quiet: true } })
