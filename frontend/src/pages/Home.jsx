@@ -1,30 +1,72 @@
-import { useNavigate } from 'react-router-dom'
-import Screen from '../components/Screen.jsx'
-import Button from '../components/Button.jsx'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext.jsx'
 import { useSession } from '../context/SessionContext.jsx'
+import { useReducedMotion } from '../lib/motion.js'
+
+const OPEN_MS = 700  // the start circle grows into the breathing circle
 
 export default function Home() {
   const navigate = useNavigate()
   const { start } = useSession()
+  const { user } = useAuth()
+  const reduced = useReducedMotion()
+  const [opening, setOpening] = useState(false)
 
-  function needHelp() {
+  function begin() {
+    if (opening) return
     start()
-    navigate('/breathe')
+    if (reduced) return navigate('/breathe')
+    setOpening(true)
+    setTimeout(() => navigate('/breathe'), OPEN_MS)
   }
 
   return (
-    <Screen home={false} footer={<p className="text-xs text-sage/60">Support tool, not treatment.</p>}>
-      <div className="mt-10 flex h-20 w-20 items-center justify-center rounded-full bg-pistachio" aria-hidden>
-        <svg viewBox="0 0 24 24" className="h-8 w-8 stroke-sage" fill="none" strokeWidth="1.5" strokeLinecap="round">
-          <path d="M3 8h11a3 3 0 1 0-3-3M3 12h15a3 3 0 1 1-3 3M3 16h8" />
-        </svg>
+    <div className="flex min-h-full flex-col bg-gradient-to-b from-cream via-pistachio to-soft-blue">
+      <div className="mx-auto flex w-full max-w-md flex-1 flex-col items-center px-6 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+        <header className="flex h-11 w-full justify-end">
+          {user && (
+            <Link to="/settings" aria-label="Settings"
+              className="flex h-11 w-11 items-center justify-center rounded-full text-sage active:bg-white/50 focus-visible:outline-2 focus-visible:outline-sage">
+              <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="1.6"
+                strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" />
+              </svg>
+            </Link>
+          )}
+        </header>
+
+        <div className={`flex flex-1 flex-col items-center justify-center transition-opacity duration-500 ${opening ? 'opacity-0' : ''}`}>
+          <p className="text-3xl text-sage">Hey!</p>
+          <p className="text-3xl text-sage">Let&apos;s</p>
+          <h1 className="mt-1 text-center text-[2.6rem] font-bold leading-tight text-sage-dark">Breathe With Me</h1>
+        </div>
+
+        {/* breathes slowly while waiting; on tap it grows and the breathing page takes over */}
+        <button type="button" onClick={begin} aria-label="Start breathing, I need help now"
+          className="relative flex h-44 w-44 items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sage">
+          <span className={`absolute inset-0 rounded-full bg-white/40 ${opening ? '' : 'animate-halo'}`} aria-hidden />
+          <span
+            className={`absolute inset-0 rounded-full bg-white shadow-xl shadow-sage/15 transition-transform ease-out ${opening ? '' : 'animate-breathe'}`}
+            style={opening ? { transform: 'scale(1.5)', transitionDuration: `${OPEN_MS}ms` } : undefined}
+            aria-hidden />
+          <span className={`relative text-3xl font-bold text-sage transition-opacity duration-300 ${opening ? 'opacity-0' : ''}`}>
+            Start
+          </span>
+        </button>
+
+        <div className={`flex flex-1 flex-col items-center justify-center gap-6 transition-opacity duration-500 ${opening ? 'opacity-0' : ''}`}>
+          <p className="text-center text-xl text-sage-dark">When it feels like too much,<br />tap Start. I&apos;ll breathe with you.</p>
+          {/* daily practice when calm; it also builds her usual rhythm (baseline) */}
+          <div className="flex items-center gap-2 text-sm text-sage">
+            <Link to="/calm-check" className="rounded-full bg-white/60 px-4 py-2 active:bg-white">Calm check | 1 min</Link>
+            <Link to="/history" className="rounded-full bg-white/60 px-4 py-2 active:bg-white">My history</Link>
+          </div>
+        </div>
+
+        <p className="text-xs text-sage/70">Support tool, not treatment.</p>
       </div>
-      <div className="mt-auto mb-auto flex w-full flex-col items-center gap-4">
-        <Button onClick={needHelp} className="py-6 text-xl">I need help now.</Button>
-        {/* daily practice when calm; it also builds her usual rhythm (baseline) */}
-        <Button to="/calm-check" variant="outline">Calm check | 1 min</Button>
-        <Button to="/history" variant="link">Review my history.</Button>
-      </div>
-    </Screen>
+    </div>
   )
 }
