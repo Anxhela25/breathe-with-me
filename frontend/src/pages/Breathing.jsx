@@ -7,7 +7,7 @@ import NumberPicker from '../components/NumberPicker.jsx'
 import { useSession } from '../context/SessionContext.jsx'
 
 // in seconds; lower them while testing
-const ASK_AFTER_S = 25
+const ASK_AFTER_S = 60  // one full minute of breathing before the first question
 const OFFER_AFTER_S = 60
 const STRONG_RECHECK_S = 120
 const STRONG_CHECKS_FOR_HELP = 2
@@ -61,8 +61,11 @@ export default function Breathing() {
   const offerReady = elapsed >= OFFER_AFTER_S && !offerHidden
   const stillStrong = state === 'strong' && strongChecks >= STRONG_CHECKS_FOR_HELP
   const chatPaused = session.crisisShown
-  // strong: a ring closes around the circle over the 2 minutes, so she can see it's going somewhere
-  const strongProgress = state === 'strong' && strongSince ? (now - strongSince) / 1000 / STRONG_RECHECK_S : null
+  // a ring closes around the circle until the next question, so she can see it's going somewhere
+  const firstMinute = state === 'start' && !showQuestion
+  let progress = null
+  if (firstMinute) progress = elapsed / ASK_AFTER_S
+  if (state === 'strong' && strongSince) progress = (now - strongSince) / 1000 / STRONG_RECHECK_S
 
   return (
     <Screen
@@ -70,9 +73,11 @@ export default function Breathing() {
         <Button to="/urgent" variant="link" className="text-xs text-sage/70">I need urgent help</Button>
       )}
     >
-      <div className="mt-16"><BreathingCircle progress={strongProgress} /></div>
-      <p className="mt-4 text-base">
-        {state === 'strong' ? 'Breathe with me for 2 minutes.' : <>Follow the circle. I&apos;m here.</>}
+      <div className="mt-16"><BreathingCircle progress={progress} /></div>
+      <p className="mt-8 text-base">
+        {firstMinute && 'Breathe with me for 1 minute.'}
+        {state === 'strong' && 'Breathe with me for 2 minutes.'}
+        {!firstMinute && state !== 'strong' && <>Follow the circle. I&apos;m here.</>}
       </p>
 
       <div className="mt-20 flex w-full flex-col items-center gap-3">
