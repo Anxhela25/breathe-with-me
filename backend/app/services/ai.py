@@ -149,6 +149,9 @@ RISK_PROMPT = """\
 You are a safety classifier for a panic-attack self-help app. Read the user's recent messages.
 risk is YES if they express any wish to die, suicidal thoughts or plans, wanting to hurt themselves,
 or not wanting to live, even when misspelled, in slang, hinted at, or in any language.
+If it could mean not wanting to live, risk is YES too: for example "I don't want to breathe anymore",
+"I want to disappear", "I can't do this anymore", "no one would miss me", above all together with
+loneliness or hopelessness. A YES only makes the app ask whether they are safe, so when unsure, say YES.
 risk is NO if they only express fear of dying or of a physical symptom (for example "I'm going to die",
 "I don't want to die", "my heart will stop"), which is common during panic, or anything else.
 english is YES if the LAST message is written in English (typos, slang and texting style still count
