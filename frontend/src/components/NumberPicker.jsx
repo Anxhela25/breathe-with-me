@@ -1,10 +1,5 @@
-// same groups as the breathing page: 1-4 light, 5-7 medium, 8-10 strong.
-// soft colours on purpose, no red: red would add alarm while she is already scared
-function tint(n) {
-  if (n <= 4) return 'bg-pistachio/60'
-  if (n <= 7) return 'bg-soft-blue/50'
-  return 'bg-lavender/70'
-}
+// 8-10 is "strong" on the breathing page, so those get a red border
+const border = n => (n >= 8 ? 'border-alert' : 'border-sage')
 
 export default function NumberPicker({ question, onPick }) {
   return (
@@ -17,7 +12,7 @@ export default function NumberPicker({ question, onPick }) {
             key={n}
             type="button"
             onClick={() => onPick(n)}
-            className={`h-12 min-w-12 rounded-xl border-2 border-sage text-lg font-bold text-sage-dark active:scale-95 active:bg-white ${tint(n)}`}
+            className={`h-12 min-w-12 rounded-xl border-2 bg-white text-lg font-bold text-sage-dark active:scale-95 active:bg-pistachio ${border(n)}`}
           >
             {n}
           </button>
