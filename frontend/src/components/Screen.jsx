@@ -9,14 +9,14 @@ const iconButton = 'flex h-11 w-11 items-center justify-center rounded-full text
  * `calm` gives the screen a soft cream-to-blue background and a gentle fade-in, for quiet spaces like
  * the calm check (give each step its own `key` so it fades in again).
  */
-export default function Screen({ children, footer, calm = false, home = true, back = false }) {
+export default function Screen({ children, footer, calm = false, home = true, back = false, fit = false }) {
   const { user } = useAuth()
   const navigate = useNavigate()
   const { pathname, key } = useLocation()
   const showSettings = user && pathname !== '/settings'
 
   const page = (
-    <div className="mx-auto flex min-h-full w-full max-w-md flex-1 flex-col px-6 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+    <div className={`mx-auto flex ${fit ? 'h-full' : 'min-h-full'} w-full max-w-md flex-1 flex-col px-6 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]`}>
       {/* keeps scrolled content from showing behind the iPhone's clock and battery */}
       <div className="fixed inset-x-0 top-0 z-20 h-[env(safe-area-inset-top)] bg-cream" aria-hidden />
       <header className="grid grid-cols-[4.5rem_1fr_4.5rem] items-center border-b border-sage/10 pb-3">
@@ -47,7 +47,7 @@ export default function Screen({ children, footer, calm = false, home = true, ba
           </Link>
         ) : <span />}
       </header>
-      <main className={`flex flex-1 flex-col items-center ${calm ? 'animate-fade-in' : ''}`}>{children}</main>
+      <main className={`flex flex-1 flex-col items-center ${fit ? 'min-h-0' : ''} ${calm ? 'animate-fade-in' : ''}`}>{children}</main>
       {footer && <footer className="pt-4 text-center">{footer}</footer>}
     </div>
   )
