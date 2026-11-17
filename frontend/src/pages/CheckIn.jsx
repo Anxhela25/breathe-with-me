@@ -7,17 +7,18 @@ const LIGHT = 4  // same as "light" on the breathing screen
 
 export default function CheckIn() {
   const navigate = useNavigate()
-  const { session, recordLevel } = useSession()
+  const { session, recordLevel, mark } = useSession()
 
   function pick(level) {
-    const previous = session.lastLevel
     recordLevel(level)
-    // finish when it eased, or when it's light anyway (after a 1 there's no lower number to give)
-    const better = level <= LIGHT || (previous == null ? level < 8 : level < previous)
-    if (better) navigate('/closing')
-    // already offered the "not feeling better" choices once: go back there, not into another loop
-    else if (session.notBetterShown) navigate('/not-better')
-    else navigate('/breathe', { state: { soft: true } })
+    // "You did it" only when it's really light: 10 -> 8 is better, but still a lot
+    if (level <= LIGHT) navigate('/closing')
+    // second time it hasn't eased, or the choices were already offered: no new loop, show them
+    else if (session.notBetterShown || session.checkInMissed) navigate('/not-better')
+    else {
+      mark({ checkInMissed: true })
+      navigate('/breathe', { state: { soft: true } })
+    }
   }
 
   return (
