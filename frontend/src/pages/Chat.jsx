@@ -25,6 +25,10 @@ export default function Chat() {
   const [safeConfirmed, setSafeConfirmed] = useState(false)
   const list = useRef(null)
   const screen = useVisibleScreen()
+  const keyboardOpen = screen.height < window.innerHeight - 100
+
+  // "Are you safe?" is answered with its two buttons: close the keyboard so the whole question shows
+  useEffect(() => { if (asking) document.activeElement?.blur() }, [asking])
 
   // newest message in view: scroll only the message list, never the page
   useEffect(() => {
@@ -95,7 +99,7 @@ export default function Chat() {
   // the header stays, the messages sit right above the text box, only the messages scroll
   return (
     <div className="fixed inset-x-0 overflow-hidden" style={{ top: screen.top, height: screen.height }}>
-      <Screen fit>
+      <Screen fit keyboard={keyboardOpen}>
         <p className="mt-3 rounded-full bg-pistachio px-3 py-1 text-xs text-sage">You are talking to an AI, not a person.</p>
 
         {!started && <p className="mt-10 text-center text-xl">Do you want to tell me what you feel?</p>}
@@ -178,7 +182,7 @@ export default function Chat() {
         </form>
 
         {/* always on screen, whatever she writes and however long the chat gets */}
-        <div className="sticky bottom-0 z-10 mt-3 w-full bg-cream pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        <div className="mt-3 w-full">
           <Link to="/urgent"
             className="block w-full rounded-3xl border-2 border-alert px-6 py-3 text-center font-bold text-alert active:scale-[0.98]">
             I need urgent help
