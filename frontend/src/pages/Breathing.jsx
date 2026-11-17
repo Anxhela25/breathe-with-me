@@ -71,7 +71,7 @@ export default function Breathing() {
       <div className="mt-16"><BreathingCircle /></div>
       <p className="mt-4 text-base">Follow the circle. I&apos;m here.</p>
 
-      <div className="mt-auto mb-12 flex w-full flex-col items-center gap-3 pt-8">
+      <div className="mt-20 flex w-full flex-col items-center gap-3">
         {softMessage && state === 'start' && (
           <p className="text-center text-sm text-sage">
             If this does not pass or feels like an emergency, contact a doctor or emergency services.
