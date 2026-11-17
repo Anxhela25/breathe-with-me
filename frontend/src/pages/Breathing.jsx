@@ -71,18 +71,14 @@ export default function Breathing() {
       )}
     >
       <div className="mt-16"><BreathingCircle progress={strongProgress} /></div>
-      <p className="mt-4 text-base">Follow the circle. I&apos;m here.</p>
+      <p className="mt-4 text-base">
+        {state === 'strong' ? 'Breathe with me for 2 minutes.' : <>Follow the circle. I&apos;m here.</>}
+      </p>
 
       <div className="mt-20 flex w-full flex-col items-center gap-3">
         {softMessage && state === 'start' && (
           <p className="text-center text-sm text-sage">
             If this does not pass or feels like an emergency, contact a doctor or emergency services.
-          </p>
-        )}
-
-        {state === 'strong' && !stillStrong && (
-          <p className="text-center text-base text-sage">
-            Breathe with me for 2 minutes. When the ring closes, I&apos;ll ask again.
           </p>
         )}
 
