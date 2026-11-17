@@ -28,12 +28,14 @@ export default function Breathing() {
   const [state, setState] = useState('start')
   const [strongSince, setStrongSince] = useState(null)
   const [goingDown, setGoingDown] = useState(false)
-  // set when she taps "Keep breathing" on an offer; the ring then runs until it's time to ask again
-  const [keepSince, setKeepSince] = useState(null)
+  // quiet: just the circle, no 1-10 question on this page (from "Not feeling better yet?", "It's still a
+  // little there", or 5-7 after grounding)
+  const quiet = location.state?.quiet === true
+  // set when she taps "Keep breathing" on an offer, or right away in quiet mode; the ring then runs
+  // for 2 minutes and "How do you feel now?" opens, so breathing never goes on with no end
+  const [keepSince, setKeepSince] = useState(() => (quiet ? Date.now() : null))
   const offerHidden = keepSince !== null
   const softMessage = location.state?.soft === true
-  // from "Not feeling better yet?": just the circle, no more questions
-  const quiet = location.state?.quiet === true
 
   useEffect(() => { if (!session.startedAt) start() }, [session.startedAt, start])
   useEffect(() => {

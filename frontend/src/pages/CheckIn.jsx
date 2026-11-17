@@ -16,10 +16,13 @@ export default function CheckIn() {
     recordLevel(level)
     // light, but higher than last time (3 -> 4): the closing page says so instead of "it passed"
     if (level <= LIGHT) navigate('/closing', { state: { rising: previous != null && level > previous } })
-    // grounding once; if it's still 5-7 after that, quiet breathing instead of the same exercise again
+    // 5-7: grounding once, then 2 minutes of quiet breathing; still 5-7 after both: the choices page
     else if (level <= MEDIUM) {
-      if (session.usedGrounding) navigate('/breathe', { state: { quiet: true } })
-      else navigate('/grounding')
+      if (!session.usedGrounding) navigate('/grounding')
+      else if (!session.checkInMissed) {
+        mark({ checkInMissed: true })
+        navigate('/breathe', { state: { quiet: true } })
+      } else navigate('/not-better')
     }
     // 8-10: the "not feeling better" choices if they were shown or it's the second time; else breathe again
     else if (session.notBetterShown || session.checkInMissed) navigate('/not-better')
