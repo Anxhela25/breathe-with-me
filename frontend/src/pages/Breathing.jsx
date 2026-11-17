@@ -90,8 +90,9 @@ export default function Breathing() {
         {showQuestion && <NumberPicker question="How strong is it right now, 1 to 10?" onPick={pick} />}
 
         {stillStrong && (
-          <p className="text-center text-sm text-sage">
-            It is still very strong. Please call emergency services or someone you trust.
+          <p className="max-w-xs text-center text-base text-sage text-balance">
+            It is still very strong.<br />
+            Please call emergency services or someone you trust.
           </p>
         )}
       </div>
