@@ -12,17 +12,28 @@ const EASE = 'cubic-bezier(0.45, 0, 0.55, 1)'  // slow at both ends, like a brea
  */
 export default function BreathingCircle({ inhaleMs = INHALE_MS, exhaleMs = EXHALE_MS, progress = null, size = 256 }) {
   const [phase, setPhase] = useState('in')
+  // first frame drawn small, so the first breath in grows from small instead of starting open
+  const [started, setStarted] = useState(false)
   const reduced = useReducedMotion()
 
   useEffect(() => {
+    // two frames: the browser has to paint the small circle before the grow transition can run
+    let second
+    const first = requestAnimationFrame(() => { second = requestAnimationFrame(() => setStarted(true)) })
+    return () => { cancelAnimationFrame(first); cancelAnimationFrame(second) }
+  }, [])
+
+  useEffect(() => {
+    if (!started) return undefined
     const t = setTimeout(() => setPhase(p => (p === 'in' ? 'out' : 'in')), phase === 'in' ? inhaleMs : exhaleMs)
     return () => clearTimeout(t)
-  }, [phase, inhaleMs, exhaleMs])
+  }, [started, phase, inhaleMs, exhaleMs])
 
   const growing = phase === 'in'
   const duration = growing ? inhaleMs : exhaleMs
   const layer = (big, small, delay) => (reduced
     ? { transform: `scale(${(big + small) / 2})` }
+    : !started ? { transform: `scale(${small})` }
     : {
         transform: `scale(${growing ? big : small})`,
         transition: `transform ${duration}ms ${EASE} ${delay}ms`,
