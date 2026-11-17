@@ -255,11 +255,11 @@ function Measuring({ onDone, onStop, onError }) {
   const secondsIn = view.progress * MEASURE_S
   return (
     <Screen calm key="measuring">
-      <div className="mt-4"><BreathingCircle {...GUIDE} progress={view.progress} /></div>
-      <p className="mt-3 h-6 text-center" aria-live="polite">
+      <div className="mt-8"><BreathingCircle {...GUIDE} progress={view.progress} /></div>
+      <p className="mt-8 h-6 text-center" aria-live="polite">
         {view.finger ? 'Keep your finger still. Breathe with the circle.' : 'Rest your finger gently on the camera.'}
       </p>
-      <div className="mt-4 grid w-full grid-cols-3 gap-2">
+      <div className="mt-8 grid w-full grid-cols-3 gap-3">
         <StatTile icon={<HeartIcon />} label="Heart" value={view.bpm ? `${view.bpm}` : '…'} />
         <StatTile icon={<ClockIcon />} label="Left" value={timeLeft(MEASURE_S - secondsIn)} tone="blue" />
         <StatTile icon={<BreathIcon />} label="Breaths"
@@ -330,7 +330,7 @@ function LiveWave({ samples, channel, faded }) {
 
   return (
     <canvas ref={canvas} aria-hidden
-      className={`mt-4 h-20 w-full rounded-2xl bg-white/60 transition-opacity duration-500 ${faded ? 'opacity-25' : 'opacity-100'}`} />
+      className={`mt-6 h-20 w-full rounded-2xl bg-white/60 transition-opacity duration-500 ${faded ? 'opacity-25' : 'opacity-100'}`} />
   )
 }
 
@@ -417,11 +417,11 @@ function SlowerGuide({ onDone }) {
   const done = seconds >= MEASURE_S
   return (
     <Screen calm key="slower">
-      <div className="mt-4"><BreathingCircle {...SLOWER} progress={seconds / MEASURE_S} /></div>
-      <p className="mt-3 text-center">Make the out-breath a little longer.</p>
-      <div className="mt-4 grid w-full grid-cols-2 gap-2">
+      <div className="mt-8"><BreathingCircle {...SLOWER} progress={seconds / MEASURE_S} /></div>
+      <p className="mt-8 text-center">Make the out-breath a little longer.</p>
+      <div className="mt-8 grid w-full grid-cols-2 gap-3">
         <StatTile icon={<ClockIcon />} label="Left" value={timeLeft(MEASURE_S - seconds)} tone="blue" />
-        <StatTile icon={<BreathIcon />} label="Pace" value="5 in, 7 out" tone="lavender" />
+        <StatTile icon={<BreathIcon />} label="Pace" value="In 5s, out 7s" tone="lavender" />
       </div>
       <div className="mt-auto flex flex-col items-center pt-4">
         {done ? <Button onClick={onDone}>Done</Button> : <Button variant="link" onClick={onDone}>Stop</Button>}
