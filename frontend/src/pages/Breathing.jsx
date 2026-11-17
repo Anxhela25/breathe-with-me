@@ -68,10 +68,10 @@ export default function Breathing() {
         <Button to="/urgent" variant="link" className="text-xs text-sage/70">I need urgent help</Button>
       )}
     >
-      <div className="mt-8"><BreathingCircle /></div>
+      <div className="mt-16"><BreathingCircle /></div>
       <p className="mt-4 text-base">Follow the circle. I&apos;m here.</p>
 
-      <div className="mt-auto flex w-full flex-col items-center gap-3 pt-8">
+      <div className="mt-auto mb-12 flex w-full flex-col items-center gap-3 pt-8">
         {softMessage && state === 'start' && (
           <p className="text-center text-sm text-sage">
             If this does not pass or feels like an emergency, contact a doctor or emergency services.
