@@ -77,16 +77,12 @@ function Questions() {
     )
   }
 
-  const skip = <Button variant="link" onClick={() => answer({})}>Skip</Button>
   return (
     <Screen>
       <p className="mt-6 text-sm text-sage/60">All questions are optional.</p>
-      <div className="mt-8 flex w-full flex-col items-center gap-3">
+      <div className="mt-16 flex w-full flex-col items-center gap-3">
         {step === 0 && (
-          <>
-            <NumberPicker question="How strong was the worst moment?" onPick={n => answer({ worst_level: n })} />
-            {skip}
-          </>
+          <NumberPicker question="How strong was the worst moment?" onPick={n => answer({ worst_level: n })} />
         )}
         {step === 1 && (
           <>
@@ -94,7 +90,6 @@ function Questions() {
             {PLACES.map(([value, label]) => (
               <button key={value} type="button" className={choice} onClick={() => answer({ place: value })}>{label}</button>
             ))}
-            {skip}
           </>
         )}
         {step === 2 && (
@@ -103,7 +98,6 @@ function Questions() {
             {SLEEP.map(([value, label]) => (
               <button key={value} type="button" className={choice} onClick={() => answer({ sleep: value })}>{label}</button>
             ))}
-            {skip}
           </>
         )}
         {step >= 3 && (
@@ -127,13 +121,19 @@ function Questions() {
             <textarea id="note" value={note} onChange={e => setNote(e.target.value)} rows={3} maxLength={2000}
               placeholder="Any note…"
               className="w-full resize-none rounded-2xl border border-sage/20 bg-white p-3 text-base outline-none focus:border-sage" />
-            <Button onClick={() => finish(note.trim() ? { note: note.trim() } : {})} disabled={!episodeId}
-              className="mt-2 disabled:opacity-50">
-              Save
-            </Button>
-            <Button variant="link" onClick={() => finish()}>Skip</Button>
           </>
         )}
+      </div>
+
+      {/* answers stay under the question, the buttons go to the bottom */}
+      <div className="mt-auto flex w-full flex-col items-center gap-2 pt-8">
+        {step >= 3 && (
+          <Button onClick={() => finish(note.trim() ? { note: note.trim() } : {})} disabled={!episodeId}
+            className="disabled:opacity-50">
+            Save
+          </Button>
+        )}
+        <Button variant="link" onClick={() => (step >= 3 ? finish() : answer({}))}>Skip</Button>
       </div>
     </Screen>
   )

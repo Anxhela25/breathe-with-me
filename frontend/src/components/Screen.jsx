@@ -15,7 +15,7 @@ export default function Screen({ children, footer, calm = false, home = true }) 
   const showSettings = user && pathname !== '/settings'
 
   const page = (
-    <div className="mx-auto flex min-h-full max-w-md flex-col px-6 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+    <div className="mx-auto flex min-h-full w-full max-w-md flex-1 flex-col px-6 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
       {/* keeps scrolled content from showing behind the iPhone's clock and battery */}
       <div className="fixed inset-x-0 top-0 z-20 h-[env(safe-area-inset-top)] bg-cream" aria-hidden />
       <header className="grid grid-cols-[2.75rem_1fr_2.75rem] items-center border-b border-sage/10 pb-3">
@@ -43,5 +43,5 @@ export default function Screen({ children, footer, calm = false, home = true }) 
     </div>
   )
   if (!calm) return page
-  return <div className="min-h-full bg-gradient-to-b from-cream via-cream to-soft-blue/40">{page}</div>
+  return <div className="flex min-h-full flex-col bg-gradient-to-b from-cream via-cream to-soft-blue/40">{page}</div>
 }
