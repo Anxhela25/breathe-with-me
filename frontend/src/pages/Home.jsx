@@ -30,8 +30,8 @@ export default function Home() {
         </header>
 
         <div className="flex flex-1 flex-col items-center justify-center">
-          <p className="text-5xl text-sage">Hey!</p>
-          <h1 className="mt-1 text-center text-[2.6rem] font-bold leading-tight text-sage-dark">Breathe With Me</h1>
+          <p className="text-5xl text-sage">Hey,</p>
+          <h1 className="mt-4 text-center text-[2.6rem] font-bold leading-tight text-sage-dark">Breathe With Me!</h1>
         </div>
 
         {/* breathes slowly while waiting */}
