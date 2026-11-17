@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Screen from '../components/Screen.jsx'
+import { BreathIcon } from '../components/Icons.jsx'
 import Button from '../components/Button.jsx'
 import { useSession } from '../context/SessionContext.jsx'
 import { sendChat } from '../lib/api.js'
@@ -124,21 +125,24 @@ export default function Chat() {
             </button>
           </div>
         )}
+        {/* the next step as soft suggestions under the last reply, like quick replies in a messaging app */}
+        {nextStep && !waiting && !asking && (
+          <div className="flex flex-wrap gap-2 animate-fade-in">
+            {(nextStep === 'breathing' || nextStep === 'choose') && (
+              <Suggestion to="/breathe" icon={<BreathIcon />}>
+                {nextStep === 'choose' ? 'Breathing circle' : 'Back to breathing'}
+              </Suggestion>
+            )}
+            {(nextStep === 'grounding' || nextStep === 'choose') && (
+              <Suggestion to="/grounding" icon={<GroundIcon />}>
+                {nextStep === 'choose' ? 'Grounding' : 'Start grounding'}
+              </Suggestion>
+            )}
+          </div>
+        )}
         <div ref={bottom} />
       </div>
 
-      {nextStep && !waiting && (
-        <div className="mt-4 flex w-full flex-col items-center gap-1">
-          {nextStep === 'choose' && (
-            <>
-              <Button to="/breathe">Breathing circle</Button>
-              <Button to="/grounding" variant="outline">Grounding</Button>
-            </>
-          )}
-          {nextStep === 'grounding' && <Button to="/grounding">Start grounding</Button>}
-          {nextStep === 'breathing' && <Button to="/breathe">Back to breathing</Button>}
-        </div>
-      )}
 
       <form onSubmit={send} className="mt-4 flex w-full flex-col items-center gap-2">
         <label htmlFor="chat-text" className="sr-only">Write what you feel</label>
@@ -176,3 +180,21 @@ export default function Chat() {
     </Screen>
   )
 }
+
+function Suggestion({ to, icon, children }) {
+  return (
+    <Link to={to}
+      className="flex items-center gap-2 rounded-full border border-sage/25 bg-pistachio/70 py-2 pr-4 pl-2 text-sage-dark active:scale-95">
+      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-sage">{icon}</span>
+      {children}
+      <span aria-hidden className="text-sage/60">›</span>
+    </Link>
+  )
+}
+
+const GroundIcon = () => (
+  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8"
+    strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <path d="M12 21c-4-3-6-6-6-10a6 6 0 0 1 12 0c0 4-2 7-6 10z" /><circle cx="12" cy="11" r="2" />
+  </svg>
+)
