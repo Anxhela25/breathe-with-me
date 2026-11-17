@@ -8,7 +8,8 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "ios": "vite build && cap sync ios && cap open ios"
+    "ios": "vite build && cap sync ios && cap open ios",
+    "test": "node --test 'src/**/*.test.js'"
   },
   "dependencies": {
     "@capacitor/core": "^8.6.0",

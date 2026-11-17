@@ -50,7 +50,7 @@ function StillThere({ offerChat }) {
       <h1 className="mt-6 text-center text-3xl font-bold">It&apos;s still a little there.</h1>
       <p className="mt-1 text-lg">That&apos;s okay.</p>
       <div className="mt-auto flex w-full flex-col items-center gap-2 pt-8">
-        {/* quiet: the circle only, no more questions */}
+        {/* 2 minutes of breathing with the ring, then "How do you feel now?" */}
         <Button to="/breathe" state={{ quiet: true }}>Breathe a bit longer</Button>
         {offerChat && <Button to="/chat" variant="outline">Want to talk about it?</Button>}
         <Button to="/calm-check?from=session" variant="link">I&apos;m okay for now</Button>

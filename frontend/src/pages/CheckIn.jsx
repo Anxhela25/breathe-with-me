@@ -2,34 +2,27 @@ import { useNavigate } from 'react-router-dom'
 import Screen from '../components/Screen.jsx'
 import NumberPicker from '../components/NumberPicker.jsx'
 import { useSession } from '../context/SessionContext.jsx'
-
-const LIGHT = 4  // same groups as the breathing screen: 1-4 light, 5-7 medium, 8-10 strong
-const MEDIUM = 7
+import { nextStep } from '../lib/flow.js'
 
 export default function CheckIn() {
   const navigate = useNavigate()
   const { session, recordLevel, mark } = useSession()
 
-  // where to go depends on the number now, not on what happened before
+  // the rules are in lib/flow.js (with tests)
   function pick(level) {
     const previous = session.lastLevel
     recordLevel(level)
-    // light, but higher than last time (3 -> 4): the closing page says so instead of "it passed"
-    if (level <= LIGHT) navigate('/closing', { state: { rising: previous != null && level > previous } })
-    // 5-7: grounding once, then 2 minutes of quiet breathing; still 5-7 after both: the choices page
-    else if (level <= MEDIUM) {
-      if (!session.usedGrounding) navigate('/grounding')
-      else if (!session.checkInMissed) {
-        mark({ checkInMissed: true })
-        navigate('/breathe', { state: { quiet: true } })
-      } else navigate('/not-better')
-    }
-    // 8-10: the "not feeling better" choices if they were shown or it's the second time; else breathe again
-    else if (session.notBetterShown || session.checkInMissed) navigate('/not-better')
-    else {
-      mark({ checkInMissed: true })
-      navigate('/breathe', { state: { soft: true } })
-    }
+    const minutes = session.startedAt ? (Date.now() - session.startedAt) / 60000 : 0
+    const { step } = nextStep(level, 'checkin', {
+      previous, usedGrounding: session.usedGrounding, usedQuiet: session.usedQuiet, minutes,
+    })
+    if (step === 'closing') navigate('/closing')
+    else if (step === 'still-there') navigate('/closing', { state: { rising: true } })
+    else if (step === 'grounding') navigate('/grounding')
+    else if (step === 'quiet') {
+      mark({ usedQuiet: true })
+      navigate('/breathe', { state: { quiet: true } })
+    } else navigate('/not-better')
   }
 
   return (

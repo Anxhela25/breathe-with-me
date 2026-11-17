@@ -13,8 +13,9 @@ const PhoneIcon = () => (
   </svg>
 )
 
-// Reached when breathing twice didn't lower the number. No more 1-10 questions from here:
-// asking again and again keeps her watching the fear. Instead, something different to do.
+// Reached when breathing, grounding or the extra minutes didn't help, or after 20 minutes (rules in
+// lib/flow.js). No new round of the same exercise from here: people to call, the emergency number,
+// or a few quiet minutes of breathing.
 export default function NotBetter() {
   const { user } = useAuth()
   const emergency = getEmergency(user?.country_code)
@@ -56,7 +57,7 @@ export default function NotBetter() {
           className="flex w-full items-center justify-center gap-2 rounded-3xl border border-alert px-6 py-3 text-alert active:scale-[0.98]">
           <PhoneIcon /> Emergency services <strong>{emergency}</strong>
         </a>
-        {/* quiet: the circle only, no more questions */}
+        {/* 2 minutes of breathing with the ring, then "How do you feel now?" */}
         <Button to="/breathe" state={{ quiet: true }} variant="link">Keep breathing</Button>
         {user && contacts.length === 0 && (
           <Button to="/settings" variant="link" className="-mt-2 text-sage/70">Add someone you trust</Button>

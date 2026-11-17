@@ -5,18 +5,12 @@ import Button from '../components/Button.jsx'
 import BreathingCircle from '../components/BreathingCircle.jsx'
 import NumberPicker from '../components/NumberPicker.jsx'
 import { useSession } from '../context/SessionContext.jsx'
+import { nextStep } from '../lib/flow.js'
 
 // in seconds; lower them while testing
 const ASK_AFTER_S = 60  // one full minute of breathing before the first question
-const OFFER_AFTER_S = 60
 const STRONG_RECHECK_S = 120
-const KEEP_S = 120  // "Keep breathing" on an offer: this long, then "How do you feel now?"
-
-function stateFor(level) {
-  if (level <= 4) return 'light'
-  if (level <= 7) return 'medium'
-  return 'strong'
-}
+const KEEP_S = 120  // "Keep breathing" or coming back to breathing: this long, then "How do you feel now?"
 
 export default function Breathing() {
   const location = useLocation()
@@ -24,18 +18,15 @@ export default function Breathing() {
   const { session, recordLevel, start, mark } = useSession()
   const [startedAt] = useState(() => session.startedAt ?? Date.now())
   const [now, setNow] = useState(Date.now())
-  // 'start' (A) | 'light' (B) | 'medium' (C) | 'strong' (D) | 'check' (E)
+  // 'start' | 'light' (chat offered) | 'medium' (grounding offered) | 'strong' (2-minute round) | 'check'
   const [state, setState] = useState('start')
   const [strongSince, setStrongSince] = useState(null)
   const [goingDown, setGoingDown] = useState(false)
-  // quiet: just the circle, no 1-10 question on this page (from "Not feeling better yet?", "It's still a
-  // little there", or 5-7 after grounding)
-  const quiet = location.state?.quiet === true
-  // set when she taps "Keep breathing" on an offer, or right away in quiet mode; the ring then runs
-  // for 2 minutes and "How do you feel now?" opens, so breathing never goes on with no end
-  const [keepSince, setKeepSince] = useState(() => (quiet ? Date.now() : null))
-  const offerHidden = keepSince !== null
-  const softMessage = location.state?.soft === true
+  // coming back to breathing (from the chat, grounding, urgent help, "Not feeling better yet?"...):
+  // no new start, no question here; 2 minutes with the ring, then "How do you feel now?"
+  const [returning] = useState(() => location.state?.quiet === true || session.lastLevel != null)
+  // set when she taps "Keep breathing" on an offer, or right away when returning
+  const [keepSince, setKeepSince] = useState(() => (returning ? Date.now() : null))
 
   useEffect(() => { if (!session.startedAt) start() }, [session.startedAt, start])
   useEffect(() => {
@@ -45,38 +36,41 @@ export default function Breathing() {
 
   const elapsed = (now - startedAt) / 1000
 
-  // still strong after 2 minutes -> ask again
+  // end of a strong round: ask again
   useEffect(() => {
     if (state === 'strong' && strongSince && (now - strongSince) / 1000 >= STRONG_RECHECK_S) setState('check')
   }, [state, strongSince, now])
 
-  function pick(level) {
-    const previous = session.lastLevel
-    recordLevel(level)
-    const next = stateFor(level)
-    // two rounds of breathing and no lower: stop asking, offer something different
-    if (state === 'check' && previous != null && level >= previous) {
-      mark({ notBetterShown: true })
-      navigate('/not-better')
-      return
-    }
-    // lower but still 8+ counts as progress: one more round
-    setGoingDown(state === 'check' && next === 'strong')
-    if (next === 'strong') setStrongSince(Date.now())
-    setKeepSince(null)
-    setState(next)
-  }
-
-  const showQuestion = !quiet && ((state === 'start' && elapsed >= ASK_AFTER_S) || state === 'check')
-  // after "Keep breathing": ask how she feels once the ring closes, instead of breathing with no end
+  // end of the extra 2 minutes: ask how she feels, so breathing never goes on with no end
   useEffect(() => {
     if (keepSince && (now - keepSince) / 1000 >= KEEP_S) navigate('/check-in')
   }, [keepSince, now, navigate])
 
-  const offerReady = elapsed >= OFFER_AFTER_S && !offerHidden
+  // the rules are in lib/flow.js (with tests)
+  function pick(level) {
+    const previous = session.lastLevel
+    recordLevel(level)
+    const { step, goingDown: lower } = nextStep(level, 'breathing', {
+      previous, afterRound: state === 'check', strongRounds: session.strongRounds, minutes: elapsed / 60,
+    })
+    if (step === 'not-better') {
+      navigate('/not-better')
+      return
+    }
+    setKeepSince(null)
+    if (step === 'strong-round') {
+      mark({ strongRounds: session.strongRounds + 1 })
+      setGoingDown(lower)
+      setStrongSince(Date.now())
+      setState('strong')
+    } else setState(step === 'offer-chat' ? 'light' : 'medium')
+  }
+
+  const showQuestion = !returning && ((state === 'start' && elapsed >= ASK_AFTER_S) || state === 'check')
+  const offerOpen = keepSince === null
   const chatPaused = session.crisisShown
   // a ring closes around the circle until the next question, so she can see it's going somewhere
-  const firstMinute = state === 'start' && !showQuestion && !quiet
+  const firstMinute = state === 'start' && !showQuestion && !returning
   let progress = null
   if (firstMinute) progress = elapsed / ASK_AFTER_S
   if (state === 'strong' && strongSince) progress = (now - strongSince) / 1000 / STRONG_RECHECK_S
@@ -84,7 +78,7 @@ export default function Breathing() {
 
   return (
     <Screen
-      footer={(state === 'strong' || softMessage || chatPaused || quiet) && (
+      footer={(state === 'strong' || chatPaused || returning) && (
         <Button to="/urgent" variant="link" className="text-xs text-sage/70">I need urgent help</Button>
       )}
     >
@@ -97,12 +91,6 @@ export default function Breathing() {
       </p>
 
       <div className="mt-20 flex w-full flex-col items-center gap-3">
-        {softMessage && state === 'start' && (
-          <p className="text-center text-sm text-sage">
-            If this does not pass or feels like an emergency, contact a doctor or emergency services.
-          </p>
-        )}
-
         {showQuestion && <NumberPicker question="How strong is it right now, 1 to 10?" onPick={pick} />}
 
       </div>
@@ -110,18 +98,18 @@ export default function Breathing() {
       {/* offers at the bottom, like the buttons on every page */}
       <div className="mt-auto flex w-full flex-col items-center gap-3 pt-8">
         {/* the chat stays paused after a crisis, so offer a way to finish instead */}
-        {state === 'light' && offerReady && !chatPaused && (
+        {state === 'light' && offerOpen && !chatPaused && (
           <Offer text="Would you like to chat?" action="Chat with me" to="/chat" onKeep={() => setKeepSince(Date.now())} />
         )}
-        {state === 'light' && offerReady && chatPaused && (
+        {state === 'light' && offerOpen && chatPaused && (
           <Offer text="Are you feeling a bit calmer?" action="I feel a bit better" to="/check-in"
             onKeep={() => setKeepSince(Date.now())} />
         )}
-        {state === 'medium' && offerReady && (
+        {state === 'medium' && offerOpen && (
           <Offer text="Try grounding together?" action="Start grounding" to="/grounding" onKeep={() => setKeepSince(Date.now())} />
         )}
-        {quiet && <Button to="/check-in">I feel a bit better</Button>}
-        {(state === 'light' || state === 'medium') && offerHidden && (
+        {returning && <Button to="/check-in">I feel a bit better</Button>}
+        {(state === 'light' || state === 'medium') && !offerOpen && (
           <Button to="/check-in" variant="outline">I feel a bit better</Button>
         )}
       </div>
