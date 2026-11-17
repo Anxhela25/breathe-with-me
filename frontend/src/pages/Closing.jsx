@@ -5,6 +5,7 @@ import { useSession } from '../context/SessionContext.jsx'
 // Only reached once the panic eased, so the calm check is never offered during a strong attack.
 export default function Closing() {
   const { session } = useSession()
+  const offerChat = session.lastLevel >= 2 && session.lastLevel <= 4 && !session.crisisShown
   return (
     <Screen>
       <div className="mt-28 flex h-28 w-28 items-center justify-center rounded-full bg-pistachio" aria-hidden>
@@ -25,6 +26,8 @@ export default function Closing() {
       <div className="mt-auto flex w-full flex-col items-center gap-2 pt-8">
         <p className="mb-2">Want a one-minute calm check?</p>
         <Button to="/calm-check?from=session">Start calm check</Button>
+        {/* 2-4: a little is still there, so offer to talk; never after a crisis (the chat is paused) */}
+        {offerChat && <Button to="/chat" variant="outline">Want to talk about it?</Button>}
         <Button to="/questions" variant="link">Skip for now</Button>
       </div>
     </Screen>
