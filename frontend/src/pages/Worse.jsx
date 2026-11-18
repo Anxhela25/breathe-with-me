@@ -32,8 +32,8 @@ export default function Worse() {
             <path d="M5 4h3l2 5-2.5 1.5a11 11 0 0 0 6 6L15 14l5 2v3a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z" />
           </svg>
           <span className="text-left leading-tight">
-            <span className="block text-lg font-bold">Yes, I have one</span>
-            <span className="block text-sm opacity-90">Call emergency services · {emergency}</span>
+            <span className="block text-lg font-bold">Yes,</span>
+            <span className="block text-base">Call emergency services</span>
           </span>
         </a>
         {/* panic: just breathe, no timer and no questions */}
