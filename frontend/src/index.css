@@ -62,9 +62,16 @@ body { @apply bg-cream text-sage-dark font-sans antialiased; }
 .sun-rise { animation: sun-rise 2.6s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
 .sun-rays { animation: sun-rays 3.2s ease-out both; }
 
+/* "Let's try something else": three soft circles breathing one after another */
+@keyframes three-ways {
+  0%, 100% { transform: scale(0.94); }
+  50% { transform: scale(1.04); }
+}
+.three-ways { transform-box: fill-box; transform-origin: center; animation: three-ways 4s ease-in-out infinite; }
+
 /* people who turn off motion on their phone get still versions */
 @media (prefers-reduced-motion: reduce) {
-  .animate-fade-in, .animate-draw, .animate-glow, .animate-breathe, .animate-halo, .sun-rise, .sun-rays { animation: none; }
+  .animate-fade-in, .animate-draw, .animate-glow, .animate-breathe, .animate-halo, .sun-rise, .sun-rays, .three-ways { animation: none; }
   .animate-draw { stroke-dashoffset: 0; }
 }
 
