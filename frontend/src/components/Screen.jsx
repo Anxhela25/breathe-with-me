@@ -1,19 +1,18 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext.jsx'
 
 const iconButton = 'flex h-11 w-11 items-center justify-center rounded-full text-sage active:bg-pistachio focus-visible:outline-2 focus-visible:outline-sage'
 
 /**
  * Page layout. The header has a home button at the top left on every page (`home={false}` hides it,
- * on Home itself) and, when she is logged in, a settings button at the top right.
+ * on Home itself) and a settings button at the top right.
  * `calm` gives the screen a soft cream-to-blue background and a gentle fade-in, for quiet spaces like
  * the calm check (give each step its own `key` so it fades in again).
  */
 export default function Screen({ children, footer, calm = false, home = true, back = false, fit = false, keyboard = false }) {
-  const { user } = useAuth()
   const navigate = useNavigate()
   const { pathname, key } = useLocation()
-  const showSettings = user && pathname !== '/settings'
+  // on every page; logged out, it asks to log in first and then opens Settings
+  const showSettings = pathname !== '/settings'
 
   const page = (
     <div className={`mx-auto flex ${fit ? 'h-full' : 'min-h-full'} w-full max-w-md flex-1 flex-col px-6 pt-[max(1rem,env(safe-area-inset-top))] ${keyboard ? 'pb-2' : 'pb-[max(1.5rem,env(safe-area-inset-bottom))]'}`}>

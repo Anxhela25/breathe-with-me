@@ -3,7 +3,7 @@ import Screen from '../components/Screen.jsx'
 import Button from '../components/Button.jsx'
 import { useSession } from '../context/SessionContext.jsx'
 
-// Reached from "I'm fine now" (passed) or "Better" / "I feel better" (passing). Rules in lib/flow.js.
+// Reached from "I'm fine now" (passed) or "Better" (passing). Rules in lib/flow.js.
 export default function Closing() {
   const { session } = useSession()
   const passed = useLocation().state?.feeling === 'passed'

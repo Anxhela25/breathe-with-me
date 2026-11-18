@@ -3,7 +3,7 @@ import { FEELINGS } from '../lib/flow.js'
 const EMOJI = { fine: '😆', better: '🙂', same: '😐', worse: '😟' }
 const TONE = {
   fine: 'bg-pistachio',
-  better: 'bg-pistachio/60',
+  better: 'bg-[#FBEBC5]',  // warm, like the sunrise on "getting through it"
   same: 'bg-soft-blue/70',
   worse: 'bg-lavender',
 }

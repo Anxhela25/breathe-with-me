@@ -38,7 +38,6 @@ export default function UrgentHelp() {
         {user && contacts.length === 0 && (
           <Button to="/settings" variant="link">Add someone you trust</Button>
         )}
-        <Button to="/breathe" variant="link">Back to breathing</Button>
       </div>
     </Screen>
   )

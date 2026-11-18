@@ -70,10 +70,11 @@ export default function Breathing() {
       <div className="mt-auto flex w-full flex-col items-center gap-3 pt-8">
         {stay && <StayHelp />}
         {ownPace && <OwnPaceNote minutes={(now - session.startedAt) / 60000} />}
-        {/* these buttons are the answer: straight on, no question asked */}
+        {/* own pace: these buttons are the answer */}
         {ownPace && <Button to="/closing" state={{ feeling: 'passed' }}>I&apos;m fine now</Button>}
         {ownPace && <Button to="/not-better" variant="outline">It&apos;s not passing</Button>}
-        {returning && !ownPace && <Button to="/closing" state={{ feeling: 'passing' }}>I feel better</Button>}
+        {/* "I feel better": ask how she is now, the answer decides the next page */}
+        {returning && !ownPace && <Button to="/check-in">I feel better</Button>}
       </div>
     </Screen>
   )
