@@ -27,7 +27,7 @@ export default function QuickQuestions() {
 function AccountOffer() {
   return (
     <Screen>
-      <h1 className="mt-12 text-center text-2xl font-bold">Want to keep a private history?</h1>
+      <h1 className="mt-28 text-center text-2xl font-bold">Want to keep a private history?</h1>
       <p className="mt-3 text-center text-sage/80">
         With an account, this session and your answers are saved. Over time you can see patterns and share a summary
         with your doctor.
