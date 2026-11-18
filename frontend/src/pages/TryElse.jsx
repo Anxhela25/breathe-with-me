@@ -9,9 +9,9 @@ export default function TryElse() {
   return (
     <Screen calm>
       <LongSessionNote />
-      {/* the empty middle gets a calm picture: three soft circles, one for each choice below */}
+      {/* the empty middle gets a calm picture: a path leading on, another way forward */}
       <div className="flex flex-1 flex-col items-center justify-center pt-6">
-        <ThreeWays />
+        <AnotherWay />
         <h1 className="mt-8 text-center text-3xl font-bold">Let&apos;s try something else.</h1>
         <p className="mt-2 max-w-xs text-center text-lg text-sage text-balance">
           It&apos;s okay that it hasn&apos;t eased yet. Pick what feels right for you.
@@ -32,14 +32,29 @@ export default function TryElse() {
   )
 }
 
-/** Three soft circles in the colours of the three choices, breathing slowly one after another. */
-function ThreeWays() {
+/** Another way: soft hills and a winding path that draws itself towards the horizon. */
+function AnotherWay() {
   return (
-    <svg viewBox="0 0 200 140" className="h-36 w-52" aria-hidden>
-      <circle cx="70" cy="62" r="40" fill="#DCD6EC" opacity="0.9" className="three-ways" />
-      <circle cx="130" cy="62" r="40" fill="#C9DCEB" opacity="0.9" className="three-ways" style={{ animationDelay: '1.3s' }} />
-      <circle cx="100" cy="98" r="40" fill="#E2EADA" opacity="0.9" className="three-ways" style={{ animationDelay: '2.6s' }} />
+    <svg viewBox="0 0 220 140" className="h-36 w-56" aria-hidden>
+      {/* the hills fade out at the sides and bottom instead of ending in a hard edge */}
+      <defs>
+        <radialGradient id="fade" cx="50%" cy="70%" r="55%">
+          <stop offset="60%" stopColor="#fff" />
+          <stop offset="100%" stopColor="#000" />
+        </radialGradient>
+        <mask id="soft"><rect width="220" height="140" fill="url(#fade)" /></mask>
+      </defs>
+      <g mask="url(#soft)">
+      <path d="M0 92c40-26 80-30 120-14s70 18 100 4v58H0z" fill="#C9DCEB" opacity="0.8" />
+      <path d="M0 110c50-22 100-22 150-6s50 10 70 4v32H0z" fill="#E2EADA" />
+      </g>
+      <path d="M110 140c-30-10-40-20-18-30s40-14 22-26-22-14-4-22" fill="none" stroke="#4A6355" strokeWidth="3"
+        strokeLinecap="round" strokeDasharray="1 9" opacity="0.7" />
+      <path d="M110 140c-30-10-40-20-18-30s40-14 22-26-22-14-4-22" fill="none" stroke="#4A6355" strokeWidth="2.5"
+        strokeLinecap="round" pathLength="1" className="animate-draw" opacity="0.35" />
+      <circle cx="110" cy="62" r="5" fill="#4A6355" />
+      <path d="M104 40c4-10 14-12 18-4-6 0-12 2-18 4z" fill="#8FB89A" />
+      <path d="M110 58V44" stroke="#4A6355" strokeWidth="2" strokeLinecap="round" />
     </svg>
   )
 }
-
