@@ -56,11 +56,11 @@ export default function Breathing() {
   function pick(level) {
     const previous = session.lastLevel
     recordLevel(level)
-    const { step, goingDown: lower } = nextStep(level, 'breathing', {
+    const { step, goingDown: lower, long } = nextStep(level, 'breathing', {
       previous, afterRound: state === 'check', strongRounds: session.strongRounds, minutes: elapsed / 60,
     })
     if (step === 'not-better') {
-      navigate('/not-better')
+      navigate('/not-better', { state: { long } })
       return
     }
     setKeepSince(null)

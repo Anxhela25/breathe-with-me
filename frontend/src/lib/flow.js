@@ -30,7 +30,8 @@ export function band(level) {
  *   usedQuiet      the extra 2 minutes of quiet breathing for 5-7 were already given
  *   minutes        minutes since the session started
  *
- * Returns { step } and, for a strong round, goingDown. The steps:
+ * Returns { step } and, for a strong round, goingDown; long is set when the 20-minute rule sent her
+ * to "Not feeling better yet?". The steps:
  *   offer-chat, offer-grounding  stay on the breathing page and offer it (with "Keep breathing")
  *   strong-round                 2 more minutes of breathing, then the question again
  *   closing, still-there         "You did it" / "It's still a little there"
@@ -43,7 +44,7 @@ export function nextStep(level, where, s) {
   const kind = band(level)
 
   // a long session that is still at 5 or more needs more than another exercise
-  if (minutes >= LONG_SESSION_MIN && kind !== 'light') return { step: 'not-better' }
+  if (minutes >= LONG_SESSION_MIN && kind !== 'light') return { step: 'not-better', long: true }
 
   if (kind === 'light') {
     if (where === 'breathing') return { step: 'offer-chat' }

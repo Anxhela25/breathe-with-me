@@ -13,7 +13,7 @@ export default function CheckIn() {
     const previous = session.lastLevel
     recordLevel(level)
     const minutes = session.startedAt ? (Date.now() - session.startedAt) / 60000 : 0
-    const { step } = nextStep(level, 'checkin', {
+    const { step, long } = nextStep(level, 'checkin', {
       previous, usedGrounding: session.usedGrounding, usedQuiet: session.usedQuiet, minutes,
     })
     if (step === 'closing') navigate('/closing')
@@ -22,7 +22,7 @@ export default function CheckIn() {
     else if (step === 'quiet') {
       mark({ usedQuiet: true })
       navigate('/breathe', { state: { quiet: true } })
-    } else navigate('/not-better')
+    } else navigate('/not-better', { state: { long } })
   }
 
   return (

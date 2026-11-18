@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import Screen from '../components/Screen.jsx'
 import Button from '../components/Button.jsx'
 import { getEmergency, telLink } from '../data/emergency.js'
@@ -18,6 +19,8 @@ const PhoneIcon = () => (
 // or a few quiet minutes of breathing.
 export default function NotBetter() {
   const { user } = useAuth()
+  // true when the 20-minute rule opened this page (lib/flow.js)
+  const long = useLocation().state?.long === true
   const emergency = getEmergency(user?.country_code)
   const [contacts, setContacts] = useState([])
 
@@ -33,13 +36,29 @@ export default function NotBetter() {
           <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" />
         </svg>
       </div>
-      <h1 className="mt-6 text-center text-3xl font-bold">Not feeling better yet?</h1>
-      <p className="mt-3 max-w-xs text-center text-lg text-balance">
-        That&apos;s okay. Panic usually passes within 20 minutes.
-      </p>
-      <p className="mt-6 max-w-xs text-center text-sm text-sage/70 text-balance">
-        If you have chest pain, or it lasts longer, contact a doctor or emergency services.
-      </p>
+      {long ? (
+        <>
+          {/* the 20-minute rule: "usually passes within 20 minutes" isn't true any more, so say what to do */}
+          <h1 className="mt-6 text-center text-3xl font-bold">It&apos;s been 20 minutes.</h1>
+          <p className="mt-3 max-w-xs text-center text-lg text-balance">
+            When panic lasts this long, it&apos;s best not to stay alone with it.
+          </p>
+          <p className="mt-6 max-w-xs rounded-2xl border border-alert/30 bg-white/70 px-4 py-3 text-center font-bold text-balance">
+            Please contact a doctor, or call emergency services if you have chest pain, trouble breathing, or it&apos;s
+            getting worse.
+          </p>
+        </>
+      ) : (
+        <>
+          <h1 className="mt-6 text-center text-3xl font-bold">Not feeling better yet?</h1>
+          <p className="mt-3 max-w-xs text-center text-lg text-balance">
+            That&apos;s okay. Panic usually passes within 20 minutes.
+          </p>
+          <p className="mt-6 max-w-xs text-center text-sm text-sage/70 text-balance">
+            If you have chest pain, or it lasts longer, contact a doctor or emergency services.
+          </p>
+        </>
+      )}
 
       <div className="mt-auto flex w-full flex-col items-center gap-3 pt-8">
         {contacts.length > 0 && <p className="text-sm text-sage/70">You don&apos;t have to do this alone</p>}
@@ -54,7 +73,8 @@ export default function NotBetter() {
           </a>
         ))}
         <a href={telLink(emergency)}
-          className="flex w-full items-center justify-center gap-2 rounded-3xl border border-alert px-6 py-3 text-alert active:scale-[0.98]">
+          className={`flex w-full items-center justify-center gap-2 rounded-3xl border border-alert px-6 active:scale-[0.98] ${
+            long ? 'bg-alert py-4 text-lg text-white shadow-lg shadow-alert/20' : 'py-3 text-alert'}`}>
           <PhoneIcon /> Emergency services <strong>{emergency}</strong>
         </a>
         {/* stay: breathing with no timer and no more questions, help one tap away */}

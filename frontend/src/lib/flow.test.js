@@ -71,6 +71,9 @@ test('after 20 minutes, 5 or more goes to the choices page; light can still fini
   assert.deepEqual(play([6], { minutes: 20 }), ['not-better'])
   assert.deepEqual(play([9], { minutes: 25 }), ['not-better'])
   assert.deepEqual(play([2], { minutes: 25 }), ['offer-chat'])
+  // the page knows it came from the time rule, so it can say so; earlier it doesn't
+  assert.equal(nextStep(6, 'checkin', { minutes: 21, usedGrounding: true }).long, true)
+  assert.equal(nextStep(9, 'checkin', { minutes: 3 }).long, undefined)
 })
 
 test('from "Not feeling better yet?" -> keep breathing -> "How do you feel now?"', () => {
