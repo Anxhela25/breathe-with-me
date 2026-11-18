@@ -1,6 +1,7 @@
 import { useLocation } from 'react-router-dom'
 import Screen from '../components/Screen.jsx'
 import Button from '../components/Button.jsx'
+import OptionCard, { ICONS } from '../components/OptionCard.jsx'
 import { useSession } from '../context/SessionContext.jsx'
 
 // Reached from "I'm fine now" (passed) or "Better" (passing). Rules in lib/flow.js.
@@ -34,12 +35,18 @@ export default function Closing() {
         </div>
       )}
       {/* actions at the bottom, where the thumb is */}
-      <div className="mt-auto flex w-full flex-col items-center gap-2 pt-8">
-        <p className="mb-2">Want a one-minute calm check?</p>
-        <Button to="/calm-check?from=session">Start calm check</Button>
-        {offerChat && <Button to="/chat" variant="outline">Want to talk about it?</Button>}
-        {!passed && <Button to="/breathe" state={{ ownPace: true }} variant="outline">Breathe at my own pace</Button>}
-        <Button to="/questions" variant="link">Skip for now</Button>
+      <div className="mt-auto flex w-full flex-col gap-3 pt-8">
+        <p className="text-center text-sm font-bold tracking-wider text-sage/60 uppercase">What would help now?</p>
+        <OptionCard to="/calm-check?from=session" title="Calm check" text="1 minute, fingertip on the camera."
+          tone="bg-lavender" icon={ICONS.heart} />
+        {offerChat && (
+          <OptionCard to="/chat" title="Talk to me" text="Write what you feel." tone="bg-soft-blue" icon={ICONS.chat} />
+        )}
+        {!passed && (
+          <OptionCard to="/breathe" state={{ ownPace: true }} title="Breathe at my own pace"
+            text="The circle, no timer." tone="bg-pistachio" icon={ICONS.breathe} />
+        )}
+        <Button to="/questions" variant="link" className="self-center">I&apos;m done for now</Button>
       </div>
     </Screen>
   )

@@ -1,14 +1,11 @@
 import { useEffect, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import Screen from '../components/Screen.jsx'
 import LongSessionNote from '../components/LongSessionNote.jsx'
 import Button from '../components/Button.jsx'
 import BreathingCircle from '../components/BreathingCircle.jsx'
 import FeelingPicker from '../components/FeelingPicker.jsx'
-import { useAuth } from '../context/AuthContext.jsx'
 import { useSession } from '../context/SessionContext.jsx'
-import { getEmergency, telLink } from '../data/emergency.js'
-import { listContacts } from '../lib/api.js'
 import { LONG_SESSION_MIN } from '../lib/flow.js'
 import { useAnswer } from '../lib/useAnswer.js'
 
@@ -68,13 +65,24 @@ export default function Breathing() {
       </div>
 
       <div className="mt-auto flex w-full flex-col items-center gap-3 pt-8">
-        {stay && <StayHelp />}
+        {/* "Keep breathing" from the help page: urgent help stays one tap away */}
+        {stay && (
+          <p className="max-w-xs text-center text-xs text-sage/70 text-balance">
+            If you have chest pain, or it lasts longer, contact a doctor or emergency services.
+          </p>
+        )}
         {ownPace && <OwnPaceNote minutes={(now - session.startedAt) / 60000} />}
         {/* own pace: these buttons are the answer */}
         {ownPace && <Button to="/closing" state={{ feeling: 'passed' }}>I&apos;m fine now</Button>}
         {ownPace && <Button to="/not-better" variant="outline">It&apos;s not passing</Button>}
         {/* "I feel better": ask how she is now, the answer decides the next page */}
         {returning && !ownPace && <Button to="/check-in">I feel better</Button>}
+        {stay && (
+          <Link to="/urgent"
+            className="block w-full rounded-3xl border-2 border-alert px-6 py-3 text-center font-bold text-alert active:scale-[0.98]">
+            I need urgent help
+          </Link>
+        )}
       </div>
     </Screen>
   )
@@ -89,30 +97,3 @@ function OwnPaceNote({ minutes }) {
     </p>
   )
 }
-
-// in "stay" breathing: the people she trusts and the emergency number, one tap away
-function StayHelp() {
-  const { user } = useAuth()
-  const emergency = getEmergency(user?.country_code)
-  const [contacts, setContacts] = useState([])
-
-  useEffect(() => {
-    if (user) listContacts().then(setContacts).catch(() => setContacts([]))
-  }, [user])
-
-  const small = 'flex flex-1 items-center justify-center gap-2 rounded-2xl border px-3 py-2.5 text-sm active:scale-[0.98]'
-  return (
-    <div className="flex w-full flex-col items-center gap-2">
-      <p className="max-w-xs text-center text-xs text-sage/70 text-balance">
-        If you have chest pain, or it lasts longer, contact a doctor or emergency services.
-      </p>
-      <div className="flex w-full flex-wrap gap-2">
-        {contacts.slice(0, 2).map(c => (
-          <a key={c.id} href={`tel:${c.phone}`} className={`${small} border-sage text-sage`}>Call {c.name}</a>
-        ))}
-        <a href={telLink(emergency)} className={`${small} border-alert text-alert`}>Emergency {emergency}</a>
-      </div>
-    </div>
-  )
-}
-
