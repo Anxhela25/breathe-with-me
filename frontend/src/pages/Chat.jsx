@@ -45,7 +45,7 @@ export default function Chat() {
         <div className="mt-auto flex w-full flex-col items-center gap-2 pt-8">
           <Button to="/urgent">Show emergency numbers</Button>
           <Button to="/breathe" variant="outline">Back to breathing</Button>
-          <Button to="/closing" variant="link">I feel better</Button>
+          <Button to="/closing" state={{ feeling: 'passing' }} variant="link">I feel better</Button>
         </div>
       </Screen>
     )

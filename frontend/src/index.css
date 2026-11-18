@@ -50,9 +50,21 @@ body { @apply bg-cream text-sage-dark font-sans antialiased; }
 }
 .animate-halo { animation: halo 10s cubic-bezier(0.45, 0, 0.55, 1) infinite; }
 
+/* closing "getting through it": the sun rises over the horizon, then its rays fade in */
+@keyframes sun-rise {
+  from { transform: translateY(40px); }
+  to { transform: none; }
+}
+@keyframes sun-rays {
+  0%, 50% { opacity: 0; }
+  100% { opacity: 1; }
+}
+.sun-rise { animation: sun-rise 2.6s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.sun-rays { animation: sun-rays 3.2s ease-out both; }
+
 /* people who turn off motion on their phone get still versions */
 @media (prefers-reduced-motion: reduce) {
-  .animate-fade-in, .animate-draw, .animate-glow, .animate-breathe, .animate-halo { animation: none; }
+  .animate-fade-in, .animate-draw, .animate-glow, .animate-breathe, .animate-halo, .sun-rise, .sun-rays { animation: none; }
   .animate-draw { stroke-dashoffset: 0; }
 }
 

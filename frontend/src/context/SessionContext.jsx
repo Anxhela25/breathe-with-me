@@ -4,7 +4,7 @@ import { createEpisode, getToken, updateEpisode } from '../lib/api.js'
 const SessionContext = createContext(null)
 
 const empty = {
-  startLevel: null, lastLevel: null, usedChat: false, usedGrounding: false, crisisShown: false, strongRounds: 0, longNoteClosed: false, startedAt: null,
+  startLevel: null, lastLevel: null, usedChat: false, usedGrounding: false, crisisShown: false, asked: 0, longNoteClosed: false, startedAt: null,
 }
 
 // session field -> episode field on the server
