@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 
-const iconButton = 'flex h-11 w-11 items-center justify-center rounded-full text-sage active:bg-pistachio focus-visible:outline-2 focus-visible:outline-sage'
+const pill = 'flex h-10 w-10 items-center justify-center rounded-full text-sage-dark active:bg-pistachio focus-visible:outline-2 focus-visible:outline-sage'
 
 /**
  * Page layout. The header has a back and a home button at the top left on every page (`home={false}`
@@ -19,26 +19,30 @@ export default function Screen({ children, footer, calm = false, home = true, fi
       {/* keeps scrolled content from showing behind the iPhone's clock and battery */}
       <div className="fixed inset-x-0 top-0 z-20 h-[env(safe-area-inset-top)] bg-cream" aria-hidden />
       <header className="grid grid-cols-[5.5rem_1fr_5.5rem] items-center border-b border-sage/10 pb-3">
-        <div className="flex items-center">
-          {/* back on every page, icon only: to where she came from, or home if the app opened here */}
+        {/* like the iPhone's own apps: round glassy buttons, back and home together in one capsule */}
+        <div className="flex h-10 w-fit items-center rounded-full border border-white/70 bg-white/70 shadow-sm shadow-sage/10 backdrop-blur">
           <button type="button" aria-label="Back" onClick={() => (key === 'default' ? navigate('/') : navigate(-1))}
-            className={iconButton}>
-            <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2"
-              strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M15 5l-7 7 7 7" /></svg>
+            className={pill}>
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.2"
+              strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M14.5 5.5L8 12l6.5 6.5" /></svg>
           </button>
           {home && (
-            <Link to="/" aria-label="Home" className={iconButton}>
-              <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8"
-                strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <path d="M4 11l8-7 8 7M6 9.5V20h4.5v-5h3v5H18V9.5" />
-              </svg>
-            </Link>
+            <>
+              <span className="h-5 w-px bg-sage/15" aria-hidden />
+              <Link to="/" aria-label="Home" className={pill}>
+                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.9"
+                  strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="M4 11l8-7 8 7M6 9.5V20h4.5v-5h3v5H18V9.5" />
+                </svg>
+              </Link>
+            </>
           )}
         </div>
         <span className="text-center text-lg font-bold">Breathe With Me</span>
         {showSettings ? (
-          <Link to="/settings" aria-label="Settings" className={`${iconButton} justify-self-end`}>
-            <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8"
+          <Link to="/settings" aria-label="Settings"
+            className={`${pill} justify-self-end border border-white/70 bg-white/70 shadow-sm shadow-sage/10 backdrop-blur`}>
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8"
               strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <circle cx="12" cy="12" r="3" />
               <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" />

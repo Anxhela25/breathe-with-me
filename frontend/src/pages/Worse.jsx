@@ -26,15 +26,17 @@ export default function Worse() {
       </ul>
       <div className="mt-auto flex w-full flex-col items-center gap-3 pt-8">
         <a href={telLink(emergency)}
-          className="flex w-full items-center justify-center gap-3 rounded-3xl bg-alert px-6 py-4 text-white shadow-lg shadow-alert/20 active:scale-[0.98]">
-          <svg viewBox="0 0 24 24" className="h-6 w-6 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.8"
-            strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-            <path d="M5 4h3l2 5-2.5 1.5a11 11 0 0 0 6 6L15 14l5 2v3a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z" />
-          </svg>
-          <span className="text-left leading-tight">
-            <span className="block text-lg font-bold">Yes,</span>
-            <span className="block text-base">Call emergency services</span>
+          className="flex w-full items-center gap-4 rounded-3xl bg-alert py-3 pr-6 pl-3 text-white shadow-lg shadow-alert/25 active:scale-[0.98]">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/20" aria-hidden>
+            <svg viewBox="0 0 24 24" className="h-6 w-6" fill="currentColor">
+              <path d="M6.6 10.8a15.2 15.2 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z" />
+            </svg>
           </span>
+          <span className="flex-1 text-left leading-tight">
+            <span className="block text-xl font-bold">Yes,</span>
+            <span className="block text-base opacity-95">Call emergency services</span>
+          </span>
+          <span aria-hidden className="text-2xl opacity-70">›</span>
         </a>
         {/* panic: just breathe, no timer and no questions */}
         <Button to="/breathe" state={{ stay: true }} variant="outline">No, it&apos;s the panic</Button>
