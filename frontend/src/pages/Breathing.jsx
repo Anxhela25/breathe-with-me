@@ -88,12 +88,12 @@ export default function Breathing() {
   )
 }
 
-// own-pace breathing: while it's under 20 minutes, the reassurance; after that the doctor note at the top says more
+// own-pace breathing: the chest pain note; after 20 minutes the doctor note at the top says more
 function OwnPaceNote({ minutes }) {
   if (!(minutes < LONG_SESSION_MIN)) return null
   return (
     <p className="mb-2 max-w-xs text-center text-sm text-sage/80 text-balance">
-      Panic usually passes within 20 minutes. If you have chest pain, contact a doctor or emergency services.
+      If you have chest pain, contact a doctor or emergency services.
     </p>
   )
 }
