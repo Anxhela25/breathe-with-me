@@ -14,6 +14,7 @@ export function useAnswer() {
     mark({ asked: session.asked + 1, round: step === 'try-else' ? session.round + 1 : 0 })
     if (step === 'passed' || step === 'passing') navigate('/closing', { state: { feeling: step } })
     else if (step === 'try-else') navigate('/try-else')
+    else if (step === 'worse') navigate('/worse')
     else navigate('/not-better')
   }
 }

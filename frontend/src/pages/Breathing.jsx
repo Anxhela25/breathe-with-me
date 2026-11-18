@@ -5,7 +5,9 @@ import LongSessionNote from '../components/LongSessionNote.jsx'
 import Button from '../components/Button.jsx'
 import BreathingCircle from '../components/BreathingCircle.jsx'
 import FeelingPicker from '../components/FeelingPicker.jsx'
+import { useAuth } from '../context/AuthContext.jsx'
 import { useSession } from '../context/SessionContext.jsx'
+import { listContacts } from '../lib/api.js'
 import { LONG_SESSION_MIN } from '../lib/flow.js'
 import { useAnswer } from '../lib/useAnswer.js'
 
@@ -77,6 +79,7 @@ export default function Breathing() {
         {ownPace && <Button to="/not-better" variant="outline">It&apos;s not passing</Button>}
         {/* "I feel better": ask how she is now, the answer decides the next page */}
         {returning && !ownPace && <Button to="/check-in">I feel better</Button>}
+        {stay && <CallContact />}
         {stay && (
           <Link to="/urgent"
             className="block w-full rounded-3xl border-2 border-alert px-6 py-3 text-center font-bold text-alert active:scale-[0.98]">
@@ -97,3 +100,15 @@ function OwnPaceNote({ minutes }) {
     </p>
   )
 }
+
+// in "stay" breathing: a person she trusts, one tap away (nothing shows if she saved no one)
+function CallContact() {
+  const { user } = useAuth()
+  const [contact, setContact] = useState(null)
+  useEffect(() => {
+    if (user) listContacts().then(list => setContact(list[0] ?? null)).catch(() => setContact(null))
+  }, [user])
+  if (!contact) return null
+  return <a href={`tel:${contact.phone}`} className="block w-full rounded-3xl border border-sage px-6 py-3 text-center text-sage active:scale-[0.98]">Call {contact.name}</a>
+}
+
