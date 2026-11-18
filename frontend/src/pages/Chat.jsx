@@ -64,7 +64,7 @@ export default function Chat() {
       const out = await sendChat({ message, history, level: session.lastLevel, safeConfirmed })
       if (out.kind === 'crisis') {
         mark({ crisisShown: true })
-        navigate('/urgent', { replace: true })
+        navigate('/urgent')
         return
       }
       if (out.kind === 'check') {
@@ -86,7 +86,7 @@ export default function Chat() {
     setAsking(false)
     if (atRisk) {
       mark({ crisisShown: true })
-      navigate('/urgent', { replace: true })
+      navigate('/urgent')
       return
     }
     setSafeConfirmed(true)
