@@ -11,15 +11,15 @@ export default function Insights() {
 
   if (failed) {
     return (
-      <Screen back>
+      <Screen>
         <p className="mt-12 text-center">Your patterns couldn't be loaded. Please check your connection.</p>
       </Screen>
     )
   }
-  if (!data) return <Screen back />
+  if (!data) return <Screen />
 
   return (
-    <Screen back footer={<p className="text-xs text-sage/60">These are patterns, not a diagnosis.</p>}>
+    <Screen footer={<p className="text-xs text-sage/60">These are patterns, not a diagnosis.</p>}>
       <h1 className="mt-6 text-2xl font-bold">Your patterns</h1>
 
       {!data.ready && (

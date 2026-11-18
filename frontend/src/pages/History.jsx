@@ -21,7 +21,7 @@ export default function History() {
   const empty = episodes?.length === 0 && calmChecks?.length === 0
 
   return (
-    <Screen back>
+    <Screen>
       <h1 className="mt-6 text-2xl font-bold">My history</h1>
       {failed && <p className="mt-6 text-center">Your history couldn't be loaded. Please check your connection.</p>}
       {empty && (

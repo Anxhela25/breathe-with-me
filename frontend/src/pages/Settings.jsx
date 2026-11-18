@@ -139,7 +139,7 @@ export default function Settings() {
   const initial = (user.email?.[0] ?? '?').toUpperCase()
 
   return (
-    <Screen back>
+    <Screen>
       <div className="mt-4 flex w-full items-baseline justify-between">
         <h1 className="text-3xl font-bold">Settings</h1>
         <p role="status" aria-live="polite" className="text-sm font-bold text-sage">{status}</p>

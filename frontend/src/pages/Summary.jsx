@@ -85,7 +85,7 @@ export default function Summary() {
   }
 
   return (
-    <Screen back>
+    <Screen>
       <h1 className="mt-6 text-2xl font-bold">Summary for my doctor</h1>
       <p className="mt-2 text-center text-sm text-sage/70">You choose who sees this. Nothing is sent automatically.</p>
       {text && (

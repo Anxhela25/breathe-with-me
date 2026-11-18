@@ -26,8 +26,15 @@ export default function Worse() {
       </ul>
       <div className="mt-auto flex w-full flex-col items-center gap-3 pt-8">
         <a href={telLink(emergency)}
-          className="block w-full rounded-3xl bg-alert px-6 py-4 text-center text-lg font-bold text-white shadow-lg shadow-alert/20 active:scale-[0.98]">
-          Yes · Call emergency {emergency}
+          className="flex w-full items-center justify-center gap-3 rounded-3xl bg-alert px-6 py-4 text-white shadow-lg shadow-alert/20 active:scale-[0.98]">
+          <svg viewBox="0 0 24 24" className="h-6 w-6 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.8"
+            strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M5 4h3l2 5-2.5 1.5a11 11 0 0 0 6 6L15 14l5 2v3a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z" />
+          </svg>
+          <span className="text-left leading-tight">
+            <span className="block text-lg font-bold">Yes, I have one</span>
+            <span className="block text-sm opacity-90">Call emergency services · {emergency}</span>
+          </span>
         </a>
         {/* panic: just breathe, no timer and no questions */}
         <Button to="/breathe" state={{ stay: true }} variant="outline">No, it&apos;s the panic</Button>
