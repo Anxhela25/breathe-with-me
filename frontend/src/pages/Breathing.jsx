@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { useSession } from '../context/SessionContext.jsx'
 import { getEmergency, telLink } from '../data/emergency.js'
 import { listContacts } from '../lib/api.js'
+import { LONG_SESSION_MIN } from '../lib/flow.js'
 import { useAnswer } from '../lib/useAnswer.js'
 
 // in seconds; lower them while testing
@@ -24,9 +25,11 @@ export default function Breathing() {
   const [now, setNow] = useState(Date.now())
   // from "Not feeling better yet?": breathe as long as she wants, no timer and no more questions
   const [stay] = useState(() => location.state?.stay === true)
+  // from "You're getting through it": breathe at her own pace; she says when it passed or when it doesn't
+  const [ownPace] = useState(() => location.state?.ownPace === true)
   // coming back (she already answered once): 2 more minutes, then the question again
-  const [returning] = useState(() => stay || session.asked > 0)
-  const [backSince] = useState(() => (returning && !stay ? Date.now() : null))
+  const [returning] = useState(() => stay || ownPace || session.asked > 0)
+  const [backSince] = useState(() => (returning && !stay && !ownPace ? Date.now() : null))
 
   useEffect(() => { if (!session.startedAt) start() }, [session.startedAt, start])
   useEffect(() => {
@@ -49,14 +52,14 @@ export default function Breathing() {
 
   return (
     <Screen
-      footer={!stay && <Button to="/urgent" variant="link" className="text-xs text-sage/70">I need urgent help</Button>}
+      footer={!stay && !ownPace && <Button to="/urgent" variant="link" className="text-xs text-sage/70">I need urgent help</Button>}
     >
       <LongSessionNote />
       <div className="mt-16"><BreathingCircle progress={progress} /></div>
       <p className="mt-8 text-base">
         {firstPart && 'Breathe with me for 2 minutes.'}
         {backSince && 'Breathe with me for 2 more minutes.'}
-        {stay && "Breathe at your own pace. I'm here."}
+        {(stay || ownPace) && "Breathe at your own pace. I'm here."}
         {showQuestion && <>Follow the circle. I&apos;m here.</>}
       </p>
 
@@ -66,10 +69,23 @@ export default function Breathing() {
 
       <div className="mt-auto flex w-full flex-col items-center gap-3 pt-8">
         {stay && <StayHelp />}
-        {/* "I feel better" is the answer: straight to the end, no question asked */}
-        {returning && <Button to="/closing" state={{ feeling: 'passing' }}>I feel better</Button>}
+        {ownPace && <OwnPaceNote minutes={(now - session.startedAt) / 60000} />}
+        {/* these buttons are the answer: straight on, no question asked */}
+        {ownPace && <Button to="/closing" state={{ feeling: 'passed' }}>I&apos;m fine now</Button>}
+        {ownPace && <Button to="/not-better" variant="outline">It&apos;s not passing</Button>}
+        {returning && !ownPace && <Button to="/closing" state={{ feeling: 'passing' }}>I feel better</Button>}
       </div>
     </Screen>
+  )
+}
+
+// own-pace breathing: while it's under 20 minutes, the reassurance; after that the doctor note at the top says more
+function OwnPaceNote({ minutes }) {
+  if (!(minutes < LONG_SESSION_MIN)) return null
+  return (
+    <p className="mb-2 max-w-xs text-center text-sm text-sage/80 text-balance">
+      Panic usually passes within 20 minutes. If you have chest pain, contact a doctor or emergency services.
+    </p>
   )
 }
 

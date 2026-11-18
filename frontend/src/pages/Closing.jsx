@@ -38,6 +38,7 @@ export default function Closing() {
         <p className="mb-2">Want a one-minute calm check?</p>
         <Button to="/calm-check?from=session">Start calm check</Button>
         {offerChat && <Button to="/chat" variant="outline">Want to talk about it?</Button>}
+        {!passed && <Button to="/breathe" state={{ ownPace: true }} variant="outline">Breathe at my own pace</Button>}
         <Button to="/questions" variant="link">Skip for now</Button>
       </div>
     </Screen>
