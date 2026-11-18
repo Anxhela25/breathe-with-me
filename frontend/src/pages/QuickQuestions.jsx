@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Screen from '../components/Screen.jsx'
 import Button from '../components/Button.jsx'
 import NumberPicker from '../components/NumberPicker.jsx'
+import Orb from '../components/Orb.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useSession } from '../context/SessionContext.jsx'
 import { updateEpisode } from '../lib/api.js'
@@ -27,7 +28,8 @@ export default function QuickQuestions() {
 function AccountOffer() {
   return (
     <Screen>
-      <h1 className="mt-28 text-center text-2xl font-bold">Want to keep a private history?</h1>
+      <Orb icon="book" ring className="mt-20" />
+      <h1 className="mt-10 text-center text-2xl font-bold">Want to keep a private history?</h1>
       <p className="mt-3 text-center text-sage/80">
         With an account, this session and your answers are saved. Over time you can see patterns and share a summary
         with your doctor.

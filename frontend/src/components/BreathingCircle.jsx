@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useReducedMotion } from '../lib/motion.js'
+import Landscape from './Landscape.jsx'
 
 export const INHALE_MS = 4000
 export const EXHALE_MS = 6000
@@ -10,7 +11,7 @@ const EASE = 'cubic-bezier(0.45, 0, 0.55, 1)'  // slow at both ends, like a brea
  * The breathing guide: a soft pistachio circle that grows on the in-breath and shrinks on the
  * out-breath. `progress` (0 to 1) draws a thin ring around it that closes over the exercise.
  */
-export default function BreathingCircle({ inhaleMs = INHALE_MS, exhaleMs = EXHALE_MS, progress = null, size = 256 }) {
+export default function BreathingCircle({ inhaleMs = INHALE_MS, exhaleMs = EXHALE_MS, progress = null, size = 256, landscape = false }) {
   const [phase, setPhase] = useState('in')
   // first frame drawn small, so the first breath in grows from small instead of starting open
   const [started, setStarted] = useState(false)
@@ -41,6 +42,40 @@ export default function BreathingCircle({ inhaleMs = INHALE_MS, exhaleMs = EXHAL
 
   const radius = size / 2 - 3
   const circumference = 2 * Math.PI * radius
+
+  // the breathing page: a little landscape that grows and shrinks, a thin ring, the words below as a heading
+  if (landscape) {
+    return (
+      <div className="flex flex-col items-center">
+        <div className="relative" style={{ width: size, height: size }}>
+          <svg className="absolute inset-0 -rotate-90" viewBox={`0 0 ${size} ${size}`} aria-hidden>
+            <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#FFFFFF" strokeOpacity="0.8" strokeWidth="3" />
+            {progress !== null && (
+              <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#4A6355" strokeWidth="3"
+                strokeLinecap="round" strokeDasharray={circumference}
+                strokeDashoffset={circumference * (1 - Math.min(1, Math.max(0, progress)))}
+                style={{ transition: 'stroke-dashoffset 300ms linear' }} />
+            )}
+          </svg>
+          <div className="absolute inset-5 overflow-hidden rounded-full shadow-[0_14px_40px_-14px_rgba(47,65,54,0.45)] ring-4 ring-white/70"
+            style={layer(1, 0.72, 0)} aria-hidden>
+            <Landscape />
+          </div>
+        </div>
+        <div className="relative mt-6 h-9 w-full" aria-live="polite">
+          {/* the two words fade into each other instead of switching */}
+          <span className="absolute inset-x-0 text-center font-display text-2xl font-bold transition-opacity duration-700"
+            style={{ opacity: growing ? 1 : 0 }} aria-hidden={!growing}>
+            Breathe in
+          </span>
+          <span className="absolute inset-x-0 text-center font-display text-2xl font-bold transition-opacity duration-700"
+            style={{ opacity: growing ? 0 : 1 }} aria-hidden={growing}>
+            Breathe out
+          </span>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="relative" style={{ width: size, height: size }}>

@@ -4,6 +4,7 @@ import Screen from '../components/Screen.jsx'
 import LongSessionNote from '../components/LongSessionNote.jsx'
 import { BreathIcon } from '../components/Icons.jsx'
 import Button from '../components/Button.jsx'
+import EmergencyButton from '../components/EmergencyButton.jsx'
 import { useSession } from '../context/SessionContext.jsx'
 import { sendChat } from '../lib/api.js'
 
@@ -43,7 +44,7 @@ export default function Chat() {
         <h1 className="mt-10 text-2xl font-bold">The chat is paused.</h1>
         <p className="mt-2 text-center text-sage/80">Please reach out to someone now.</p>
         <div className="mt-auto flex w-full flex-col items-center gap-2 pt-8">
-          <Button to="/urgent">Show emergency numbers</Button>
+          <EmergencyButton to="/urgent" title="Show emergency numbers" />
           <Button to="/breathe" variant="outline">Back to breathing</Button>
         </div>
       </Screen>
@@ -184,10 +185,7 @@ export default function Chat() {
 
         {/* always on screen, whatever she writes and however long the chat gets */}
         <div className="mt-3 w-full">
-          <Link to="/urgent"
-            className="block w-full rounded-3xl border-2 border-alert px-6 py-3 text-center font-bold text-alert active:scale-[0.98]">
-            I need urgent help
-          </Link>
+          <EmergencyButton to="/urgent" title="I need urgent help" small />
         </div>
       </Screen>
     </div>

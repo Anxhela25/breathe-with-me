@@ -13,6 +13,9 @@ export const ClockIcon = () => (
 export const BreathIcon = () => (
   <svg {...base}><path d="M3 9h11a3 3 0 1 0-3-3M3 13h15a3 3 0 1 1-3 3M3 17h7" /></svg>
 )
+export const PhoneIcon = () => (
+  <svg {...base}><path d="M5 4h3l2 5-2.5 1.5a11 11 0 0 0 6 6L15 14l5 2v3a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z" /></svg>
+)
 export const RhythmIcon = () => (
   <svg {...base}><path d="M3 12h3l2-5 4 10 2-5h7" /></svg>
 )

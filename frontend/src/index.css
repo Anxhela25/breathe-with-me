@@ -7,13 +7,21 @@
   --color-soft-blue: #C9DCEB;
   --color-lavender: #DCD6EC;
   --color-cream: #F7F6F1;
-  --color-alert: #B4413C;  /* emergencies, deleting data and form problems */
+  --color-alert: #B35A50;  /* emergencies, deleting data and form problems */
+  --color-blush: #F6E1DC;  /* soft background of the emergency buttons */
+  --color-rose: #8E433B;  /* text on blush */
+  --color-rose-soft: #C9776D;  /* phone circle on the emergency buttons */
   --color-ok: #2E7D4F;  /* success, e.g. password long enough */
+  --color-orb: #B9A6E0;  /* the lavender orbs and the grounding pebbles already done */
   --font-sans: "Lato", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fraunces", Georgia, ui-serif, serif;  /* headings: a soft serif */
 }
 
 html, body, #root { height: 100%; }
 body { @apply bg-cream text-sage-dark font-sans antialiased; }
+@layer base {
+  h1 { font-family: var(--font-display); }
+}
 
 /* gentle entrance when a step changes */
 @keyframes fade-in {

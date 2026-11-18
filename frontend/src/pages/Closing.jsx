@@ -2,6 +2,8 @@ import { useLocation } from 'react-router-dom'
 import Screen from '../components/Screen.jsx'
 import Button from '../components/Button.jsx'
 import OptionCard, { ICONS } from '../components/OptionCard.jsx'
+import Landscape from '../components/Landscape.jsx'
+import EmergencyButton from '../components/EmergencyButton.jsx'
 import { useSession } from '../context/SessionContext.jsx'
 
 // Reached from "I'm fine now" (passed) or "Better" (passing). Rules in lib/flow.js.
@@ -13,10 +15,15 @@ export default function Closing() {
   return (
     <Screen calm>
       {passed ? (
-        <div className="relative mt-24 flex h-32 w-32 items-center justify-center" aria-hidden>
-          <span className="absolute inset-0 rounded-full bg-pistachio animate-halo" />
-          <span className="relative flex h-28 w-28 items-center justify-center rounded-full bg-sage shadow-lg shadow-sage/30">
-            <svg viewBox="0 0 24 24" className="h-12 w-12 stroke-white" fill="none" strokeWidth="2.4"
+        // calm water and a small boat, with a check: it passed
+        <div className="relative mt-10 flex h-56 w-56 items-center justify-center" aria-hidden>
+          <span className="absolute inset-0 rounded-full border border-white/80" />
+          <span className="absolute inset-6 rounded-full border border-white/70 animate-halo" />
+          <div className="relative h-40 w-40 overflow-hidden rounded-full shadow-[0_14px_40px_-14px_rgba(47,65,54,0.45)] ring-4 ring-white/70">
+            <Landscape boat />
+          </div>
+          <span className="absolute right-9 bottom-9 flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-md shadow-sage/20">
+            <svg viewBox="0 0 24 24" className="h-6 w-6 stroke-sage" fill="none" strokeWidth="2.4"
               strokeLinecap="round" strokeLinejoin="round">
               <path d="M5 12.5l4.5 4.5L19 7.5" pathLength="1" className="animate-draw" />
             </svg>
@@ -31,7 +38,7 @@ export default function Closing() {
         <div className="mt-6 w-full rounded-2xl border border-alert/40 bg-alert/5 p-4 text-center text-sm">
           <p>If the thoughts of hurting yourself come back, please don&apos;t stay alone with them.
             Call someone you trust or emergency services.</p>
-          <Button to="/urgent" variant="link" className="mt-1 text-alert">Show emergency numbers</Button>
+          <EmergencyButton to="/urgent" title="Show emergency numbers" small className="mt-3" />
         </div>
       )}
       {/* actions at the bottom, where the thumb is */}

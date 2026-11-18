@@ -30,7 +30,7 @@ export default function LongSessionNote() {
         <p className="mt-0.5 text-sm">If it isn&apos;t easing, please contact a doctor.</p>
         <div className="mt-3 flex gap-2">
           <a href={telLink(emergency)}
-            className="flex-1 rounded-xl bg-alert px-3 py-2 text-center text-sm font-bold text-white active:scale-[0.98]">
+            className="flex-1 rounded-xl border border-rose-soft/30 bg-blush px-3 py-2 text-center text-sm font-bold text-rose active:scale-[0.98]">
             Emergency {emergency}
           </a>
           <button type="button" onClick={() => mark({ longNoteClosed: true })}

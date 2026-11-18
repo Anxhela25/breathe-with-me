@@ -38,7 +38,7 @@ export default function Screen({ children, footer, calm = false, home = true, fi
             </>
           )}
         </div>
-        <span className="text-center text-lg font-bold">Breathe With Me</span>
+        <span className="text-center font-display text-lg font-bold">Breathe With Me</span>
         {showSettings ? (
           <Link to="/settings" aria-label="Settings"
             className={`${pill} justify-self-end border border-white/70 bg-white/70 shadow-sm shadow-sage/10 backdrop-blur`}>
@@ -54,6 +54,12 @@ export default function Screen({ children, footer, calm = false, home = true, fi
       {footer && <footer className="pt-4 text-center">{footer}</footer>}
     </div>
   )
-  if (!calm) return page
-  return <div className="flex min-h-full flex-col bg-gradient-to-b from-cream via-cream to-soft-blue/40">{page}</div>
+  // every page: a soft cream-to-blue sky with two faint clouds behind the content (decorative only)
+  return (
+    <div className={`relative flex ${fit ? 'h-full' : 'min-h-full'} flex-col overflow-hidden bg-gradient-to-b from-cream via-cream to-soft-blue/40`}>
+      <span aria-hidden className="pointer-events-none absolute -left-12 top-36 h-16 w-60 rounded-full bg-white/70 blur-2xl" />
+      <span aria-hidden className="pointer-events-none absolute -right-12 top-[58%] h-14 w-52 rounded-full bg-white/60 blur-2xl" />
+      <div className={fit ? 'relative h-full' : 'relative flex flex-1 flex-col'}>{page}</div>
+    </div>
+  )
 }

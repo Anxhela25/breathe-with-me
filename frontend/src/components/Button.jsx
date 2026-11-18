@@ -2,7 +2,8 @@ import { Link } from 'react-router-dom'
 
 const styles = {
   primary: 'w-full rounded-3xl bg-sage px-6 py-4 text-lg font-bold text-white shadow-lg shadow-sage/20 active:scale-[0.98]',
-  outline: 'w-full rounded-3xl border border-sage px-6 py-3 text-base text-sage active:scale-[0.98]',
+  // a soft white pill: the second choice, quieter than primary
+  outline: 'w-full rounded-3xl border border-sage/15 bg-white/80 px-6 py-3 text-base font-bold text-sage-dark shadow-sm shadow-sage/5 active:scale-[0.98]',
   link: 'px-2 py-2 text-sm text-sage underline underline-offset-4',
 }
 

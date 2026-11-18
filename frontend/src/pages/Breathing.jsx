@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import Screen from '../components/Screen.jsx'
 import LongSessionNote from '../components/LongSessionNote.jsx'
 import Button from '../components/Button.jsx'
+import EmergencyButton from '../components/EmergencyButton.jsx'
 import BreathingCircle from '../components/BreathingCircle.jsx'
 import FeelingPicker from '../components/FeelingPicker.jsx'
 import { useSession } from '../context/SessionContext.jsx'
@@ -49,11 +50,11 @@ export default function Breathing() {
 
   return (
     <Screen
-      footer={!stay && !ownPace && <Button to="/urgent" variant="link" className="text-xs text-sage/70">I need urgent help</Button>}
+      footer={!stay && !ownPace && <Button to="/urgent" variant="link" className="text-xs font-bold text-alert">I need urgent help</Button>}
     >
       <LongSessionNote />
-      <div className="mt-16"><BreathingCircle progress={progress} /></div>
-      <p className="mt-8 text-base">
+      <div className="mt-12"><BreathingCircle progress={progress} landscape /></div>
+      <p className="mt-2 text-base text-sage/80">
         {firstPart && 'Breathe with me for 2 minutes.'}
         {backSince && 'Breathe with me for 2 more minutes.'}
         {(stay || ownPace) && "Breathe at your own pace. I'm here."}
@@ -78,10 +79,7 @@ export default function Breathing() {
         {/* "I feel better": ask how she is now, the answer decides the next page */}
         {returning && !ownPace && <Button to="/check-in">I feel better</Button>}
         {stay && (
-          <Link to="/urgent"
-            className="block w-full rounded-3xl border-2 border-alert px-6 py-3 text-center font-bold text-alert active:scale-[0.98]">
-            I need urgent help
-          </Link>
+          <EmergencyButton to="/urgent" title="I need urgent help" />
         )}
       </div>
     </Screen>
