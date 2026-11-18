@@ -13,9 +13,8 @@ const PhoneIcon = () => (
   </svg>
 )
 
-// Reached when breathing, grounding or the extra minutes didn't help, or after 20 minutes (rules in
-// lib/flow.js). No new round of the same exercise from here: people to call, the emergency number,
-// or a few quiet minutes of breathing.
+// Reached when the 2 more minutes (8-10) or grounding (5-7) didn't help (rules in lib/flow.js).
+// No more questions from here: people to call, the emergency number, or breathing at her own pace.
 export default function NotBetter() {
   const { user } = useAuth()
   const emergency = getEmergency(user?.country_code)

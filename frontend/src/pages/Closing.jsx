@@ -1,15 +1,11 @@
-import { useLocation } from 'react-router-dom'
 import Screen from '../components/Screen.jsx'
 import Button from '../components/Button.jsx'
 import { useSession } from '../context/SessionContext.jsx'
 
-// Only reached once the panic eased (1-4), so the calm check is never offered during a strong attack.
+// Reached at 1-4, or when she taps "I feel better" (that button is the answer, no number asked).
 export default function Closing() {
   const { session } = useSession()
-  const location = useLocation()
   const offerChat = session.lastLevel >= 2 && session.lastLevel <= 4 && !session.crisisShown
-  // still light, but higher than the last answer (3 -> 4): don't say it passed
-  if (location.state?.rising) return <StillThere offerChat={offerChat} />
   const passed = session.lastLevel === 1
   return (
     <Screen calm>
@@ -53,27 +49,6 @@ export default function Closing() {
         {/* 2-4: a little is still there, so offer to talk; never after a crisis (the chat is paused) */}
         {offerChat && <Button to="/chat" variant="outline">Want to talk about it?</Button>}
         <Button to="/questions" variant="link">Skip for now</Button>
-      </div>
-    </Screen>
-  )
-}
-
-function StillThere({ offerChat }) {
-  return (
-    <Screen>
-      <div className="mt-28 flex h-28 w-28 items-center justify-center rounded-full bg-pistachio" aria-hidden>
-        <svg viewBox="0 0 24 24" className="h-12 w-12 stroke-sage" fill="none" strokeWidth="1.8"
-          strokeLinecap="round" strokeLinejoin="round">
-          <path d="M3 9h11a3 3 0 1 0-3-3M3 13h15a3 3 0 1 1-3 3M3 17h7" />
-        </svg>
-      </div>
-      <h1 className="mt-6 text-center text-3xl font-bold">It&apos;s still a little there.</h1>
-      <p className="mt-1 text-lg">That&apos;s okay.</p>
-      <div className="mt-auto flex w-full flex-col items-center gap-2 pt-8">
-        {/* 2 minutes of breathing with the ring, then "How do you feel now?" */}
-        <Button to="/breathe" state={{ quiet: true }}>Breathe a bit longer</Button>
-        {offerChat && <Button to="/chat" variant="outline">Want to talk about it?</Button>}
-        <Button to="/calm-check?from=session" variant="link">I&apos;m okay for now</Button>
       </div>
     </Screen>
   )

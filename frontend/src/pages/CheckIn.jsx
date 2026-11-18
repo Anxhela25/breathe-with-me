@@ -7,22 +7,15 @@ import { nextStep } from '../lib/flow.js'
 
 export default function CheckIn() {
   const navigate = useNavigate()
-  const { session, recordLevel, mark } = useSession()
+  const { session, recordLevel } = useSession()
 
   // the rules are in lib/flow.js (with tests)
   function pick(level) {
-    const previous = session.lastLevel
     recordLevel(level)
-    const { step } = nextStep(level, 'checkin', {
-      previous, usedGrounding: session.usedGrounding, usedQuiet: session.usedQuiet,
-    })
-    if (step === 'closing') navigate('/closing')
-    else if (step === 'still-there') navigate('/closing', { state: { rising: true } })
+    const step = nextStep(level, 'checkin', { usedGrounding: session.usedGrounding, strongRounds: session.strongRounds })
+    if (step === 'finish') navigate('/closing')
     else if (step === 'grounding') navigate('/grounding')
-    else if (step === 'quiet') {
-      mark({ usedQuiet: true })
-      navigate('/breathe', { state: { quiet: true } })
-    } else navigate('/not-better')
+    else navigate('/not-better')
   }
 
   return (
