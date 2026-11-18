@@ -8,8 +8,8 @@ import { useSession } from '../context/SessionContext.jsx'
 export default function Closing() {
   const { session } = useSession()
   const passed = useLocation().state?.feeling === 'passed'
-  // still a little there, so offer to talk; never after a crisis (the chat is paused)
-  const offerChat = !passed && !session.crisisShown
+  // still a little there, so offer to talk (greyed out while the chat is paused after a crisis)
+  const offerChat = !passed
   return (
     <Screen calm>
       {passed ? (
@@ -40,7 +40,8 @@ export default function Closing() {
         <OptionCard to="/calm-check?from=session" title="Calm check" text="1 minute, fingertip on the camera."
           tone="bg-lavender" icon={ICONS.heart} />
         {offerChat && (
-          <OptionCard to="/chat" title="Talk to me" text="Write what you feel." tone="bg-soft-blue" icon={ICONS.chat} />
+          <OptionCard to="/chat" title="Talk to me" tone="bg-soft-blue" icon={ICONS.chat} paused={session.crisisShown}
+            text={session.crisisShown ? 'Paused after your last message.' : 'Write what you feel.'} />
         )}
         {!passed && (
           <OptionCard to="/breathe" state={{ ownPace: true }} title="Breathe at my own pace"

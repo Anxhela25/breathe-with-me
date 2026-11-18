@@ -20,11 +20,9 @@ export default function TryElse() {
       <div className="flex w-full flex-col gap-3 pt-8">
         <OptionCard to="/grounding" title="Grounding" text="Notice 5 things around you, one sense at a time."
           tone="bg-lavender" icon={ICONS.grounding} />
-        {/* never after a crisis message: the chat stays paused */}
-        {!session.crisisShown && (
-          <OptionCard to="/chat" title="Talk to me" text="Write what you feel. You're talking to an AI."
-            tone="bg-soft-blue" icon={ICONS.chat} />
-        )}
+        {/* after a crisis message the chat stays paused: the card stays, greyed out, saying so */}
+        <OptionCard to="/chat" title="Talk to me" tone="bg-soft-blue" icon={ICONS.chat} paused={session.crisisShown}
+          text={session.crisisShown ? 'Paused after your last message.' : "Write what you feel. You're talking to an AI."} />
         <OptionCard to="/breathe" title="Keep breathing" text="2 more minutes with the circle."
           tone="bg-pistachio" icon={ICONS.breathe} />
       </div>

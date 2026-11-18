@@ -11,8 +11,20 @@ export const ICONS = {
   heart: <svg {...icon}><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" /></svg>,
 }
 
-/** A choice as a card: coloured icon, title, one line, chevron. Used where she picks what helps. */
-export default function OptionCard({ to, state, title, text, tone, icon: svg }) {
+/** A choice as a card: coloured icon, title, one line, chevron. Used where she picks what helps.
+ * `paused` keeps the card in its place but greyed out and not tappable, with `text` saying why. */
+export default function OptionCard({ to, state, title, text, tone, icon: svg, paused = false }) {
+  if (paused) {
+    return (
+      <div aria-disabled="true" className="flex items-center gap-4 rounded-2xl border border-sage/10 bg-white/50 p-4 text-left opacity-60">
+        <span className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-sage-dark ${tone}`}>{svg}</span>
+        <span className="flex-1">
+          <span className="block text-lg font-bold">{title}</span>
+          <span className="block text-sm text-sage/80">{text}</span>
+        </span>
+      </div>
+    )
+  }
   return (
     <Link to={to} state={state}
       className="flex items-center gap-4 rounded-2xl border border-sage/20 bg-white p-4 text-left shadow-sm active:scale-[0.98]">
