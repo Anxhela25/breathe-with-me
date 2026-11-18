@@ -4,12 +4,13 @@
 // The ideas behind it:
 // - the number decides the kind of help: 1-4 light (chat, finish), 5-7 medium (grounding), 8-10 strong
 // - the same help is never repeated in a loop: when something didn't work, the next answer moves on
-// - when nothing has worked, or after 20 minutes, "Not feeling better yet?" offers people and numbers
+// - when nothing has worked, "Not feeling better yet?" offers people and numbers
+// - after 20 minutes a note on the help pages suggests a doctor (components/LongSessionNote.jsx)
 
 export const LIGHT = 4
 export const MEDIUM = 7
 export const MAX_STRONG_ROUNDS = 3  // the first 2 minutes plus two more while it's going down
-export const LONG_SESSION_MIN = 20  // panic usually passes within 20 minutes; after that, more than breathing
+export const LONG_SESSION_MIN = 20  // panic usually passes within 20 minutes; after that, the doctor note shows
 
 export function band(level) {
   if (level <= LIGHT) return 'light'
@@ -28,10 +29,8 @@ export function band(level) {
  *   strongRounds   strong rounds already done in this session
  *   usedGrounding  grounding was done in this session
  *   usedQuiet      the extra 2 minutes of quiet breathing for 5-7 were already given
- *   minutes        minutes since the session started
  *
- * Returns { step } and, for a strong round, goingDown; long is set when the 20-minute rule sent her
- * to "Not feeling better yet?". The steps:
+ * Returns { step } and, for a strong round, goingDown. The steps:
  *   offer-chat, offer-grounding  stay on the breathing page and offer it (with "Keep breathing")
  *   strong-round                 2 more minutes of breathing, then the question again
  *   closing, still-there         "You did it" / "It's still a little there"
@@ -39,12 +38,9 @@ export function band(level) {
  *   not-better                   "Not feeling better yet?"
  */
 export function nextStep(level, where, s) {
-  const { previous = null, afterRound = false, strongRounds = 0, usedGrounding = false, usedQuiet = false,
-    minutes = 0 } = s
+  const { previous = null, afterRound = false, strongRounds = 0, usedGrounding = false, usedQuiet = false
+  } = s
   const kind = band(level)
-
-  // a long session that is still at 5 or more needs more than another exercise
-  if (minutes >= LONG_SESSION_MIN && kind !== 'light') return { step: 'not-better', long: true }
 
   if (kind === 'light') {
     if (where === 'breathing') return { step: 'offer-chat' }

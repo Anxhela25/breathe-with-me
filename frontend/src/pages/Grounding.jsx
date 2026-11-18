@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Screen from '../components/Screen.jsx'
+import LongSessionNote from '../components/LongSessionNote.jsx'
 import Button from '../components/Button.jsx'
 import { useSession } from '../context/SessionContext.jsx'
 
@@ -27,6 +28,7 @@ export default function Grounding() {
 
   return (
     <Screen>
+      <LongSessionNote />
       <p className="mt-8 text-sm text-sage/60">Step {step + 1} of {STEPS.length}</p>
       <div key={step} className="mt-auto mb-auto flex flex-col items-center">
         <span className="text-9xl font-bold text-sage">{number}</span>

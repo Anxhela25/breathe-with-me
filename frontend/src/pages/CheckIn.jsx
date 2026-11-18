@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import Screen from '../components/Screen.jsx'
+import LongSessionNote from '../components/LongSessionNote.jsx'
 import NumberPicker from '../components/NumberPicker.jsx'
 import { useSession } from '../context/SessionContext.jsx'
 import { nextStep } from '../lib/flow.js'
@@ -12,9 +13,8 @@ export default function CheckIn() {
   function pick(level) {
     const previous = session.lastLevel
     recordLevel(level)
-    const minutes = session.startedAt ? (Date.now() - session.startedAt) / 60000 : 0
-    const { step, long } = nextStep(level, 'checkin', {
-      previous, usedGrounding: session.usedGrounding, usedQuiet: session.usedQuiet, minutes,
+    const { step } = nextStep(level, 'checkin', {
+      previous, usedGrounding: session.usedGrounding, usedQuiet: session.usedQuiet,
     })
     if (step === 'closing') navigate('/closing')
     else if (step === 'still-there') navigate('/closing', { state: { rising: true } })
@@ -22,11 +22,12 @@ export default function CheckIn() {
     else if (step === 'quiet') {
       mark({ usedQuiet: true })
       navigate('/breathe', { state: { quiet: true } })
-    } else navigate('/not-better', { state: { long } })
+    } else navigate('/not-better')
   }
 
   return (
     <Screen>
+      <LongSessionNote />
       <div className="mt-16 flex h-64 w-64 items-center justify-center" aria-hidden>
         <div className="h-40 w-40 rounded-full bg-pistachio" />
       </div>

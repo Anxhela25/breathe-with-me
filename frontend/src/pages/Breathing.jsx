@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import Screen from '../components/Screen.jsx'
+import LongSessionNote from '../components/LongSessionNote.jsx'
 import Button from '../components/Button.jsx'
 import BreathingCircle from '../components/BreathingCircle.jsx'
 import NumberPicker from '../components/NumberPicker.jsx'
@@ -56,11 +57,11 @@ export default function Breathing() {
   function pick(level) {
     const previous = session.lastLevel
     recordLevel(level)
-    const { step, goingDown: lower, long } = nextStep(level, 'breathing', {
-      previous, afterRound: state === 'check', strongRounds: session.strongRounds, minutes: elapsed / 60,
+    const { step, goingDown: lower } = nextStep(level, 'breathing', {
+      previous, afterRound: state === 'check', strongRounds: session.strongRounds,
     })
     if (step === 'not-better') {
-      navigate('/not-better', { state: { long } })
+      navigate('/not-better')
       return
     }
     setKeepSince(null)
@@ -88,6 +89,7 @@ export default function Breathing() {
         <Button to="/urgent" variant="link" className="text-xs text-sage/70">I need urgent help</Button>
       )}
     >
+      <LongSessionNote />
       <div className="mt-16"><BreathingCircle progress={progress} /></div>
       <p className="mt-8 text-base">
         {firstMinute && 'Breathe with me for 1 minute.'}

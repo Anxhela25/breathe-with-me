@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Screen from '../components/Screen.jsx'
+import LongSessionNote from '../components/LongSessionNote.jsx'
 import { BreathIcon } from '../components/Icons.jsx'
 import Button from '../components/Button.jsx'
 import { useSession } from '../context/SessionContext.jsx'
@@ -100,6 +101,7 @@ export default function Chat() {
   return (
     <div className="fixed inset-x-0 overflow-hidden" style={{ top: screen.top, height: screen.height }}>
       <Screen fit keyboard={keyboardOpen}>
+        <LongSessionNote />
         <p className="mt-3 rounded-full bg-pistachio px-3 py-1 text-xs text-sage">You are talking to an AI, not a person.</p>
 
         {!started && <p className="mt-10 text-center text-xl">Do you want to tell me what you feel?</p>}

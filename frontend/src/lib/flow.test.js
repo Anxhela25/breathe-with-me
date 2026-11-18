@@ -7,8 +7,8 @@ const ENDS = new Set(['closing', 'still-there', 'not-better'])
 
 // Plays a session like the app does: the first question is on the breathing page; "Keep breathing" on
 // an offer, grounding and quiet breathing all lead to "How do you feel now?".
-function play(answers, { minutes = 0 } = {}) {
-  let s = { previous: null, afterRound: false, strongRounds: 0, usedGrounding: false, usedQuiet: false, minutes }
+function play(answers) {
+  let s = { previous: null, afterRound: false, strongRounds: 0, usedGrounding: false, usedQuiet: false }
   let where = 'breathing'
   const steps = []
   for (const level of answers) {
@@ -67,17 +67,8 @@ test('strong at "How do you feel now?" always goes to the choices page', () => {
   }
 })
 
-test('after 20 minutes, 5 or more goes to the choices page; light can still finish', () => {
-  assert.deepEqual(play([6], { minutes: 20 }), ['not-better'])
-  assert.deepEqual(play([9], { minutes: 25 }), ['not-better'])
-  assert.deepEqual(play([2], { minutes: 25 }), ['offer-chat'])
-  // the page knows it came from the time rule, so it can say so; earlier it doesn't
-  assert.equal(nextStep(6, 'checkin', { minutes: 21, usedGrounding: true }).long, true)
-  assert.equal(nextStep(9, 'checkin', { minutes: 3 }).long, undefined)
-})
-
 test('from "Not feeling better yet?" -> keep breathing -> "How do you feel now?"', () => {
-  const s = { previous: 9, usedGrounding: true, usedQuiet: true, strongRounds: 2, minutes: 8 }
+  const s = { previous: 9, usedGrounding: true, usedQuiet: true, strongRounds: 2 }
   assert.equal(nextStep(2, 'checkin', s).step, 'closing')
   assert.equal(nextStep(6, 'checkin', s).step, 'not-better')
   assert.equal(nextStep(9, 'checkin', s).step, 'not-better')
