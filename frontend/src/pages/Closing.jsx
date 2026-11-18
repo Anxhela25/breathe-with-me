@@ -37,7 +37,7 @@ export default function Closing() {
       )}
       <h1 className="mt-6 text-center text-3xl font-bold">{passed ? 'You did it.' : "It's easing."}</h1>
       <p className="mt-2 max-w-xs text-center text-lg text-balance">
-        {passed ? 'It passed. You stayed with it, and it went.' : "You're getting through it. What's left will settle."}
+        {passed ? 'It passed.' : "You're getting through it."}
       </p>
       {session.crisisShown && (
         <div className="mt-6 w-full rounded-2xl border border-alert/40 bg-alert/5 p-4 text-center text-sm">
