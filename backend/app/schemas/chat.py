@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -17,8 +18,15 @@ class ChatIn(BaseModel):
 
 
 class ChatOut(BaseModel):
-    kind: Literal["crisis", "check", "reply"]  # check: possible crisis, the app asks the user
+    kind: Literal["crisis", "check", "reply", "paused"]  # check: possible crisis, the app asks the user
     reply: str | None
     emergency_note: bool
     next_step: Literal["breathing", "grounding", "urgent", "choose"]  # choose: all three
     source: Literal["ai", "fixed"]
+    # crisis or paused: the AI chat is paused until then (also for users without an account, so the app
+    # can keep the pause on the phone)
+    paused_until: datetime | None = None
+
+
+class PauseOut(BaseModel):
+    paused_until: datetime

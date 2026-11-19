@@ -7,7 +7,11 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+psycopg://localhost:5432/breathe_with_me"
     jwt_secret: str = "dev-only-secret"
-    jwt_expire_minutes: int = 60 * 24 * 7
+    # login keys (services/tokens.py): a short access key and a refresh key renewed on every use
+    access_token_minutes: int = 60
+    refresh_token_days: int = 90
+    # only for testing: REFRESH_TOKEN_MINUTES=1 in .env makes the login run out after 1 minute unused
+    refresh_token_minutes: int | None = None
     cors_origins: list[str] = ["http://localhost:5173"]
     log_level: str = "INFO"  # DEBUG shows more while looking for a bug
 
@@ -21,6 +25,9 @@ class Settings(BaseSettings):
     ai_attempt_seconds: float = 4.0  # one call to one model
     ai_total_seconds: float = 10.0  # risk check and reply together; after that, the fixed calm message
     chat_max_user_messages: int = 6
+    # after a crisis message the AI chat pauses this long (24 hours), whatever the app does.
+    # CHAT_PAUSE_MINUTES=3 in .env makes it short while testing
+    chat_pause_minutes: int = 24 * 60
 
     check_breached_passwords: bool = True  # Have I Been Pwned range API
     check_email_domain: bool = True  # sign-up email domain must have mail servers (DNS lookup)

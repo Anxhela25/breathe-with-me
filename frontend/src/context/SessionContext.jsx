@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react'
-import { createEpisode, getToken, updateEpisode } from '../lib/api.js'
+import { createEpisode, hasLogin, updateEpisode } from '../lib/api.js'
 
 const SessionContext = createContext(null)
 
@@ -26,7 +26,7 @@ export function SessionProvider({ children }) {
 
   const sync = useCallback(fields => {
     // created at the first real step (a 1-10 answer, chat, grounding), so an accidental tap saves nothing
-    if (!episode.current && current.current.startedAt && getToken()) {
+    if (!episode.current && current.current.startedAt && hasLogin()) {
       episode.current = createEpisode({ started_at: new Date(current.current.startedAt).toISOString() })
         .then(e => e.id).catch(() => null)
     }

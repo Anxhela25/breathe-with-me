@@ -6,6 +6,7 @@ import UIKit
 class MainViewController: CAPBridgeViewController {
     override open func capacitorDidLoad() {
         bridge?.registerPluginInstance(CalmCameraPlugin())
+        bridge?.registerPluginInstance(KeychainPlugin())
         hideKeyboardToolbar()
     }
 

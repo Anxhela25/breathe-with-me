@@ -2,11 +2,16 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Screen from '../components/Screen.jsx'
 import LongSessionNote from '../components/LongSessionNote.jsx'
-import { BreathIcon } from '../components/Icons.jsx'
+import { BreathIcon, PhoneIcon } from '../components/Icons.jsx'
 import Button from '../components/Button.jsx'
 import EmergencyButton from '../components/EmergencyButton.jsx'
+import Orb from '../components/Orb.jsx'
+import { useAuth } from '../context/AuthContext.jsx'
 import { useSession } from '../context/SessionContext.jsx'
-import { sendChat } from '../lib/api.js'
+import { getEmergency, telLink } from '../data/emergency.js'
+import { listContacts, pauseChat, sendChat } from '../lib/api.js'
+import { CHECK_IN, pauseEnds, useChatPause } from '../lib/chatPause.js'
+import { formatPhone } from '../lib/phone.js'
 
 // used when the backend can't be reached
 const OFFLINE_REPLY = "I'm here. Let's keep following the circle together."
@@ -17,7 +22,10 @@ const CHECK_NO_REPLY = "Thank you for telling me. Let's follow the circle togeth
 export default function Chat() {
   const navigate = useNavigate()
   const { session, mark } = useSession()
-  const [lines, setLines] = useState([])
+  const pause = useChatPause()
+  // the first chat after a crisis pause opens with a gentle check-in (urgent help is always at the bottom)
+  const [afterPause] = useState(() => pause.checkInDue)
+  const [lines, setLines] = useState(() => (afterPause ? [{ role: 'assistant', content: CHECK_IN }] : []))
   const [text, setText] = useState('')
   const [waiting, setWaiting] = useState(false)
   const [nextStep, setNextStep] = useState(null)
@@ -37,23 +45,15 @@ export default function Chat() {
     list.current?.scrollTo({ top: list.current.scrollHeight, behavior: 'smooth' })
   }, [lines, waiting, asking, nextStep, screen.height])
 
-  // stays paused for the rest of the session after a crisis message
-  if (session.crisisShown) {
-    return (
-      <Screen>
-        <h1 className="mt-10 text-2xl font-bold">The chat is paused.</h1>
-        <p className="mt-2 text-center text-sage/80">Please reach out to someone now.</p>
-        <div className="mt-auto flex w-full flex-col items-center gap-2 pt-8">
-          <EmergencyButton to="/urgent" title="Show emergency numbers" />
-          <Button to="/breathe" variant="outline">Back to breathing</Button>
-        </div>
-      </Screen>
-    )
+  // 24 hours after a crisis message: people first, not the AI (lib/chatPause.js)
+  if (pause.paused) return <ChatPaused until={pause.until} />
+
+  function send(event) {
+    event.preventDefault()
+    sendText(text.trim())
   }
 
-  async function send(event) {
-    event.preventDefault()
-    const message = text.trim()
+  async function sendText(message) {
     if (!message || waiting || asking) return
     const history = lines.map(({ role, content }) => ({ role, content }))
     setLines(l => [...l, { role: 'user', content: message }])
@@ -64,9 +64,16 @@ export default function Chat() {
       const out = await sendChat({ message, history, level: session.lastLevel, safeConfirmed })
       if (out.kind === 'crisis') {
         mark({ crisisShown: true })
+        pause.start(out.paused_until)
         navigate('/urgent')
         return
       }
+      if (out.kind === 'paused') {
+        // paused on another device: the support screen shows instead
+        pause.start(out.paused_until)
+        return
+      }
+      if (pause.checkInDue) pause.checkInDone()
       if (out.kind === 'check') {
         setAsking(true)
         setNextStep(null)
@@ -86,6 +93,9 @@ export default function Chat() {
     setAsking(false)
     if (atRisk) {
       mark({ crisisShown: true })
+      pause.start()
+      // with an account the server keeps the pause too; the phone already has it
+      pauseChat().then(out => pause.start(out.paused_until)).catch(() => {})
       navigate('/urgent')
       return
     }
@@ -140,6 +150,14 @@ export default function Chat() {
             </div>
           )}
           {/* the next step as soft suggestions under the last reply, like quick replies in a messaging app */}
+          {/* the check-in, answered with one tap or in her own words */}
+          {afterPause && lines.length === 1 && !waiting && (
+            <div className="flex flex-wrap gap-2 animate-fade-in">
+              <QuickReply onClick={() => sendText('A bit better')}>A bit better</QuickReply>
+              <QuickReply onClick={() => sendText('Still hard')}>Still hard</QuickReply>
+              <Link to="/urgent" className={QUICK}>I need a person</Link>
+            </div>
+          )}
           {nextStep && !waiting && !asking && (
             <div className="flex flex-wrap gap-2 animate-fade-in">
               {(nextStep === 'breathing' || nextStep === 'choose') && (
@@ -189,6 +207,69 @@ export default function Chat() {
         </div>
       </Screen>
     </div>
+  )
+}
+
+const QUICK = 'rounded-full border border-sage/20 bg-white px-3 py-1.5 text-sm text-sage-dark active:scale-95'
+
+function QuickReply({ onClick, children }) {
+  return <button type="button" onClick={onClick} className={QUICK}>{children}</button>
+}
+
+function useContacts() {
+  const { user } = useAuth()
+  const [contacts, setContacts] = useState([])
+  useEffect(() => {
+    if (user) listContacts().then(setContacts).catch(() => setContacts([]))
+  }, [user])
+  return contacts
+}
+
+/**
+ * The chat during the 24-hour crisis pause: a support screen, not a closed door. Fixed words, never the AI;
+ * the emergency number and each trusted contact one tap away; breathing and grounding close; when it ends.
+ */
+function ChatPaused({ until }) {
+  const { user } = useAuth()
+  const contacts = useContacts()
+  const emergency = getEmergency(user?.country_code)
+  return (
+    <Screen calm>
+      {/* when the chat comes back, as a calm status line at the top; then the message; ways to reach someone at the bottom */}
+      <p className="mt-5 flex items-center gap-2 rounded-full bg-white/80 px-4 py-2 text-sm text-sage shadow-sm shadow-sage/5">
+        <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+          <circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" strokeLinecap="round" />
+        </svg>
+        You can talk to me again {pauseEnds(until)}.
+      </p>
+      <div className="flex flex-col items-center pt-16 pb-8">
+        <Orb icon="heart" halo />
+        <h1 className="mt-10 text-center text-[1.7rem] font-bold leading-tight text-balance">I&apos;m really glad you told me.</h1>
+        <p className="mt-4 max-w-xs text-center leading-relaxed text-sage-dark/85 text-balance">
+          Right now a person can help you more than I can. Please reach out to someone.
+        </p>
+      </div>
+      <div className="mt-auto flex w-full flex-col gap-2.5">
+        <EmergencyButton href={telLink(emergency)} title="Emergency services" subtitle={`Call ${emergency}`} />
+        {contacts.map(c => (
+          <a key={c.id} href={`tel:${c.phone}`}
+            className="flex w-full items-center gap-3 rounded-2xl bg-white p-3 text-left shadow-sm shadow-sage/10 active:scale-[0.98]">
+            <span aria-hidden className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-lavender font-bold text-sage-dark">
+              {(c.name?.[0] ?? '?').toUpperCase()}
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-lg font-bold">Call {c.name}</span>
+              <span className="block text-sm text-sage/70">{formatPhone(c.phone)}</span>
+            </span>
+            <span aria-hidden className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-sage text-white"><PhoneIcon /></span>
+          </a>
+        ))}
+        <div className="mt-1 grid grid-cols-2 gap-2.5">
+          <Button to="/breathe" variant="outline">Breathe</Button>
+          <Button to="/grounding" variant="outline">Grounding</Button>
+        </div>
+      </div>
+    </Screen>
   )
 }
 

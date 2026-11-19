@@ -8,10 +8,10 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import CalmCheck, Episode, User
 from app.schemas.user import (
-    ForgotPasswordIn, LoginIn, RegisterIn, RegisterStartIn, ResetPasswordIn, SettingsIn, TokenOut, UserOut,
+    ForgotPasswordIn, LoginIn, RefreshIn, RegisterIn, RegisterStartIn, ResetPasswordIn, SettingsIn, TokenOut, UserOut,
 )
-from app.services.auth import create_token, get_current_user, hash_password, verify_password
-from app.services import email_verification, password_reset
+from app.services.auth import get_current_user, hash_password, verify_password
+from app.services import email_verification, password_reset, tokens
 from app.services.email import send_email
 from app.services.email_check import email_problem
 from app.services.passwords import password_problem
@@ -63,7 +63,7 @@ def register(data: RegisterIn, db: Session = Depends(get_db)):
     db.add(user)
     db.commit()
     log.info("Account %d created", user.id)
-    return TokenOut(access_token=create_token(user))
+    return tokens.issue(db, user)
 
 
 @router.post("/auth/login", response_model=TokenOut)
@@ -75,7 +75,7 @@ def login(data: LoginIn, db: Session = Depends(get_db)):
     if not verify_password(data.password, user.password_hash):
         log.info("Login failed: wrong password for account %d", user.id)
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Email or password is not correct.")
-    return TokenOut(access_token=create_token(user))
+    return tokens.issue(db, user)
 
 
 @router.post("/auth/forgot-password", status_code=status.HTTP_202_ACCEPTED)
@@ -97,8 +97,24 @@ def reset_password(data: ResetPasswordIn, db: Session = Depends(get_db)):
         log.info("Password reset refused: wrong or expired code")
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "This code is not valid or has expired. Ask for a new one.")
     password_reset.finish(db, user, hash_password(data.password))
+    tokens.revoke_all(db, user)  # every other phone logs out
     log.info("Password reset for account %d", user.id)
-    return TokenOut(access_token=create_token(user))
+    return tokens.issue(db, user)
+
+
+@router.post("/auth/refresh", response_model=TokenOut)
+def refresh(data: RefreshIn, db: Session = Depends(get_db)):
+    """A new pair of keys for a refresh key; the old one stops working. 401: log in again."""
+    pair = tokens.rotate(db, data.refresh_token)
+    if pair is None:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Please log in again.")
+    return pair
+
+
+@router.post("/auth/logout", status_code=status.HTTP_204_NO_CONTENT)
+def logout(data: RefreshIn, db: Session = Depends(get_db)):
+    """This phone's refresh key stops working. Answers the same whether or not the key was valid."""
+    tokens.revoke(db, data.refresh_token)
 
 
 @router.get("/me", response_model=UserOut)

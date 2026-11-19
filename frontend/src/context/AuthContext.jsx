@@ -5,19 +5,20 @@ const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
-  const [ready, setReady] = useState(!api.getToken())
+  const [ready, setReady] = useState(false)
 
+  // the app opens: read the keys from the Keychain, then ask who is logged in (renewing the keys if needed).
+  // Offline the keys stay; only the server saying the login ran out logs her out (api.js)
   useEffect(() => {
-    if (!api.getToken()) return
-    api.getMe()
-      .then(setUser)
-      .catch(() => api.setToken(null))  // expired or invalid token
+    api.whenLoggedOut(() => setUser(null))
+    api.loadKeys()
+      .then(() => (api.hasLogin() ? api.getMe().then(setUser) : null))
+      .catch(() => {})
       .finally(() => setReady(true))
   }, [])
 
   const signIn = useCallback(async (action, ...args) => {
-    const { access_token: token } = await action(...args)
-    api.setToken(token)
+    await api.saveLogin(await action(...args))
     const me = await api.getMe()
     setUser(me)
     return me
@@ -30,13 +31,17 @@ export function AuthProvider({ children }) {
   const resetPassword = useCallback(
     (email, code, password) => signIn(api.resetPassword, email, code, password), [signIn],
   )
-  const logout = useCallback(() => { api.setToken(null); setUser(null) }, [])
+  // after something the server changed on the account, e.g. the chat pause
+  const refreshUser = useCallback(() => {
+    if (api.hasLogin()) api.getMe().then(setUser).catch(() => {})
+  }, [])
+  const logout = useCallback(() => { api.logout(); setUser(null) }, [])
   const updateSettings = useCallback(async fields => setUser(await api.updateMe(fields)), [])
   const deleteAccount = useCallback(async () => { await api.deleteMe(); logout() }, [logout])
 
   const value = useMemo(
-    () => ({ user, ready, register, login, resetPassword, logout, updateSettings, deleteAccount }),
-    [user, ready, register, login, resetPassword, logout, updateSettings, deleteAccount],
+    () => ({ user, ready, register, login, resetPassword, logout, updateSettings, deleteAccount, refreshUser }),
+    [user, ready, register, login, resetPassword, logout, updateSettings, deleteAccount, refreshUser],
   )
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

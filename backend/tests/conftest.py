@@ -5,6 +5,10 @@ os.environ["DATABASE_URL"] = os.environ.get(
     "TEST_DATABASE_URL", "postgresql+psycopg://localhost:5432/breathe_with_me_test"
 )
 
+os.environ["ACCESS_TOKEN_MINUTES"] = "60"  # the real login times, even when .env shortens them for testing
+os.environ["REFRESH_TOKEN_DAYS"] = "90"
+os.environ["REFRESH_TOKEN_MINUTES"] = "0"  # 0: use the days
+os.environ["CHAT_PAUSE_MINUTES"] = str(24 * 60)  # the real pause, even when .env shortens it for testing
 os.environ["CHECK_BREACHED_PASSWORDS"] = "false"  # no network calls in tests
 os.environ["CHECK_EMAIL_DOMAIN"] = "false"
 

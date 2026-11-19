@@ -29,6 +29,15 @@ def treat_as_english(message: str, english: bool | None) -> bool:
     return english is not False or len(message.split()) < MIN_WORDS_FOR_LANGUAGE
 
 
+def _possible_crisis(safe_confirmed: bool) -> ChatResult:
+    # she already answered "No, it's the panic" once in this chat: a second sign is treated as a clear crisis
+    if safe_confirmed:
+        log.info("Second possible crisis after the user said no: treated as a crisis")
+        return ChatResult(kind="crisis", next_step="urgent")
+    log.info("Possible crisis: asking the user if they are safe")
+    return ChatResult(kind="check", next_step="urgent")
+
+
 def run_chat(message: str, history: list[dict], level: int | None, safe_confirmed: bool = False) -> ChatResult:
     # Layer 1: rules. Clear crisis messages never reach the AI.
     safety = check_message(message)
@@ -58,8 +67,8 @@ def run_chat(message: str, history: list[dict], level: int | None, safe_confirme
         log.warning("Risk check unavailable: asking the user if they are safe")
         return ChatResult(kind="check", next_step="urgent")
     if risk is not None and risk.risk:
-        log.info("Risk check said YES: asking the user if they are safe")
-        return ChatResult(kind="check", next_step="urgent")
+        log.info("Risk check said YES")
+        return _possible_crisis(safe_confirmed)
     if risk is not None and not treat_as_english(message, risk.english):
         log.info("Message not in English: English-only message shown")
         return ChatResult(kind="reply", reply=ENGLISH_ONLY_MESSAGE, emergency_note=medical_worry, next_step="choose")
@@ -75,8 +84,8 @@ def run_chat(message: str, history: list[dict], level: int | None, safe_confirme
     if not checked.ok:
         log.warning("AI reply replaced: %s (from %s)", checked.reason, model)
     if checked.crisis:
-        log.info("Reply sounded like a crisis answer: asking the user if they are safe")
-        return ChatResult(kind="check", next_step="urgent")
+        log.info("Reply sounded like a crisis answer")
+        return _possible_crisis(safe_confirmed)
     return ChatResult(
         kind="reply",
         reply=checked.text,

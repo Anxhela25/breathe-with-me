@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, String, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, String, false, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -20,6 +20,10 @@ class User(Base):
     health_data_consent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     # tokens issued before this are no longer accepted
     password_changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # after a crisis message the AI chat is paused until then, on every device; the first chat after it
+    # opens with a gentle check-in (chat_checkin_due)
+    chat_paused_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    chat_checkin_due: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
 
     # cascade so "Delete my account" removes everything
     emergency_contacts: Mapped[list["EmergencyContact"]] = relationship(
@@ -29,6 +33,9 @@ class User(Base):
         back_populates="user", cascade="all, delete-orphan"
     )
     calm_checks: Mapped[list["CalmCheck"]] = relationship(  # noqa: F821
+        back_populates="user", cascade="all, delete-orphan"
+    )
+    refresh_tokens: Mapped[list["RefreshToken"]] = relationship(  # noqa: F821
         back_populates="user", cascade="all, delete-orphan"
     )
 

@@ -28,10 +28,24 @@ def _password_version(user: User) -> float:
 
 
 def create_token(user: User) -> str:
-    expire = datetime.now(timezone.utc) + timedelta(minutes=settings.jwt_expire_minutes)
+    # the short access key; services/tokens.py hands it out together with the refresh key
+    expire = datetime.now(timezone.utc) + timedelta(minutes=settings.access_token_minutes)
     # "pv" ties the token to the current password, so changing it signs out other devices
     claims = {"sub": str(user.id), "pv": _password_version(user), "exp": expire}
     return jwt.encode(claims, settings.jwt_secret, algorithm="HS256")
+
+
+def get_optional_user(
+    creds: HTTPAuthorizationCredentials | None = Depends(_bearer),
+    db: Session = Depends(get_db),
+) -> User | None:
+    """The logged-in user, or None: for endpoints that also work without an account."""
+    if creds is None:
+        return None
+    try:
+        return get_current_user(creds, db)
+    except HTTPException:
+        return None
 
 
 def get_current_user(

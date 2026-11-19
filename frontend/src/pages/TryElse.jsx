@@ -1,11 +1,11 @@
 import Screen from '../components/Screen.jsx'
 import LongSessionNote from '../components/LongSessionNote.jsx'
 import OptionCard, { ICONS } from '../components/OptionCard.jsx'
-import { useSession } from '../context/SessionContext.jsx'
+import { pauseEnds, useChatPause } from '../lib/chatPause.js'
 
 // "About the same" after the first 2 minutes: she picks what feels right, like in other help apps.
 export default function TryElse() {
-  const { session } = useSession()
+  const pause = useChatPause()
   return (
     <Screen calm>
       <LongSessionNote />
@@ -20,9 +20,10 @@ export default function TryElse() {
       <div className="flex w-full flex-col gap-3 pt-8">
         <OptionCard to="/grounding" title="Grounding" text="Notice 5 things around you, one sense at a time."
           tone="bg-lavender" icon={ICONS.grounding} />
-        {/* after a crisis message the chat stays paused: the card stays, greyed out, saying so */}
-        <OptionCard to="/chat" title="Talk to me" tone="bg-soft-blue" icon={ICONS.chat} paused={session.crisisShown}
-          text={session.crisisShown ? 'Paused after your last message.' : "Write what you feel. You're talking to an AI."} />
+        {/* for 24 hours after a crisis message the chat is paused: the card stays, greyed out, saying until when */}
+        <OptionCard to="/chat" title="Talk to me" tone="bg-soft-blue" icon={ICONS.chat} paused={pause.paused}
+          text={pause.paused ? `Paused until ${pauseEnds(pause.until)}. A person can help more right now.`
+            : "Write what you feel. You're talking to an AI."} />
         <OptionCard to="/breathe" title="Keep breathing" text="2 more minutes with the circle."
           tone="bg-pistachio" icon={ICONS.breathe} />
       </div>

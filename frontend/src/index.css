@@ -30,6 +30,14 @@ body { @apply bg-cream text-sage-dark font-sans antialiased; }
 }
 .animate-fade-in { animation: fade-in 500ms ease-out both; }
 
+/* a page opening: a short, small slide that starts almost fully visible. A fade from invisible looked
+   like a broken, washed-out page for a moment, which is the wrong feeling during panic */
+@keyframes enter {
+  from { opacity: 0.85; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.animate-enter { animation: enter 250ms ease-out both; }
+
 /* lines that draw themselves (use with pathLength="1") */
 @keyframes draw {
   from { stroke-dashoffset: 1; }
@@ -72,7 +80,7 @@ body { @apply bg-cream text-sage-dark font-sans antialiased; }
 
 /* people who turn off motion on their phone get still versions */
 @media (prefers-reduced-motion: reduce) {
-  .animate-fade-in, .animate-draw, .animate-glow, .animate-breathe, .animate-halo, .sun-rise, .sun-rays { animation: none; }
+  .animate-fade-in, .animate-enter, .animate-draw, .animate-glow, .animate-breathe, .animate-halo, .sun-rise, .sun-rays { animation: none; }
   .animate-draw { stroke-dashoffset: 0; }
 }
 

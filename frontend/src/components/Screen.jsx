@@ -5,8 +5,8 @@ const pill = 'flex h-10 w-10 items-center justify-center rounded-full text-sage-
 /**
  * Page layout. The header has a back and a home button at the top left on every page (`home={false}`
  * hides home) and a settings button at the top right.
- * `calm` gives the screen a soft cream-to-blue background and a gentle fade-in, for quiet spaces like
- * the calm check (give each step its own `key` so it fades in again).
+ * `calm` gives the screen a soft cream-to-blue background and a short, gentle entrance, for quiet spaces
+ * like the calm check (give each step its own `key` so it plays again).
  */
 export default function Screen({ children, footer, calm = false, home = true, fit = false, keyboard = false }) {
   const navigate = useNavigate()
@@ -50,7 +50,7 @@ export default function Screen({ children, footer, calm = false, home = true, fi
           </Link>
         ) : <span />}
       </header>
-      <main className={`flex flex-1 flex-col items-center ${fit ? 'min-h-0' : ''} ${calm ? 'animate-fade-in' : ''}`}>{children}</main>
+      <main className={`flex flex-1 flex-col items-center ${fit ? 'min-h-0' : ''} ${calm ? 'animate-enter' : ''}`}>{children}</main>
       {footer && <footer className="pt-4 text-center">{footer}</footer>}
     </div>
   )

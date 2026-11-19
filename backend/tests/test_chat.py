@@ -51,7 +51,7 @@ def test_crisis_opens_emergency_screen_and_never_calls_ai(client, fake_ai, text)
 def test_normal_message_gets_ai_reply_and_breathing(client, fake_ai):
     out = send(client, "my heart is very fast")
     assert out == {"kind": "reply", "reply": GOOD_REPLY, "emergency_note": False,
-                   "next_step": "breathing", "source": "ai"}
+                   "next_step": "breathing", "source": "ai", "paused_until": None}
 
 
 @pytest.mark.parametrize("text, note", [
@@ -199,17 +199,18 @@ def test_risk_check_unavailable_after_user_said_no_replies(client, fake_ai, risk
     assert r.json()["kind"] == "reply"
 
 
-def test_clear_risk_asks_even_after_user_said_no(client, fake_ai, risk_check):
+def test_second_possible_crisis_after_user_said_no_is_a_crisis(client, fake_ai, risk_check):
+    # she said "No, it's the panic" once: a second sign isn't asked about again, the chat pauses
     risk_check.answer = True
     r = client.post("/api/chat", json={"message": "nobody would notice if i was gone", "safe_confirmed": True})
-    assert r.json()["kind"] == "check"
+    assert r.json()["kind"] == "crisis" and r.json()["paused_until"] is not None
 
 
 def test_non_english_message_without_risk_gets_fixed_message(client, fake_ai, risk_check):
     risk_check.english = False
     out = send(client, "mi corazón late muy rápido y tengo miedo")
     assert out == {"kind": "reply", "reply": ENGLISH_ONLY_MESSAGE, "emergency_note": False,
-                   "next_step": "choose", "source": "fixed"}
+                   "next_step": "choose", "source": "fixed", "paused_until": None}
     assert fake_ai.calls == []  # never sent to the reply model
 
 

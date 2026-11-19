@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 
@@ -38,7 +40,12 @@ class LoginIn(BaseModel):
 
 class TokenOut(BaseModel):
     access_token: str
+    refresh_token: str
     token_type: str = "bearer"
+
+
+class RefreshIn(BaseModel):
+    refresh_token: str = Field(min_length=20, max_length=200)
 
 
 class UserOut(BaseModel):
@@ -47,6 +54,8 @@ class UserOut(BaseModel):
     id: int
     email: EmailStr
     country_code: str | None
+    chat_paused_until: datetime | None = None
+    chat_checkin_due: bool = False
 
 
 class SettingsIn(BaseModel):
