@@ -16,6 +16,19 @@ public class KeychainPlugin: CAPPlugin, CAPBridgedPlugin {
     ]
 
     private let service = "com.breathewithme.app.login"
+    private let installedMark = "keychainReady"
+
+    /// Keychain items stay on the iPhone after an app is deleted, so a fresh install would still be logged in.
+    /// The app's own settings (UserDefaults) are deleted with the app: no mark there means this is the first
+    /// start after installing, so the login left over from an earlier install is removed.
+    override public func load() {
+        let settings = UserDefaults.standard
+        if !settings.bool(forKey: installedMark) {
+            SecItemDelete([kSecClass as String: kSecClassGenericPassword,
+                           kSecAttrService as String: service] as CFDictionary)
+            settings.set(true, forKey: installedMark)
+        }
+    }
 
     private func query(_ key: String) -> [String: Any] {
         [kSecClass as String: kSecClassGenericPassword,

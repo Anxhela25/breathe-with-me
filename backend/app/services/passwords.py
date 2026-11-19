@@ -46,5 +46,5 @@ def password_problem(password: str, email: str) -> str | None:
     if (len(name) >= 4 and name in lowered) or "breathe" in lowered:
         return "Don't use your email name or the app's name in the password."
     if settings.check_breached_passwords and _is_breached(password):
-        return "This password has appeared in a data breach. Please choose a different one."
+        return "This password isn't safe. Try another one."
     return None

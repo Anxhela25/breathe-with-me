@@ -26,6 +26,17 @@ export default function AuthForm({ mode }) {
   const [codeSentTo, setCodeSentTo] = useState('')
   const [code, setCode] = useState('')
   const [notice, setNotice] = useState('')
+
+  // Log in and Create account are this same screen: switching keeps what she typed, but a message
+  // from the other one (e.g. "Email or password is not correct" after a failed login) doesn't belong here
+  const [shownMode, setShownMode] = useState(mode)
+  if (shownMode !== mode) {
+    setShownMode(mode)
+    setError('')
+    setNotice('')
+    setCodeSentTo('')
+    setCode('')
+  }
   const next = safeNext(params)
 
   function showError(err) {
@@ -106,7 +117,7 @@ export default function AuthForm({ mode }) {
             value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ''))} autoFocus
             className={`${inputClass} text-center text-2xl tracking-[0.4em]`} />
           {notice && <p role="status" className="px-1 text-sm">{notice}</p>}
-          {error && <p role="alert" className="px-1 text-sm font-bold">{error}</p>}
+          {error && <p role="alert" className="px-1 text-sm font-bold text-alert">{error}</p>}
           <Button type="submit" disabled={busy || code.length !== 6} className="mt-auto disabled:opacity-50">
             Create account
           </Button>
@@ -151,7 +162,7 @@ export default function AuthForm({ mode }) {
             </label>
           </div>
         )}
-        {error && <p role="alert" className="px-1 text-sm font-bold">{error}</p>}
+        {error && <p role="alert" className="px-1 text-sm font-bold text-alert">{error}</p>}
         <Button type="submit" disabled={busy || !email || !password || (isRegister && !(isAdult && consent))}
           className="mt-auto disabled:opacity-50">
           {isRegister ? 'Continue' : 'Log in'}

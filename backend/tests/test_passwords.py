@@ -34,7 +34,7 @@ def test_common_list_is_used():
 def test_breached_passwords_are_rejected(monkeypatch):
     monkeypatch.setattr(settings, "check_breached_passwords", True)
     monkeypatch.setattr(passwords, "_is_breached", lambda _: True)
-    assert "data breach" in password_problem("quiet-river-lamp", EMAIL)
+    assert "isn't safe" in password_problem("quiet-river-lamp", EMAIL)
 
 
 def test_register_returns_the_reason_before_sending_a_code(client):

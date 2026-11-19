@@ -35,7 +35,7 @@ export default function ForgotPassword() {
         <label htmlFor="email" className="sr-only">Email</label>
         <input id="email" type="email" autoComplete="email" inputMode="email" placeholder="Email"
           value={email} onChange={e => setEmail(e.target.value)} className={inputClass} />
-        {error && <p role="alert" className="px-1 text-sm font-bold">{error}</p>}
+        {error && <p role="alert" className="px-1 text-sm font-bold text-alert">{error}</p>}
         <Button type="submit" disabled={busy || !email.trim()} className="mt-auto disabled:opacity-50">Send code</Button>
       </form>
       <Button to="/login" variant="link" className="mt-3">Back to log in</Button>

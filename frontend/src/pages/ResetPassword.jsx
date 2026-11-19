@@ -58,7 +58,7 @@ export default function ResetPassword() {
         <PasswordInput id="new-password" autoComplete="new-password" placeholder="New password"
           value={password} onChange={e => setPassword(e.target.value)} />
         <PasswordHint password={password} min={MIN_PASSWORD} />
-        {error && <p role="alert" className="px-1 text-sm font-bold">{error}</p>}
+        {error && <p role="alert" className="px-1 text-sm font-bold text-alert">{error}</p>}
         <Button type="submit" disabled={busy || code.length !== 6 || !password} className="mt-auto disabled:opacity-50">
           Save new password
         </Button>
