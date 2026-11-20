@@ -28,3 +28,5 @@ services:
         sync: false
       - key: BREVO_SENDER
         sync: false
+      - key: SENTRY_DSN
+        sync: false

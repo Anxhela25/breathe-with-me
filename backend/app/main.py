@@ -8,8 +8,11 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from app import monitoring
 from app.config import settings
 from app.routers import auth, calm_checks, chat, contacts, episodes, insights, safety
+
+monitoring.init()
 
 # show time and module in the logs
 logging.basicConfig(

@@ -5,8 +5,11 @@ import './index.css'
 import App from './App.jsx'
 import { SessionProvider } from './context/SessionContext.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
+import { initMonitoring, reactErrorHandlers } from './lib/monitoring.js'
 
-createRoot(document.getElementById('root')).render(
+initMonitoring()
+
+createRoot(document.getElementById('root'), reactErrorHandlers).render(
   <StrictMode>
     <BrowserRouter>
       <AuthProvider>

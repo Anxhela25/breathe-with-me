@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     refresh_token_minutes: int | None = None
     cors_origins: list[str] = ["http://localhost:5173"]
     log_level: str = "INFO"
+    # error reports, off when empty. log.error and crashes become Sentry issues
+    sentry_dsn: str = ""
+    sentry_environment: str = "production"
 
     groq_api_key: str = ""
     # fallback order. gpt-oss-20b first, it's ~10x cheaper than the Qwen preview

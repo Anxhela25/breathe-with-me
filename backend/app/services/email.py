@@ -9,6 +9,11 @@ from app.config import settings
 log = logging.getLogger("breathe.email")
 
 
+def _domain(email: str) -> str:
+    # enough to see if one provider (e.g. outlook) is rejecting us, without logging the address
+    return email.rpartition("@")[2]
+
+
 def _send_with_gmail(to: str, subject: str, text: str) -> None:
     message = EmailMessage()
     message["From"] = f"Breathe With Me <{settings.gmail_address}>"
@@ -21,7 +26,7 @@ def _send_with_gmail(to: str, subject: str, text: str) -> None:
             server.login(settings.gmail_address, settings.gmail_app_password.replace(" ", ""))
             server.send_message(message)
     except (smtplib.SMTPException, OSError) as error:
-        log.error("Email to %s failed (Gmail): %s: %s", to, type(error).__name__, error)
+        log.error("Email to @%s failed (Gmail): %s: %s", _domain(to), type(error).__name__, error)
 
 
 def _send_with_resend(to: str, subject: str, text: str) -> None:
@@ -36,7 +41,7 @@ def _send_with_resend(to: str, subject: str, text: str) -> None:
     except httpx.HTTPError as error:
         response = getattr(error, "response", None)
         detail = f"{response.status_code} {response.text[:300]}" if response is not None else type(error).__name__
-        log.error("Email to %s failed (Resend): %s", to, detail)
+        log.error("Email to @%s failed (Resend): %s", _domain(to), detail)
 
 
 def _send_with_brevo(to: str, subject: str, text: str) -> None:
@@ -52,7 +57,7 @@ def _send_with_brevo(to: str, subject: str, text: str) -> None:
     except httpx.HTTPError as error:
         response = getattr(error, "response", None)
         detail = f"{response.status_code} {response.text[:300]}" if response is not None else type(error).__name__
-        log.error("Email to %s failed (Brevo): %s", to, detail)
+        log.error("Email to @%s failed (Brevo): %s", _domain(to), detail)
 
 
 def send_email(to: str, subject: str, text: str) -> None:
