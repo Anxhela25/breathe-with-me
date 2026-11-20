@@ -10,9 +10,11 @@ Calm support for panic moments. **A support tool, not a treatment.**
 
 ## Project pages
 
-- [Screens](https://anxhela25.github.io/breathe-with-me-screens/): every screen of the app and where its buttons lead
-- [How it works](https://anxhela25.github.io/breathe-with-me-screens/flow.html): flow charts of the app's logic
-- [Technology and decisions](https://anxhela25.github.io/breathe-with-me-screens/decisions.html): what we used, why, and the references
+- [Screens](https://anxhela25.github.io/breathe-with-me/): every screen of the app and where its buttons lead
+- [How it works](https://anxhela25.github.io/breathe-with-me/flow.html): flow charts of the app's logic
+- [Technology and decisions](https://anxhela25.github.io/breathe-with-me/decisions.html): what we used, why, and the references
+
+The pages are in the `pages/` folder. GitHub publishes them again whenever something in it changes.
 
 ## What you need
 
