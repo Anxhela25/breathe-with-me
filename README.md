@@ -21,7 +21,7 @@ These steps are for a Mac with [Homebrew](https://brew.sh).
 | Tool | Version | Install |
 |---|---|---|
 | Python | 3.12 or newer | `brew install python` |
-| Node.js | 20 or newer | `brew install node` |
+| Node.js | 22 or newer (Capacitor needs it) | `brew install node` |
 | PostgreSQL | 15 or newer | `brew install postgresql@16 && brew services start postgresql@16` |
 | Xcode | only for the iPhone app | App Store |
 
