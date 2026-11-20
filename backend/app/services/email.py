@@ -63,5 +63,5 @@ def send_email(to: str, subject: str, text: str) -> None:
     elif settings.resend_api_key:
         _send_with_resend(to, subject, text)
     else:
-        # development without a provider: show the email in the server log instead of sending it
+        # no provider: print the email to the log instead
         log.warning("Email not sent (no email provider set). To: %s | %s\n%s", to, subject, text)

@@ -1,4 +1,4 @@
-/** Pebble, the friendly companion: a soft, smiling shape. Decorative, so it is hidden from screen readers. */
+/** Pebble, the app's little mascot. Decorative. */
 export default function Pebble({ className = 'h-[72px] w-[72px]' }) {
   return (
     <svg viewBox="0 0 120 120" className={className} aria-hidden="true">

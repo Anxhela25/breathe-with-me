@@ -5,9 +5,9 @@ import { getEmergency, telLink } from '../data/emergency.js'
 import { LONG_SESSION_MIN } from '../lib/flow.js'
 
 /**
- * After 20 minutes in a session: a calm note at the top of the help pages. It doesn't take her
- * anywhere (she may be at 2 and almost done, or in the middle of a breath); it just puts the advice and
- * the emergency number in front of her. OK closes it for the rest of the session.
+ * After 20 minutes in a session: a note at the top of the help pages.
+ * Doesn't navigate anywhere, just shows the advice and the emergency number.
+ * OK hides it for the rest of the session.
  */
 export default function LongSessionNote() {
   const { session, mark } = useSession()

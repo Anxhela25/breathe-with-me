@@ -1,9 +1,8 @@
 import { useId } from 'react'
 
 /**
- * A calm little world in a circle: lavender sky, a white sun, sage hills and still water.
- * `boat` adds a small sailboat (the closing "You did it."). Decorative: hidden from screen readers.
- * It fills its box; the parent sets the size and the round clip.
+ * Small landscape in a circle. `boat` adds a sailboat. Decorative.
+ * The parent sets the size and the round clip.
  */
 export default function Landscape({ boat = false }) {
   const id = useId()

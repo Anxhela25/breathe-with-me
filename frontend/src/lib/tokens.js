@@ -1,11 +1,10 @@
-// The login keys (backend/app/services/tokens.py): a 1-hour access key sent with every request, and a
-// 90-day refresh key that gets a new pair when the access key runs out. The person never notices.
-// On the iPhone both live in the Keychain (ios/App/App/KeychainPlugin.swift), in the browser in localStorage.
+// Login tokens (backend services/tokens.py): 1h access token + 90 day refresh token.
+// On iPhone they're in the Keychain (KeychainPlugin.swift), in the browser in localStorage.
 import { Capacitor, registerPlugin } from '@capacitor/core'
 
 const Keychain = registerPlugin('Keychain')
 const KEY = 'bwm_login'
-const OLD_KEY = 'bwm_token'  // the single 7-day key of earlier versions
+const OLD_KEY = 'bwm_token'  // single 7-day token from older versions
 
 let keys = { access: null, refresh: null }
 const onPhone = () => Capacitor.getPlatform() === 'ios'
@@ -30,7 +29,7 @@ async function writeStored(value) {
   } catch { /* storage unavailable: logged in until the app closes */ }
 }
 
-/** Once, when the app opens: reads the keys into memory, so every request can use them right away. */
+/** Called once on start: load the tokens into memory. */
 export async function loadKeys() {
   let stored = null
   try {
@@ -38,7 +37,7 @@ export async function loadKeys() {
   } catch (err) {
     console.warn('[login] reading the saved keys failed:', err?.message ?? err)
   }
-  // an older version kept one key in localStorage: move it, it works until it runs out
+  // older versions kept one token in localStorage, move it over
   try {
     const old = localStorage.getItem(OLD_KEY)
     if (old) {
@@ -54,7 +53,7 @@ export async function loadKeys() {
 
 export const accessKey = () => keys.access
 
-/** The access key runs out within half a minute (or already has): renew it before using it. */
+/** True if the access token expires within 30s (or already has). */
 export function accessRunningOut(now = Date.now()) {
   if (!keys.access) return Boolean(keys.refresh)
   try {
@@ -68,7 +67,7 @@ export function accessRunningOut(now = Date.now()) {
 export const refreshKey = () => keys.refresh
 export const hasKeys = () => Boolean(keys.access || keys.refresh)
 
-/** After login, sign-up, password reset or a refresh: the pair from the server. */
+/** Save the pair from login, sign-up, reset or refresh. */
 export async function saveKeys({ access_token: access, refresh_token: refresh }) {
   keys = { access, refresh }
   try {

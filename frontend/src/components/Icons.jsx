@@ -1,4 +1,4 @@
-// Small line icons for the stat tiles. Decorative: the tile's label says the same thing.
+// Line icons for the stat tiles (decorative, the label says the same).
 const base = {
   viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8,
   strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true, className: 'h-5 w-5',

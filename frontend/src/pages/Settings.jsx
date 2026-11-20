@@ -9,7 +9,6 @@ import PhoneInput from '../components/PhoneInput.jsx'
 import { formatPhone, toInternational } from '../lib/phone.js'
 import { getEmergency } from '../data/emergency.js'
 
-// Stored now; the numbers per country are added once each one is verified from an official source.
 const MAX_CONTACTS = 5  // same limit as the backend
 
 const COUNTRIES = [
@@ -18,7 +17,7 @@ const COUNTRIES = [
 ]
 const input = 'w-full rounded-xl border border-sage/20 bg-cream px-4 py-3 text-base outline-none focus:border-sage'
 
-// iPhone-style grouped list: a small grey title, then a white card of rows
+// iOS style grouped list: grey title, white card of rows
 function Group({ title, note, children }) {
   return (
     <section className="mt-9 w-full">
@@ -50,8 +49,8 @@ export default function Settings() {
   const [phone, setPhone] = useState('')
   const [phoneCountry, setPhoneCountry] = useState(user.country_code || 'AL')
   const [error, setError] = useState('')
-  const [confirming, setConfirming] = useState(null)  // 'history' | 'account': which pop-up is open
-  const [adding, setAdding] = useState(false)  // the new-contact form opens from the + button
+  const [confirming, setConfirming] = useState(null)  // 'history' | 'account', which dialog is open
+  const [adding, setAdding] = useState(false)  // new contact form, opened with +
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState('')
   const [status, setStatus] = useState('')
@@ -63,7 +62,7 @@ export default function Settings() {
     statusTimer.current = setTimeout(() => setStatus(''), 2500)
   }
 
-  // every change saves right away, so show it clearly
+  // changes save right away, so show it
   async function saved(action) {
     try {
       await action()
@@ -208,7 +207,7 @@ export default function Settings() {
           <span className="flex-1">Country</span>
           <span className="text-sage/70">{COUNTRIES.find(([code]) => code === (user.country_code ?? ''))?.[1]}</span>
           <Chevron />
-          {/* the real select sits on top, invisible, so tapping the row opens the iPhone picker */}
+          {/* invisible select on top, so tapping the row opens the iOS picker */}
           <select id="country" value={user.country_code ?? ''} className="absolute inset-0 opacity-0"
             onChange={e => saved(() => updateSettings({ country_code: e.target.value || null }))}>
             {COUNTRIES.map(([code, label]) => <option key={code} value={code}>{label}</option>)}
@@ -289,7 +288,7 @@ export default function Settings() {
         </ConfirmDialog>
       )}
 
-      {/* no Done button: changes save as you go, and Back is in the header */}
+      {/* no Done button, changes save as you go */}
       <p className="mt-10 mb-4 text-center text-xs leading-5 text-sage/50">
         <span className="block font-bold">Breathe With Me</span>
         Support tool, not treatment

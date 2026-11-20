@@ -1,4 +1,4 @@
-// Run with: npm test (Node's own test runner, nothing to install)
+// npm test (node's built-in test runner)
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { FEELINGS, nextStep } from './flow.js'

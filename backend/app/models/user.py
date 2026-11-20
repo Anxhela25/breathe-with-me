@@ -12,20 +12,19 @@ class User(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(String(255))
-    # ISO code, used to pick emergency numbers
+    # ISO country code, for emergency numbers
     country_code: Mapped[str | None] = mapped_column(String(2))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    # required at sign-up: the app is for adults, and health data needs explicit consent (GDPR art. 9)
+    # required at sign-up: adults only + health data consent (GDPR art. 9)
     adult_confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     health_data_consent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    # tokens issued before this are no longer accepted
+    # tokens issued before this are rejected
     password_changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    # after a crisis message the AI chat is paused until then, on every device; the first chat after it
-    # opens with a gentle check-in (chat_checkin_due)
+    # chat is paused until this after a crisis message, chat_checkin_due = say hi after
     chat_paused_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     chat_checkin_due: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
 
-    # cascade so "Delete my account" removes everything
+    # cascade so deleting the account removes everything
     emergency_contacts: Mapped[list["EmergencyContact"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )

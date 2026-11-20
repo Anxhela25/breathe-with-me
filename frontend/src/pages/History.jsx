@@ -4,7 +4,7 @@ import Button from '../components/Button.jsx'
 import { listCalmChecks, listEpisodes } from '../lib/api.js'
 import { periodOf, shortDate, strengthOf } from '../lib/format.js'
 
-// calm words, never a score: the hidden level is not sent to the app
+// words only, no score (the level isn't sent to the app)
 const CALM_RESULT = { steady: 'Steadier rhythm', gentle: 'Took the time to breathe' }
 const CALM_SOURCE = { end_of_session: 'After a help session', practice: 'Practice', baseline: 'First calm check' }
 

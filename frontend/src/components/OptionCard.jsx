@@ -11,8 +11,8 @@ export const ICONS = {
   heart: <svg {...icon}><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" /></svg>,
 }
 
-/** A choice as a card: coloured icon, title, one line, chevron. Used where she picks what helps.
- * `paused` keeps the card in its place but greyed out and not tappable, with `text` saying why. */
+/** Choice card: icon, title, one line, chevron.
+ * `paused` greys it out and disables it, `text` says why. */
 export default function OptionCard({ to, state, title, text, tone, icon: svg, paused = false }) {
   if (paused) {
     return (

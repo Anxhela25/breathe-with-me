@@ -2,7 +2,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useSession } from '../context/SessionContext.jsx'
 import Pebble from '../components/Pebble.jsx'
 
-// soft sun and hills behind the content: decorative only, they never sit over a button
+// decorative background, never over a button
 const DECOR = [
   {
     className: 'right-[-18px] top-[150px] h-[110px] w-[110px] rounded-full shadow-[0_0_0_16px_rgba(255,246,223,0.45)]',
@@ -28,7 +28,7 @@ export default function Home() {
   const navigate = useNavigate()
   const { start } = useSession()
 
-  // no animation before leaving: in a panic every second waiting feels long
+  // no animation before leaving, every second counts in a panic
   function begin() {
     start()
     navigate('/breathe')
@@ -63,7 +63,7 @@ export default function Home() {
 
         <div className="flex flex-1 flex-col items-center justify-center gap-6">
           <p className="text-center text-xl text-sage-dark">When it feels like too much,<br />tap Start. I&apos;m right here, and I&apos;ll breathe with you.</p>
-          {/* daily practice when calm; it also builds her usual rhythm (baseline) */}
+          {/* daily practice when calm, also builds the baseline */}
           <div className="flex items-center gap-2 text-sm text-sage">
             <Link to="/calm-check" className={LINK_PILL}>Calm check | 1 min</Link>
             <Link to="/history" className={LINK_PILL}>My history</Link>

@@ -168,7 +168,7 @@ def test_empty_message_is_rejected(client):
     assert client.post("/api/chat", json={"message": ""}).status_code == 422
 
 
-# the messages from the screenshot that got through before
+# messages that used to get through
 @pytest.mark.parametrize("text", ["i wantttt toooo dyeeeee", "i will kill myselve", "kms"])
 def test_stretched_and_misspelled_crisis_never_calls_ai(client, fake_ai, text):
     assert send(client, text)["kind"] == "crisis" and fake_ai.calls == []
@@ -200,7 +200,7 @@ def test_risk_check_unavailable_after_user_said_no_replies(client, fake_ai, risk
 
 
 def test_second_possible_crisis_after_user_said_no_is_a_crisis(client, fake_ai, risk_check):
-    # she said "No, it's the panic" once: a second sign isn't asked about again, the chat pauses
+    # after "No, it's the panic" once, a second sign pauses the chat
     risk_check.answer = True
     r = client.post("/api/chat", json={"message": "nobody would notice if i was gone", "safe_confirmed": True})
     assert r.json()["kind"] == "crisis" and r.json()["paused_until"] is not None

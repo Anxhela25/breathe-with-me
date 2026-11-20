@@ -13,18 +13,17 @@ class ChatIn(BaseModel):
     message: str = Field(min_length=1, max_length=2000)
     history: list[ChatLine] = Field(default_factory=list, max_length=20)
     level: int | None = Field(default=None, ge=1, le=10)
-    # the user already answered "No" to "Are you safe?" in this chat
+    # user already said they're safe in this chat
     safe_confirmed: bool = False
 
 
 class ChatOut(BaseModel):
-    kind: Literal["crisis", "check", "reply", "paused"]  # check: possible crisis, the app asks the user
+    kind: Literal["crisis", "check", "reply", "paused"]  # check = possible crisis, ask the user
     reply: str | None
     emergency_note: bool
     next_step: Literal["breathing", "grounding", "urgent", "choose"]  # choose: all three
     source: Literal["ai", "fixed"]
-    # crisis or paused: the AI chat is paused until then (also for users without an account, so the app
-    # can keep the pause on the phone)
+    # set for crisis/paused, also without an account so the app can keep the pause
     paused_until: datetime | None = None
 
 

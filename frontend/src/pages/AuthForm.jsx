@@ -22,13 +22,12 @@ export default function AuthForm({ mode }) {
   const [consent, setConsent] = useState(false)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
-  // sign-up step 2: the email the code was sent to
+  // sign-up step 2: where the code was sent
   const [codeSentTo, setCodeSentTo] = useState('')
   const [code, setCode] = useState('')
   const [notice, setNotice] = useState('')
 
-  // Log in and Create account are this same screen: switching keeps what she typed, but a message
-  // from the other one (e.g. "Email or password is not correct" after a failed login) doesn't belong here
+  // login and sign-up share this screen: keep what was typed, clear messages from the other one
   const [shownMode, setShownMode] = useState(mode)
   if (shownMode !== mode) {
     setShownMode(mode)

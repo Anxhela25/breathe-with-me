@@ -1,5 +1,5 @@
-# Crisis pause: after a clear crisis message the AI chat pauses for 24 hours on every device,
-# and the first chat after it opens with a check-in.
+# After a crisis message the chat pauses 24h on every device,
+# and the next chat opens with a check-in.
 from datetime import datetime, timedelta, timezone
 
 from app.database import SessionLocal

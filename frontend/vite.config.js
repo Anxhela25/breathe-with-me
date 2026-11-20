@@ -5,7 +5,7 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
-    // Calls to /api go to the Python backend.
+    // /api goes to the python backend
     proxy: { '/api': 'http://localhost:8001' },
   },
 })

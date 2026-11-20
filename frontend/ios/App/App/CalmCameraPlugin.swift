@@ -2,7 +2,7 @@ import AVFoundation
 import Capacitor
 import UIKit
 
-/// The app's main screen: the normal Capacitor web view, plus the app's own native plugins.
+/// Main view controller: the Capacitor web view + our own plugins.
 class MainViewController: CAPBridgeViewController {
     override open func capacitorDidLoad() {
         bridge?.registerPluginInstance(CalmCameraPlugin())
@@ -10,9 +10,8 @@ class MainViewController: CAPBridgeViewController {
         hideKeyboardToolbar()
     }
 
-    /// The web view puts a bar with up, down and a check mark above the keyboard. The app doesn't need it:
-    /// Return sends the chat and the forms. Same trick as Capacitor's Keyboard plugin: give the web view's
-    /// content view a subclass whose inputAccessoryView is nil.
+    /// Hides the up/down/done bar above the keyboard, Return already sends.
+    /// Same trick as Capacitor's Keyboard plugin: a content view subclass with inputAccessoryView = nil.
     private func hideKeyboardToolbar() {
         guard let content = webView?.scrollView.subviews.first(where: {
             String(describing: type(of: $0)).hasPrefix("WKContent")
@@ -32,9 +31,8 @@ class MainViewController: CAPBridgeViewController {
     }
 }
 
-/// Calm check: reads the pulse from a fingertip on the back camera with the flash on.
-/// For each frame it sends only the average red, green and blue of the image to the web app
-/// (about 30 times a second). The video itself is never stored and never leaves the phone.
+/// Calm check: reads the pulse from a fingertip on the back camera, flash on.
+/// Only the average RGB of each frame (~30/s) goes to the web app, the video never leaves the phone.
 @objc(CalmCameraPlugin)
 public class CalmCameraPlugin: CAPPlugin, CAPBridgedPlugin, AVCaptureVideoDataOutputSampleBufferDelegate {
     public let identifier = "CalmCameraPlugin"
@@ -76,8 +74,7 @@ public class CalmCameraPlugin: CAPPlugin, CAPBridgedPlugin, AVCaptureVideoDataOu
         }
     }
 
-    /// Stops the camera from adjusting brightness by itself, which would hide the pulse.
-    /// Call it once the finger is on the lens and the image has settled.
+    /// Locks exposure once the finger is on the lens, auto exposure would hide the pulse.
     @objc func lockExposure(_ call: CAPPluginCall) {
         queue.async {
             guard let device = self.device else { call.resolve(); return }

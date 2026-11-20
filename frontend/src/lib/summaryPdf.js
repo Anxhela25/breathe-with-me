@@ -1,5 +1,5 @@
-// Builds the doctor summary as a PDF on the device. Nothing is uploaded: the file only leaves the
-// device when the user shares or saves it. Loaded on demand, so jsPDF isn't in the main bundle.
+// Builds the doctor summary PDF on the device, nothing is uploaded.
+// Loaded on demand so jsPDF isn't in the main bundle.
 import { jsPDF } from 'jspdf'
 import { autoTable } from 'jspdf-autotable'
 import { Capacitor } from '@capacitor/core'
@@ -12,8 +12,8 @@ const PLACE = { home: 'Home', work: 'Work', street: 'Outside', other: 'Other' }
 const SLEEP = { well: 'slept well', little: 'little sleep', very_little: 'very little sleep' }
 const DISCLAIMER = 'Recorded by the patient in a self-help app. These are patterns, not a diagnosis.'
 
-// The built-in PDF fonts cover Western European letters (including ë and ç) but not every character.
-// Swap the common ones and drop the rest (emoji, other scripts) instead of printing garbage.
+// Built-in PDF fonts cover Western European letters (ë, ç) but not everything.
+// Replace the common ones and drop the rest (emoji etc.) instead of printing garbage.
 function pdfSafe(text) {
   return String(text ?? '')
     .replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/[–—]/g, '-').replace(/…/g, '...')
@@ -124,7 +124,7 @@ export async function deliverPdf(doc) {
     const { Filesystem, Directory } = await import('@capacitor/filesystem')
     const { Share } = await import('@capacitor/share')
     const data = doc.output('datauristring').split(',')[1]
-    // the cache folder is private to the app and cleared by iOS when space is needed
+    // cache dir is private, iOS clears it when it needs space
     const { uri } = await Filesystem.writeFile({ path: PDF_NAME, data, directory: Directory.Cache })
     try {
       await Share.share({ title: 'Summary for my doctor', files: [uri], dialogTitle: 'Share the summary' })

@@ -11,7 +11,7 @@ const line = {
   strokeLinecap: 'round', strokeLinejoin: 'round', className: 'h-6 w-6', 'aria-hidden': true,
 }
 
-// symptoms that may not be panic: panic eases, a heart problem gets worse and doesn't go away
+// may not be panic: panic eases, a heart problem gets worse and doesn't go away
 const SIGNS = [
   ['Chest pain or pressure', <svg key="chest" {...line}>
     <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" />
@@ -32,7 +32,7 @@ const SIGNS = [
   </svg>],
 ]
 
-// "Worse": first make sure it isn't a medical emergency, then breathe at her own pace.
+// "Worse": rule out a medical emergency first, then breathe at own pace
 export default function Worse() {
   const { user } = useAuth()
   const emergency = getEmergency(user?.country_code)
@@ -43,7 +43,7 @@ export default function Worse() {
       <h1 className="mt-6 text-center text-3xl font-bold">I&apos;m here with you.</h1>
       <p className="mt-2 text-center text-sage/80">First, let&apos;s make sure it&apos;s panic.</p>
 
-      {/* one soft card to read, not four buttons to choose from */}
+      {/* one card to read, not four buttons */}
       <section aria-labelledby="signs-title" className="mt-6 w-full rounded-3xl bg-white/90 px-4 pt-4 pb-5 shadow-sm shadow-sage/10">
         <h2 id="signs-title" className="text-center text-xs font-bold tracking-[0.18em] text-alert/80 uppercase">
           Signs it may not be panic
@@ -61,7 +61,7 @@ export default function Worse() {
       <div className="mt-auto flex w-full flex-col items-center gap-3 pt-8">
         <p className="font-display text-xl font-bold">Do you have any of these?</p>
         <EmergencyButton href={telLink(emergency)} title="Yes," subtitle="Call emergency services" />
-        {/* panic: just breathe, no timer and no questions */}
+        {/* panic: just breathe, no timer or questions */}
         <Button to="/breathe" state={{ stay: true }} variant="outline">No, it&apos;s the panic</Button>
       </div>
     </Screen>

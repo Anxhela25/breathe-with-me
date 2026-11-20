@@ -28,9 +28,9 @@ def _password_version(user: User) -> float:
 
 
 def create_token(user: User) -> str:
-    # the short access key; services/tokens.py hands it out together with the refresh key
+    # access token, tokens.py issues it together with the refresh token
     expire = datetime.now(timezone.utc) + timedelta(minutes=settings.access_token_minutes)
-    # "pv" ties the token to the current password, so changing it signs out other devices
+    # pv ties the token to the password, so changing it logs out other devices
     claims = {"sub": str(user.id), "pv": _password_version(user), "exp": expire}
     return jwt.encode(claims, settings.jwt_secret, algorithm="HS256")
 
@@ -39,7 +39,7 @@ def get_optional_user(
     creds: HTTPAuthorizationCredentials | None = Depends(_bearer),
     db: Session = Depends(get_db),
 ) -> User | None:
-    """The logged-in user, or None: for endpoints that also work without an account."""
+    """Current user or None, for endpoints that also work without login."""
     if creds is None:
         return None
     try:
@@ -60,7 +60,7 @@ def get_current_user(
         payload = jwt.decode(creds.credentials, settings.jwt_secret, algorithms=["HS256"])
         user = db.get(User, int(payload["sub"]))
     except (jwt.PyJWTError, KeyError, ValueError) as error:
-        # ExpiredSignatureError is the usual one; InvalidSignatureError means JWT_SECRET changed
+        # usually expired. InvalidSignatureError = JWT_SECRET changed
         log.info("Login token rejected: %s", type(error).__name__)
         raise unauthorized
     if user is None:

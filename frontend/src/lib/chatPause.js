@@ -1,16 +1,15 @@
-// Crisis pause: after a crisis message the AI chat pauses for 24 hours (backend/app/routers/chat.py).
-// Why 24 hours: the riskiest time after a suicidal crisis is the first hours up to about a day, and
-// clinical guidance aims for a person to follow up within 24 hours. Until then the app points to people.
-// The pause is kept on the phone too, so it holds without an account and after closing the app; with an
-// account the server keeps it as well and refuses chat messages until it ends.
+// Crisis pause: the AI chat pauses for 24h after a crisis message (see routers/chat.py).
+// 24h because the highest risk after a suicidal crisis is the first hours up to about a day,
+// and follow-up should happen within 24 hours. During the pause the app points to people.
+// Kept on the phone too, so it works without an account and after closing the app.
 import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
 
 const KEY = 'bwm_chat_pause'
-// used when the server can't be reached; VITE_CHAT_PAUSE_MINUTES=3 makes it short while testing
+// fallback if the server can't be reached. VITE_CHAT_PAUSE_MINUTES=3 for testing
 const PAUSE_MINUTES = Number(import.meta.env.VITE_CHAT_PAUSE_MINUTES) || 24 * 60
 
-// the first chat after the pause, however many days later
+// first chat after the pause, however much later
 export const CHECK_IN = "Welcome back. The last time we talked was a really hard moment, and I'm glad you're here. " +
   'How are you feeling right now?'
 
@@ -49,14 +48,14 @@ export function useChatPause() {
   const state = chatPause(user)
   const endsAt = state.until?.getTime()
 
-  // the page updates by itself when the pause ends while it is open
+  // update the page if the pause ends while it's open
   useEffect(() => {
     if (!state.paused) return undefined
     const timer = setTimeout(rerender, Math.min(endsAt - Date.now() + 500, 2 ** 31 - 1))
     return () => clearTimeout(timer)
   }, [state.paused, endsAt, rerender])
 
-  // until: from the server, or 24 hours from now when it can't be reached
+  // until from the server, or 24h from now if offline
   const start = useCallback(until => {
     const end = until ? new Date(until) : new Date(Date.now() + PAUSE_MINUTES * 60000)
     writeLocal({ until: end.toISOString(), checkIn: true })
@@ -64,7 +63,7 @@ export function useChatPause() {
     refreshUser?.()
   }, [rerender, refreshUser])
 
-  // she wrote after the check-in; the server clears its own flag with that message
+  // wrote after the check-in, the server clears its flag on that message
   const checkInDone = useCallback(() => {
     writeLocal({ ...readLocal(), checkIn: false })
     rerender()

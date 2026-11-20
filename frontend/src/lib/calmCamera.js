@@ -1,10 +1,10 @@
-// Bridge to the native CalmCamera plugin (ios/App/App/CalmCameraPlugin.swift).
-// The plugin sends one small reading per camera frame: { t: seconds, r, g, b: average colour 0-255 }.
+// Bridge to the native CalmCamera plugin (CalmCameraPlugin.swift).
+// One reading per frame: { t, r, g, b } with the average colour 0-255.
 import { Capacitor, registerPlugin } from '@capacitor/core'
 
 const CalmCamera = registerPlugin('CalmCamera')
 
-/** The calm check needs the camera and flash, which only the iPhone app can use. */
+/** Needs the camera + flash, so iPhone app only. */
 export const calmCameraAvailable = () => Capacitor.getPlatform() === 'ios'
 
 /** Starts the camera and flash. Returns a function that stops them. */
@@ -22,5 +22,5 @@ export async function startCalmCamera(onFrame) {
   }
 }
 
-/** Stops the camera from changing its brightness by itself once the finger is in place. */
+/** Lock exposure once the finger is in place. */
 export const lockCalmExposure = () => CalmCamera.lockExposure()

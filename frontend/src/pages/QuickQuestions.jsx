@@ -127,7 +127,7 @@ function Questions() {
         )}
       </div>
 
-      {/* answers stay under the question, the buttons go to the bottom */}
+      {/* answers under the question, buttons at the bottom */}
       <div className="mt-auto flex w-full flex-col items-center gap-2 pt-8">
         {step >= 3 && (
           <Button onClick={() => finish(note.trim() ? { note: note.trim() } : {})} disabled={!episodeId}

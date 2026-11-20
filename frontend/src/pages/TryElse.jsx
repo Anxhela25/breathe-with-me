@@ -3,13 +3,13 @@ import LongSessionNote from '../components/LongSessionNote.jsx'
 import OptionCard, { ICONS } from '../components/OptionCard.jsx'
 import { pauseEnds, useChatPause } from '../lib/chatPause.js'
 
-// "About the same" after the first 2 minutes: she picks what feels right, like in other help apps.
+// "About the same" after the first 2 minutes: pick what feels right
 export default function TryElse() {
   const pause = useChatPause()
   return (
     <Screen calm>
       <LongSessionNote />
-      {/* the empty middle gets a calm picture: a path leading on, another way forward */}
+      {/* calm picture in the empty middle */}
       <div className="flex flex-1 flex-col items-center justify-center pt-6">
         <AnotherWay />
         <h1 className="mt-8 text-center text-3xl font-bold">Let&apos;s try something else.</h1>
@@ -20,7 +20,7 @@ export default function TryElse() {
       <div className="flex w-full flex-col gap-3 pt-8">
         <OptionCard to="/grounding" title="Grounding" text="Notice 5 things around you, one sense at a time."
           tone="bg-lavender" icon={ICONS.grounding} />
-        {/* for 24 hours after a crisis message the chat is paused: the card stays, greyed out, saying until when */}
+        {/* greyed out during the 24h chat pause, says until when */}
         <OptionCard to="/chat" title="Talk to me" tone="bg-soft-blue" icon={ICONS.chat} paused={pause.paused}
           text={pause.paused ? `Paused until ${pauseEnds(pause.until)}. A person can help more right now.`
             : "Write what you feel. You're talking to an AI."} />
@@ -31,11 +31,11 @@ export default function TryElse() {
   )
 }
 
-/** Another way: soft hills and a winding path that draws itself towards the horizon. */
+/** Hills and a winding path that draws itself. */
 function AnotherWay() {
   return (
     <svg viewBox="0 0 220 140" className="h-36 w-56" aria-hidden>
-      {/* the hills fade out at the sides and bottom instead of ending in a hard edge */}
+      {/* fade the hills out at the edges */}
       <defs>
         <radialGradient id="fade" cx="50%" cy="70%" r="55%">
           <stop offset="60%" stopColor="#fff" />

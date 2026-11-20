@@ -9,7 +9,7 @@ Level = Field(default=None, ge=1, le=10)
 
 class EpisodeCreate(BaseModel):
     start_level: int | None = Level
-    started_at: datetime | None = None  # sessions are saved at the end, so the app sends the real start
+    started_at: datetime | None = None  # saved at the end, so the app sends the real start time
 
     @field_validator("started_at")
     @classmethod

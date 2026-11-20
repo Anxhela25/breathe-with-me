@@ -7,17 +7,17 @@ import EmergencyButton from '../components/EmergencyButton.jsx'
 import { pauseEnds, useChatPause } from '../lib/chatPause.js'
 import { useSession } from '../context/SessionContext.jsx'
 
-// Reached from "I'm fine now" (passed) or "Better" (passing). Rules in lib/flow.js.
+// after "I'm fine now" (passed) or "Better" (passing), see lib/flow.js
 export default function Closing() {
   const { session } = useSession()
   const pause = useChatPause()
   const passed = useLocation().state?.feeling === 'passed'
-  // still a little there, so offer to talk (greyed out while the chat is paused after a crisis)
+  // still a bit there, offer the chat (greyed out during a pause)
   const offerChat = !passed
   return (
     <Screen calm>
       {passed ? (
-        // calm water and a small boat, with a check: it passed
+        // calm water and a boat: it passed
         <div className="relative mt-10 flex h-56 w-56 items-center justify-center" aria-hidden>
           <span className="absolute inset-0 rounded-full border border-white/80" />
           <span className="absolute inset-6 rounded-full border border-white/70 animate-halo" />
@@ -43,7 +43,7 @@ export default function Closing() {
           <EmergencyButton to="/urgent" title="Show emergency numbers" small className="mt-3" />
         </div>
       )}
-      {/* actions at the bottom, where the thumb is */}
+      {/* buttons at the bottom, near the thumb */}
       <div className="mt-auto flex w-full flex-col gap-3 pt-8">
         <p className="text-center text-sm font-bold tracking-wider text-sage/60 uppercase">What would help now?</p>
         <OptionCard to="/calm-check?from=session" title="Calm check" text="1 minute, fingertip on the camera."
@@ -62,7 +62,7 @@ export default function Closing() {
   )
 }
 
-/** It's getting lighter: a sun rises slowly over the horizon and its rays fade in. */
+/** Sun rising over the horizon, then the rays fade in. */
 function Sunrise() {
   return (
     <svg viewBox="0 0 160 120" className="mt-20 h-36 w-48" aria-hidden>

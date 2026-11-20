@@ -1,5 +1,5 @@
-# Rule-based, runs before any AI call. English only. The phrase lists need clinical review before
-# real users.
+# Rule-based check, runs before any AI call. English only.
+# The phrase lists still need clinical review before real users.
 import re
 import unicodedata
 from dataclasses import dataclass, field
@@ -13,8 +13,8 @@ class SafetyLevel(str, Enum):
     ok = "ok"
 
 
-# "don't want to die" is fear of dying, not a wish to die. It's stripped before the crisis check so it
-# doesn't match "want to die"; any other crisis phrase in the message still counts.
+# "don't want to die" is fear of dying, not a wish to die. It's removed before the crisis check
+# so it doesn't match "want to die". Other crisis phrases in the message still count.
 _NOT_WANTING_TO_DIE = r"\b(dont|do not|didnt|did not|never) (want|wanna)( to)? die\b"
 
 _CRISIS_PATTERNS = [
@@ -80,9 +80,9 @@ def normalize(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
-# People in distress type fast: "i wnat to diee", "kill myselv". Words one typo away from these are
-# read as the word itself, so a misspelling can't hide a crisis. Missing a crisis is worse than a
-# false alarm. Negations (dont, cant, never) are left alone: correcting them could change the meaning.
+# People in distress type fast ("i wnat to diee", "kill myselv"), so words one typo away from
+# a key word count as that word. A false alarm is better than a missed crisis.
+# Negations (dont, cant, never) aren't corrected, that could change the meaning.
 _KEY_WORDS = [
     "die", "dying", "dead", "end", "ending", "cut", "want", "wanna", "wish", "kill", "killing", "myself", "self",
     "life", "live", "living", "alive", "suicide", "suicidal", "harm", "harming", "hurt", "hurting", "overdose",

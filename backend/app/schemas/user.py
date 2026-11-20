@@ -5,13 +5,13 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 class RegisterStartIn(BaseModel):
     email: EmailStr
-    password: str = Field(max_length=200)  # checked before the code is sent, so it isn't sent for nothing
+    password: str = Field(max_length=200)  # checked before the code is sent
 
 
 class RegisterIn(BaseModel):
     email: EmailStr
-    password: str = Field(max_length=200)  # rules are checked in services/passwords.py
-    code: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$")  # emailed by /auth/register/start
+    password: str = Field(max_length=200)
+    code: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$")
     is_adult: bool
     health_data_consent: bool
 

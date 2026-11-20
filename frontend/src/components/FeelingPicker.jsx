@@ -1,7 +1,6 @@
 import { FEELINGS } from '../lib/flow.js'
 
 const EMOJI = { fine: '😆', better: '🙂', same: '😐', worse: '😟' }
-// each answer its own colour: the emoji bubble, a soft wash at the bottom of the card, a light border
 const TONE = {
   fine: ['bg-pistachio', 'to-pistachio/70', 'border-sage/25'],
   better: ['bg-[#FBE3A6]', 'to-[#FBE3A6]/45', 'border-[#E2B04F]/40'],
@@ -9,7 +8,7 @@ const TONE = {
   worse: ['bg-lavender', 'to-lavender/70', 'border-alert/25'],
 }
 
-/** "How are you now?" with four plain answers. No numbers: in a panic, choosing a word is easier. */
+/** "How are you now?" with four words, no numbers (easier during panic). */
 export default function FeelingPicker({ question = 'How are you now?', onPick }) {
   return (
     <div className="w-full text-center">

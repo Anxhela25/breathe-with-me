@@ -8,5 +8,5 @@ router = APIRouter(prefix="/api/safety", tags=["safety"])
 
 @router.post("/check", response_model=SafetyCheckOut)
 def safety_check(data: SafetyCheckIn):
-    # only the level is returned, never the matched words
+    # only the level, not the matched words
     return SafetyCheckOut(level=check_message(data.text).level)

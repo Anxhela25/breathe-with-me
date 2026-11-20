@@ -4,13 +4,13 @@ import FeelingPicker from '../components/FeelingPicker.jsx'
 import Landscape from '../components/Landscape.jsx'
 import { useAnswer } from '../lib/useAnswer.js'
 
-// "How are you now?" after grounding, the chat or more breathing (rules in lib/flow.js)
+// "How are you now?" after grounding, chat or more breathing (see lib/flow.js)
 export default function CheckIn() {
   const answer = useAnswer()
   return (
     <Screen>
       <LongSessionNote />
-      {/* the little calm world from the breathing circle, still breathing slowly while she chooses */}
+      {/* landscape from the breathing circle, still breathing slowly */}
       <div className="relative mt-12 flex h-56 w-56 items-center justify-center" aria-hidden>
         <span className="absolute inset-0 rounded-full border border-white/80" />
         <span className="absolute inset-5 rounded-full bg-white/40 animate-halo" />

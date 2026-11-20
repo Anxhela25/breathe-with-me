@@ -11,7 +11,7 @@ from app.services.auth import get_current_user
 
 router = APIRouter(prefix="/api/calm-checks", tags=["calm check"])
 
-BASELINE_CHECKS = 10  # her usual level is the median of her last 10 checks
+BASELINE_CHECKS = 10  # baseline = median of the last 10 checks
 
 
 @router.get("/baseline", response_model=CalmBaselineOut)

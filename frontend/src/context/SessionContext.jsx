@@ -12,11 +12,10 @@ const SAVED_FLAGS = { usedChat: 'used_chat', usedGrounding: 'used_grounding', cr
 
 export function SessionProvider({ children }) {
   const [session, setSession] = useState(empty)
-  const current = useRef(empty)  // the latest session, readable inside callbacks
-  // For logged-in users the episode is created at the first step and updated as it goes, so a
-  // session that ends early (urgent help, app closed) is still recorded. Saving runs in the background,
-  // in order, and never blocks or interrupts help.
-  const episode = useRef(null)  // Promise of the episode id, or null when not saving
+  const current = useRef(empty)  // latest session, for callbacks
+  // logged in: the episode is created at the first step and updated as it goes, so a session
+  // that ends early still gets saved. runs in the background, in order, never blocks the UI.
+  const episode = useRef(null)  // promise of the episode id, null when not saving
   const queue = useRef(Promise.resolve())
 
   const update = useCallback(fields => {
@@ -25,7 +24,7 @@ export function SessionProvider({ children }) {
   }, [])
 
   const sync = useCallback(fields => {
-    // created at the first real step (a 1-10 answer, chat, grounding), so an accidental tap saves nothing
+    // only at the first real step, so an accidental tap saves nothing
     if (!episode.current && current.current.startedAt && hasLogin()) {
       episode.current = createEpisode({ started_at: new Date(current.current.startedAt).toISOString() })
         .then(e => e.id).catch(() => null)
@@ -35,7 +34,7 @@ export function SessionProvider({ children }) {
     queue.current = queue.current
       .then(() => id)
       .then(episodeId => episodeId && updateEpisode(episodeId, fields))
-      .catch(() => {})  // offline: save() at the end sends everything again
+      .catch(() => {})  // offline: save() sends everything again at the end
   }, [])
 
   const start = useCallback(() => {
@@ -60,7 +59,7 @@ export function SessionProvider({ children }) {
     if (Object.keys(saved).length) sync(saved)
   }, [update, sync])
 
-  // End of the session: makes sure the episode exists (the user may have just logged in) and is complete.
+  // end of session: make sure the episode exists (user may have just logged in) and is complete
   const save = useCallback(async () => {
     const s = current.current
     if (!s.startedAt) return null
@@ -82,7 +81,7 @@ export function SessionProvider({ children }) {
     return id
   }, [])
 
-  // the saved episode of this session, if any (for linking a calm check to it)
+  // episode of this session, to link a calm check
   const episodeId = useCallback(async () => (episode.current ? episode.current : null), [])
 
   const value = useMemo(

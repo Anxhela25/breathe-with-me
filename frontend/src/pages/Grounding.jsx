@@ -31,7 +31,7 @@ export default function Grounding() {
       <LongSessionNote />
       <p className="mt-6 text-xs font-bold tracking-[0.2em] text-sage/60 uppercase">Step {step + 1} of {STEPS.length}</p>
       <div key={step} className="mt-auto mb-auto flex flex-col items-center animate-fade-in">
-        {/* the number in a soft lavender glow, with a faint ring around it */}
+        {/* number in a lavender glow with a faint ring */}
         <div className="relative flex h-60 w-60 items-center justify-center">
           <span aria-hidden className="absolute inset-0 rounded-full border border-white/80" />
           <span aria-hidden className="absolute inset-6 rounded-full border border-sage/10"
@@ -51,7 +51,7 @@ export default function Grounding() {
 
 const TILT = [-8, 6, -4, 8, -6]
 
-/** Five little pebbles: lavender for the steps done, white for this one, grey for the ones to come. */
+/** Five pebbles: lavender = done, white = current, grey = still to come. */
 function Pebbles({ count, current }) {
   return (
     <div className="mt-6 flex items-center gap-2" aria-hidden>

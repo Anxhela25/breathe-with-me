@@ -7,8 +7,8 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [ready, setReady] = useState(false)
 
-  // the app opens: read the keys from the Keychain, then ask who is logged in (renewing the keys if needed).
-  // Offline the keys stay; only the server saying the login ran out logs her out (api.js)
+  // on start: load the tokens from the Keychain, then fetch the user (refreshes if needed).
+  // offline keeps the tokens, only the server can log out (api.js)
   useEffect(() => {
     api.whenLoggedOut(() => setUser(null))
     api.loadKeys()
@@ -31,7 +31,7 @@ export function AuthProvider({ children }) {
   const resetPassword = useCallback(
     (email, code, password) => signIn(api.resetPassword, email, code, password), [signIn],
   )
-  // after something the server changed on the account, e.g. the chat pause
+  // after the server changed something on the account, e.g. the chat pause
   const refreshUser = useCallback(() => {
     if (api.hasLogin()) api.getMe().then(setUser).catch(() => {})
   }, [])

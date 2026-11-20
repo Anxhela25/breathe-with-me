@@ -7,8 +7,7 @@ from app.database import Base
 
 
 class RefreshToken(Base):
-    """The long key (90 days, renewed on every use) that keeps a phone logged in. Only its SHA-256 hash is
-    stored, so a database leak gives no working keys. Each key is used once: using it gives a new one."""
+    # only the sha256 hash is stored, each token works once and is replaced on use
 
     __tablename__ = "refresh_tokens"
 
@@ -17,9 +16,9 @@ class RefreshToken(Base):
     token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-    # set when the key is swapped for a new one (rotated), on logout, or on a password change
+    # set on rotation, logout or password change
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    # the key it was swapped for; empty when it was cancelled instead
+    # the token it was replaced by (empty if revoked)
     replaced_by_id: Mapped[int | None] = mapped_column(ForeignKey("refresh_tokens.id", ondelete="SET NULL"))
 
     user: Mapped["User"] = relationship(back_populates="refresh_tokens")  # noqa: F821

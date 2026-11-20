@@ -1,5 +1,5 @@
-# Groq and Gemini both expose an OpenAI-compatible API, so one request format covers both.
-# The prompt follows docs/clinical-decisions.md and still needs clinical review.
+# Groq and Gemini both have an OpenAI compatible API, so one request format works for both.
+# Prompt is based on docs/clinical-decisions.md, still needs clinical review.
 import json
 import logging
 import re
@@ -73,7 +73,7 @@ def providers() -> list[Provider]:
     return result
 
 
-# The app shows its own emergency note for both, so the AI shouldn't repeat it.
+# the app shows its own emergency note for these, the AI shouldn't repeat it
 MEDICAL_WORRY_NOTE = (
     "The user mentions a physical symptom that could be a medical emergency. Do not say it is panic, "
     "anxiety or a wave, and do not say it will pass. Acknowledge the fear in a few words and guide them "
@@ -89,7 +89,7 @@ WORRY_NOTES = {"medical_worry": MEDICAL_WORRY_NOTE, "fear_of_dying": FEAR_OF_DYI
 
 
 def build_messages(history: list[dict], level: int | None, worry: str | None = None) -> list[dict]:
-    # everything in one system message, Gemini ignores additional ones
+    # Gemini ignores extra system messages, so everything goes in one
     instructions = SYSTEM_PROMPT
     if level is not None:
         instructions += f"\nThe user rated the panic {level} out of 10."
@@ -101,9 +101,8 @@ def build_messages(history: list[dict], level: int | None, worry: str | None = N
 
 
 class Deadline:
-    """Time left for one chat message. Each call gets at most ai_attempt_seconds."""
 
-    MIN_SECONDS = 0.5  # not worth starting a call with less
+    MIN_SECONDS = 0.5
 
     def __init__(self, seconds: float | None = None):
         self.end = time.monotonic() + (settings.ai_total_seconds if seconds is None else seconds)
@@ -125,7 +124,6 @@ def _post(provider: Provider, body: dict, timeout: float) -> str:
 
 
 def _why(error: Exception) -> str:
-    """What went wrong, short enough for one log line: 429 is a rate limit, 401 a wrong key."""
     if isinstance(error, httpx.HTTPStatusError):
         return f"HTTP {error.response.status_code}: {error.response.text[:200]}"
     if isinstance(error, httpx.TimeoutException):
@@ -162,8 +160,8 @@ Reply with only this JSON and nothing else: {"risk": "YES" or "NO", "english": "
 @dataclass
 class RiskResult:
     risk: bool
-    # None if the model didn't say. Asked as yes/no: asked for a language code, small models
-    # got short informal texts wrong ("Ti spo m kupton" came back "unsure", Serbian or Greek)
+    # None if the model didn't say. yes/no works better than asking for a language code,
+    # small models got short texts wrong ("Ti spo m kupton" came back as "unsure")
     english: bool | None
 
 
@@ -189,8 +187,8 @@ def _ask_classifier(provider: Provider, messages: list[dict], timeout: float) ->
 
 
 def classify_risk(user_messages: list[str], deadline: Deadline | None = None) -> RiskResult | None:
-    """Risk in the last 3 user messages and whether the newest is in English, or None if no provider
-    answered clearly in time. Catches what the rules in safety.py can't: hints, slang, other languages."""
+    """Risk check on the last 3 user messages + is the newest one English. None if no clear answer in time.
+    Catches what safety.py can't: hints, slang, other languages."""
     if _no_providers():
         return None
     deadline = deadline or Deadline()
@@ -220,7 +218,7 @@ def classify_risk(user_messages: list[str], deadline: Deadline | None = None) ->
 
 def generate_reply(history: list[dict], level: int | None, worry: str | None = None,
                    deadline: Deadline | None = None) -> tuple[str, str] | None:
-    """Returns (reply, "provider/model"), or None if every provider failed or time ran out."""
+    """(reply, "provider/model"), or None if all providers failed or time ran out."""
     if _no_providers():
         return None
     deadline = deadline or Deadline()

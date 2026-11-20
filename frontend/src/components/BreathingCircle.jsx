@@ -8,17 +8,17 @@ export const EXHALE_MS = 6000
 const EASE = 'cubic-bezier(0.45, 0, 0.55, 1)'  // slow at both ends, like a breath
 
 /**
- * The breathing guide: a soft pistachio circle that grows on the in-breath and shrinks on the
- * out-breath. `progress` (0 to 1) draws a thin ring around it that closes over the exercise.
+ * Breathing circle: grows on the in-breath, shrinks on the out-breath.
+ * `progress` (0-1) draws a ring around it that closes over the exercise.
  */
 export default function BreathingCircle({ inhaleMs = INHALE_MS, exhaleMs = EXHALE_MS, progress = null, size = 256, landscape = false }) {
   const [phase, setPhase] = useState('in')
-  // first frame drawn small, so the first breath in grows from small instead of starting open
+  // start small so the first breath grows from small
   const [started, setStarted] = useState(false)
   const reduced = useReducedMotion()
 
   useEffect(() => {
-    // two frames: the browser has to paint the small circle before the grow transition can run
+    // two frames so the browser paints the small circle before the transition
     let second
     const first = requestAnimationFrame(() => { second = requestAnimationFrame(() => setStarted(true)) })
     return () => { cancelAnimationFrame(first); cancelAnimationFrame(second) }
@@ -43,7 +43,6 @@ export default function BreathingCircle({ inhaleMs = INHALE_MS, exhaleMs = EXHAL
   const radius = size / 2 - 3
   const circumference = 2 * Math.PI * radius
 
-  // the breathing page: a little landscape that grows and shrinks, a thin ring, the words below as a heading
   if (landscape) {
     return (
       <div className="flex flex-col items-center">
@@ -63,7 +62,7 @@ export default function BreathingCircle({ inhaleMs = INHALE_MS, exhaleMs = EXHAL
           </div>
         </div>
         <div className="relative mt-6 h-9 w-full" aria-live="polite">
-          {/* the two words fade into each other instead of switching */}
+          {/* crossfade the two words */}
           <span className="absolute inset-x-0 text-center font-display text-2xl font-bold transition-opacity duration-700"
             style={{ opacity: growing ? 1 : 0 }} aria-hidden={!growing}>
             Breathe in
@@ -91,7 +90,7 @@ export default function BreathingCircle({ inhaleMs = INHALE_MS, exhaleMs = EXHAL
       <div className="absolute inset-3 rounded-full bg-pistachio shadow-[0_0_60px_10px_rgba(226,234,218,0.9)]"
         style={layer(1, 0.6, 0)} aria-hidden />
       <div className="absolute inset-0 flex items-center justify-center" aria-live="polite">
-        {/* the two words fade into each other instead of switching */}
+        {/* crossfade the two words */}
         <span className="absolute text-lg text-sage transition-opacity duration-700" style={{ opacity: growing ? 1 : 0 }}
           aria-hidden={!growing}>
           Breathe in

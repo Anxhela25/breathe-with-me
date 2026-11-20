@@ -1,10 +1,9 @@
-# Login keys, the way large apps do it (RFC 9700, OAuth 2.0 Security Best Current Practice):
-# - a short access key (JWT, 1 hour) sent with every request; it can't be cancelled, so it lives briefly
-# - a long refresh key (90 days, renewed on every use) that only gets new keys. Each one works once: using
-#   it gives a new pair and cancels it ("rotation"). If a cancelled key comes back, someone copied it, and
-#   every key of that account is cancelled.
-# Why 90 days: people open a panic app when attacks come, often weeks apart, and must never be logged out at
-# that moment; a phone that isn't used any more still logs out by itself.
+# Login tokens (RFC 9700):
+# - access token (JWT, 1 hour) sent with every request. Can't be revoked, so it's short.
+# - refresh token (90 days) only used to get a new pair. Each one works once (rotation).
+#   If a used one comes back it was probably copied, so all tokens of the account are revoked.
+# 90 days because people open the app when an attack comes, sometimes weeks apart,
+# and they should never get logged out right then.
 import hashlib
 import logging
 import secrets
@@ -20,7 +19,7 @@ from app.services.auth import create_token
 
 log = logging.getLogger("breathe.auth")
 
-# a key used again this soon after its swap is a retry (the reply was lost on a bad connection), not theft
+# reused this soon after rotation = retry after a lost response, not theft
 REUSE_GRACE = timedelta(seconds=60)
 
 
@@ -61,7 +60,7 @@ def revoke_all(db: Session, user: User, now: datetime | None = None) -> None:
 
 
 def rotate(db: Session, raw: str) -> TokenOut | None:
-    """Swaps a refresh key for a new pair. None: the key isn't valid any more, the phone must log in again."""
+    """Rotate a refresh token. None = the phone has to log in again."""
     now = datetime.now(timezone.utc)
     row = db.scalar(select(RefreshToken).where(RefreshToken.token_hash == _hash(raw)))
     if row is None:
@@ -69,17 +68,17 @@ def rotate(db: Session, raw: str) -> TokenOut | None:
         return None
     user = row.user
     if row.revoked_at is not None and row.replaced_by_id is None:
-        # cancelled by logging out or a password change: this phone just logs in again
+        # revoked by logout or password change, just log in again
         log.info("Refresh refused: the key of account %d was cancelled", user.id)
         return None
     if row.revoked_at is not None:
         if now - _aware(row.revoked_at) >= REUSE_GRACE:
-            # a key that was already used or cancelled came back: it was probably copied
+            # already used or revoked token came back, probably copied
             log.warning("Refresh key reused for account %d: every login of the account cancelled", user.id)
             revoke_all(db, user, now)
             db.commit()
             return None
-        # the phone never got the answer: cancel the key it missed and give it a new one
+        # the phone never got the response: revoke the one it missed and give a new pair
         log.info("Refresh key retried within the grace time for account %d", user.id)
         db.execute(update(RefreshToken).where(RefreshToken.id == row.replaced_by_id, RefreshToken.revoked_at.is_(None))
                    .values(revoked_at=now))
@@ -94,7 +93,7 @@ def rotate(db: Session, raw: str) -> TokenOut | None:
 
 
 def revoke(db: Session, raw: str) -> None:
-    """Logout: this phone's key stops working."""
+    """Logout: revoke this phone's token."""
     row = db.scalar(select(RefreshToken).where(RefreshToken.token_hash == _hash(raw)))
     if row is not None and row.revoked_at is None:
         row.revoked_at = datetime.now(timezone.utc)

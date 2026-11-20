@@ -1,5 +1,5 @@
-# Simple, descriptive patterns from the user's own episodes. Every sentence states counts or averages
-# and never a cause; small numbers are not reported (docs/clinical-decisions.md, D8).
+# Simple patterns from the user's own episodes. Only counts and averages, never causes,
+# and nothing based on small numbers (docs/clinical-decisions.md, D8).
 from collections import Counter
 from datetime import datetime
 from zoneinfo import ZoneInfo

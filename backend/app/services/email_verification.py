@@ -1,5 +1,5 @@
-# Sign-up codes: proves the person owns the email before the account exists. Same rules as the
-# password reset codes: short-lived, single use, stored as a hash, limited requests and guesses.
+# Sign-up codes. Same rules as the password reset codes:
+# short-lived, single use, hashed, limited requests and guesses.
 import hmac
 import secrets
 from datetime import timedelta
@@ -12,7 +12,7 @@ from app.services.password_reset import CODE_MINUTES, MAX_ATTEMPTS, MAX_CODES_PE
 
 
 def create_code(db: Session, email: str) -> str | None:
-    """A new code to send, or None when this email asked for too many codes in the last hour."""
+    """New code to send, or None if too many requests for this email in the last hour."""
     recent = db.scalar(select(func.count()).select_from(EmailVerification).where(
         EmailVerification.email == email, EmailVerification.created_at > _now() - timedelta(hours=1)))
     if recent >= MAX_CODES_PER_HOUR:
@@ -39,7 +39,7 @@ def use_code(db: Session, email: str, code: str) -> bool:
             entry.used_at = _now()
         db.commit()
         return False
-    entry.used_at = _now()  # committed together with the new account
+    entry.used_at = _now()  # committed with the new account
     return True
 
 

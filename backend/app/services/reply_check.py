@@ -1,5 +1,5 @@
-# The AI doesn't always follow its instructions, so every reply is checked here.
-# Anything that fails is swapped for a fixed message.
+# The AI doesn't always follow the prompt, so every reply is checked here.
+# If a check fails we use a fixed message instead.
 import re
 from dataclasses import dataclass
 
@@ -19,7 +19,6 @@ ENGLISH_ONLY_MESSAGE = (
     "— they work without words."
 )
 
-# word count matters more than sentence count
 MAX_SENTENCES = 5
 MAX_WORDS = 45
 
@@ -30,7 +29,7 @@ _MEDICINE = [
     r"\bibuprofen\b", r"\bparacetamol\b", r"\baspirin\b", r"\bsupplement",
 ]
 
-# breathing should be slow and follow the circle: no deep breaths, holding or counting
+# slow breathing with the circle only: no deep breaths, holding or counting
 _BREATHING = [
     r"\bdeep(ly)? breath", r"\bbreathe deep", r"\bbig breath", r"\bhold (your|the|it|for)\b",
     r"\bhold your breath", r"\bfor (\w+ )?counts?\b", r"\bcount of (\d+|one|two|three|four|five|six|seven|eight)\b",
@@ -48,8 +47,8 @@ _DIAGNOSIS_AND_PROMISES = [
     r"\bi('| a)m (a )?(human|person|therapist|psychologist|doctor)\b",
 ]
 
-# Crisis topics are handled by the app, not the AI. A reply like these means the AI understood
-# something the rules missed, so the app asks the user directly instead of showing it.
+# crisis topics are handled by the app. a reply like these means the AI picked up something
+# the rules missed, so we ask the user instead of showing it
 _CRISIS_TOPICS = [
     r"\bsuicid", r"\bself[- ]?harm", r"\bkill (yourself|myself)\b", r"\bend (your|my) life\b",
     r"\bhurt(ing)? yourself\b", r"\b(crisis|help) ?line\b", r"\bhotline\b", r"\bprofessional (help|support)\b",
@@ -72,11 +71,11 @@ class ReplyCheck:
     ok: bool
     text: str
     reason: str = ""  # for logging
-    crisis: bool = False  # the reply suggests the user may be at risk
+    crisis: bool = False  # reply suggests the user may be at risk
 
 
-# The checks above only know English, so replies must be in English: no letters outside a-z (ë, ç,
-# Cyrillic...) and, in longer replies, enough very common English words.
+# the checks only know English, so replies must be English: only a-z letters (no ë, ç, cyrillic)
+# and enough common English words in longer replies
 _ENGLISH_WORDS = {
     "a", "about", "all", "an", "and", "are", "as", "at", "be", "breath", "breathe", "breathing", "but", "can",
     "circle", "do", "does", "feel", "feeling", "feels", "follow", "for", "gently", "have", "here", "how", "i",

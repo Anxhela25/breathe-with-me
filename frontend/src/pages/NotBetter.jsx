@@ -9,7 +9,7 @@ import Orb from '../components/Orb.jsx'
 import EmergencyButton from '../components/EmergencyButton.jsx'
 import { PhoneIcon } from '../components/Icons.jsx'
 
-/** Panic as a wave: it rises, peaks and falls into calm water, where a small boat waits. */
+/** Panic as a wave: rises, peaks and falls into calm water with a small boat. */
 function PanicWave() {
   return (
     <figure className="mt-auto flex w-full flex-col items-center pt-8">
@@ -28,7 +28,6 @@ function PanicWave() {
         <path d="M0 74C40 74 60 68 90 44c20-18 35-28 50-28 20 0 35 18 55 38 25 20 55 20 105 20v16H0z" fill="url(#wave-fill)" />
         <path d="M0 74C40 74 60 68 90 44c20-18 35-28 50-28 20 0 35 18 55 38 25 20 55 20 105 20"
           fill="none" stroke="url(#wave-line)" strokeWidth="3" strokeLinecap="round" />
-        {/* the boat on the calm water after the wave */}
         <g transform="translate(250 50)">
           <path d="M11 1v19" stroke="#4A6355" strokeWidth="1.4" strokeLinecap="round" />
           <path d="M12 3l9 15h-9z" fill="#FFFFFF" stroke="#8FA99A" strokeWidth="1" />
@@ -40,8 +39,8 @@ function PanicWave() {
   )
 }
 
-// Reached when the 2 more minutes (8-10) or grounding (5-7) didn't help (rules in lib/flow.js).
-// No more questions from here: people to call, the emergency number, or breathing at her own pace.
+// when 2 more minutes or grounding didn't help (see lib/flow.js).
+// No more questions: people to call, the emergency number, or breathing at own pace.
 export default function NotBetter() {
   const { user } = useAuth()
   const emergency = getEmergency(user?.country_code)
@@ -80,7 +79,7 @@ export default function NotBetter() {
           </a>
         ))}
         <EmergencyButton href={telLink(emergency)} title="Emergency services" subtitle={`Call ${emergency}`} />
-        {/* stay: breathing with no timer and no more questions, help one tap away */}
+        {/* breathing with no timer or questions, help one tap away */}
         <Button to="/breathe" state={{ stay: true }} variant="link">Keep breathing</Button>
         {user && contacts.length === 0 && (
           <Button to="/settings" variant="link" className="-mt-2 text-sage/70">Add someone you trust</Button>

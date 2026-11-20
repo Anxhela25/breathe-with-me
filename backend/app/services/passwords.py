@@ -1,4 +1,4 @@
-# Password rules follow NIST SP 800-63B-4: length over composition, and no common or leaked passwords.
+# Rules from NIST SP 800-63B: length over composition, no common or leaked passwords.
 import hashlib
 import logging
 from functools import cache
@@ -21,7 +21,7 @@ def _common_passwords() -> frozenset[str]:
 
 
 def _is_breached(password: str) -> bool:
-    # k-anonymity: only the first 5 characters of the SHA-1 hash leave the server
+    # k-anonymity: only the first 5 chars of the sha1 hash are sent
     digest = hashlib.sha1(password.encode()).hexdigest().upper()
     try:
         response = httpx.get(f"https://api.pwnedpasswords.com/range/{digest[:5]}", timeout=3,
@@ -34,7 +34,6 @@ def _is_breached(password: str) -> bool:
 
 
 def password_problem(password: str, email: str) -> str | None:
-    """A short, user-facing reason the password can't be used, or None if it is fine."""
     if len(password) < MIN_LENGTH:
         return f"Use at least {MIN_LENGTH} characters. A short phrase is easy to remember."
     if len(password) > MAX_LENGTH or len(password.encode()) > 72:  # bcrypt reads at most 72 bytes

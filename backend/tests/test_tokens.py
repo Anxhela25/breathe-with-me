@@ -1,4 +1,4 @@
-# Login keys: a 1-hour access key and a 90-day refresh key that is swapped on every use.
+# Access token 1h, refresh token 90 days, rotated on every use.
 from datetime import datetime, timedelta, timezone
 
 import jwt

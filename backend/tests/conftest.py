@@ -1,14 +1,14 @@
 import os
 
-# Tests use a separate database so they never touch real data.
+# Separate database so tests never touch real data.
 os.environ["DATABASE_URL"] = os.environ.get(
     "TEST_DATABASE_URL", "postgresql+psycopg://localhost:5432/breathe_with_me_test"
 )
 
-os.environ["ACCESS_TOKEN_MINUTES"] = "60"  # the real login times, even when .env shortens them for testing
+os.environ["ACCESS_TOKEN_MINUTES"] = "60"  # real token times, even if .env shortens them
 os.environ["REFRESH_TOKEN_DAYS"] = "90"
 os.environ["REFRESH_TOKEN_MINUTES"] = "0"  # 0: use the days
-os.environ["CHAT_PAUSE_MINUTES"] = str(24 * 60)  # the real pause, even when .env shortens it for testing
+os.environ["CHAT_PAUSE_MINUTES"] = str(24 * 60)  # real pause length
 os.environ["CHECK_BREACHED_PASSWORDS"] = "false"  # no network calls in tests
 os.environ["CHECK_EMAIL_DOMAIN"] = "false"
 
@@ -22,7 +22,7 @@ from app.routers import auth  # noqa: E402
 
 @pytest.fixture(autouse=True)
 def risk_check(monkeypatch):
-    """The AI risk check answers NO, in English, unless a test sets risk_check.answer; tests never call a real AI."""
+    """Fake risk check: answers NO + English unless a test changes it. No real AI calls."""
     from app.services import ai
 
     class RiskCheck:
@@ -43,7 +43,7 @@ def risk_check(monkeypatch):
 
 @pytest.fixture()
 def outbox(monkeypatch):
-    """Emails the app would send; tests never send real ones."""
+    """Collects emails instead of sending them."""
     sent = []
     monkeypatch.setattr(auth, "send_email", lambda to, subject, text: sent.append((to, subject, text)))
     return sent
@@ -54,5 +54,5 @@ def client(outbox):
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     with TestClient(app) as c:
-        c.outbox = outbox  # used by tests/helpers.py to read sign-up codes
+        c.outbox = outbox  # used by helpers.py to read sign-up codes
         yield c

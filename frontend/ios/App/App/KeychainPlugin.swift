@@ -2,9 +2,8 @@ import Capacitor
 import Foundation
 import Security
 
-/// The login keys, kept in the iPhone Keychain: iOS encrypts them and ties them to this phone. Apple
-/// recommends the Keychain for passwords and login tokens; normal app storage isn't made for secrets.
-/// Three actions for the web app: get, set and remove a text value by name.
+/// Login tokens in the Keychain (encrypted, tied to this phone).
+/// The web app can get, set and remove a value by key.
 @objc(KeychainPlugin)
 public class KeychainPlugin: CAPPlugin, CAPBridgedPlugin {
     public let identifier = "KeychainPlugin"
@@ -18,9 +17,8 @@ public class KeychainPlugin: CAPPlugin, CAPBridgedPlugin {
     private let service = "com.breathewithme.app.login"
     private let installedMark = "keychainReady"
 
-    /// Keychain items stay on the iPhone after an app is deleted, so a fresh install would still be logged in.
-    /// The app's own settings (UserDefaults) are deleted with the app: no mark there means this is the first
-    /// start after installing, so the login left over from an earlier install is removed.
+    // Keychain items survive deleting the app, so a reinstall would still be logged in.
+    // UserDefaults is deleted with the app, so no flag there means it's a fresh install.
     override public func load() {
         let settings = UserDefaults.standard
         if !settings.bool(forKey: installedMark) {
@@ -43,7 +41,7 @@ public class KeychainPlugin: CAPPlugin, CAPBridgedPlugin {
         search[kSecMatchLimit as String] = kSecMatchLimitOne
         var item: CFTypeRef?
         let status = SecItemCopyMatching(search as CFDictionary, &item)
-        if status == errSecItemNotFound { return call.resolve([:]) }  // nothing saved: value is missing
+        if status == errSecItemNotFound { return call.resolve([:]) }  // nothing saved
         guard status == errSecSuccess, let data = item as? Data, let value = String(data: data, encoding: .utf8) else {
             return call.reject("Keychain read failed (\(status))")
         }
@@ -57,7 +55,7 @@ public class KeychainPlugin: CAPPlugin, CAPBridgedPlugin {
         SecItemDelete(query(key) as CFDictionary)
         var item = query(key)
         item[kSecValueData as String] = Data(value.utf8)
-        // readable once the phone has been unlocked after a restart; never copied to backups or another phone
+        // after first unlock, this device only (no backups)
         item[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
         let status = SecItemAdd(item as CFDictionary, nil)
         guard status == errSecSuccess else { return call.reject("Keychain write failed (\(status))") }

@@ -7,8 +7,8 @@ const PhoneSolid = ({ className }) => (
 )
 
 /**
- * The one look for every emergency action: soft blush, deep rose text, a phone in a circle.
- * `href` calls (tel:), `to` opens a page in the app. `small` for tight places like the chat.
+ * Same style for every emergency action.
+ * `href` for tel: links, `to` for in-app pages, `small` for tight spots like the chat.
  */
 export default function EmergencyButton({ href, to, title, subtitle, small = false, className = '' }) {
   const cls = `flex w-full items-center rounded-3xl border border-rose-soft/30 bg-blush text-rose shadow-md shadow-rose-soft/15 active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-alert ${

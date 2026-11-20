@@ -3,23 +3,21 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 const pill = 'flex h-10 w-10 items-center justify-center rounded-full text-sage-dark active:bg-pistachio focus-visible:outline-2 focus-visible:outline-sage'
 
 /**
- * Page layout. The header has a back and a home button at the top left on every page (`home={false}`
- * hides home) and a settings button at the top right.
- * `calm` gives the screen a soft cream-to-blue background and a short, gentle entrance, for quiet spaces
- * like the calm check (give each step its own `key` so it plays again).
+ * Page layout. Back + home on the left (`home={false}` hides home), settings on the right.
+ * `calm` = soft background + gentle entrance (give each step a `key` so it replays).
  */
 export default function Screen({ children, footer, calm = false, home = true, fit = false, keyboard = false }) {
   const navigate = useNavigate()
   const { pathname, key } = useLocation()
-  // on every page; logged out, it asks to log in first and then opens Settings
+  // logged out it asks to log in first, then opens Settings
   const showSettings = pathname !== '/settings'
 
   const page = (
     <div className={`mx-auto flex ${fit ? 'h-full' : 'min-h-full'} w-full max-w-md flex-1 flex-col px-6 pt-[max(1rem,env(safe-area-inset-top))] ${keyboard ? 'pb-2' : 'pb-[max(1.5rem,env(safe-area-inset-bottom))]'}`}>
-      {/* keeps scrolled content from showing behind the iPhone's clock and battery */}
+      {/* keep content from scrolling under the status bar */}
       <div className="fixed inset-x-0 top-0 z-20 h-[env(safe-area-inset-top)] bg-cream" aria-hidden />
       <header className="grid grid-cols-[5.5rem_1fr_5.5rem] items-center border-b border-sage/10 pb-3">
-        {/* like the iPhone's own apps: round glassy buttons, back and home together in one capsule */}
+        {/* back + home in one glassy capsule, like iOS */}
         <div className="flex h-10 w-fit items-center rounded-full border border-white/70 bg-white/70 shadow-sm shadow-sage/10 backdrop-blur">
           <button type="button" aria-label="Back" onClick={() => (key === 'default' ? navigate('/') : navigate(-1))}
             className={pill}>
@@ -54,7 +52,7 @@ export default function Screen({ children, footer, calm = false, home = true, fi
       {footer && <footer className="pt-4 text-center">{footer}</footer>}
     </div>
   )
-  // every page: a soft cream-to-blue sky with two faint clouds behind the content (decorative only)
+  // background sky with two faint clouds
   return (
     <div className={`relative flex ${fit ? 'h-full' : 'min-h-full'} flex-col overflow-hidden bg-gradient-to-b from-cream via-cream to-soft-blue/40`}>
       <span aria-hidden className="pointer-events-none absolute -left-12 top-36 h-16 w-60 rounded-full bg-white/70 blur-2xl" />

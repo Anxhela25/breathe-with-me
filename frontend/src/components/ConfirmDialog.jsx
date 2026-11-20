@@ -1,8 +1,7 @@
 import { useEffect } from 'react'
 
 /**
- * A pop-up in the middle of the screen, page dimmed behind it, like the iPhone's own alerts.
- * For things that can't be undone: the red button does it, Cancel (or tapping outside) closes it.
+ * Centered confirm dialog for things that can't be undone. Tapping outside cancels.
  */
 export default function ConfirmDialog({ title, children, confirm, busyText, busy = false, error = '', onConfirm, onCancel }) {
   useEffect(() => {

@@ -13,7 +13,7 @@ import { listContacts, pauseChat, sendChat } from '../lib/api.js'
 import { CHECK_IN, pauseEnds, useChatPause } from '../lib/chatPause.js'
 import { formatPhone } from '../lib/phone.js'
 
-// used when the backend can't be reached
+// fallback if the backend can't be reached
 const OFFLINE_REPLY = "I'm here. Let's keep following the circle together."
 const EMERGENCY_NOTE = 'If you think this is a real medical emergency, call emergency services.'
 const CHECK_NO_REPLY = "Thank you for telling me. Let's follow the circle together. " +
@@ -23,29 +23,29 @@ export default function Chat() {
   const navigate = useNavigate()
   const { session, mark } = useSession()
   const pause = useChatPause()
-  // the first chat after a crisis pause opens with a gentle check-in (urgent help is always at the bottom)
+  // first chat after a crisis pause starts with a check-in
   const [afterPause] = useState(() => pause.checkInDue)
   const [lines, setLines] = useState(() => (afterPause ? [{ role: 'assistant', content: CHECK_IN }] : []))
   const [text, setText] = useState('')
   const [waiting, setWaiting] = useState(false)
   const [nextStep, setNextStep] = useState(null)
-  // the safety check wasn't sure: ask the user directly before anything else
+  // safety check unsure: ask the user first
   const [asking, setAsking] = useState(false)
-  // she answered "No, it's the panic": an unavailable safety check won't ask again in this chat
+  // after "No, it's the panic", don't ask again when the check is unavailable
   const [safeConfirmed, setSafeConfirmed] = useState(false)
   const list = useRef(null)
   const screen = useVisibleScreen()
   const keyboardOpen = screen.height < window.innerHeight - 100
 
-  // "Are you safe?" is answered with its two buttons: close the keyboard so the whole question shows
+  // close the keyboard so the whole "Are you safe?" question shows
   useEffect(() => { if (asking) document.activeElement?.blur() }, [asking])
 
-  // newest message in view: scroll only the message list, never the page
+  // scroll only the message list, not the page
   useEffect(() => {
     list.current?.scrollTo({ top: list.current.scrollHeight, behavior: 'smooth' })
   }, [lines, waiting, asking, nextStep, screen.height])
 
-  // 24 hours after a crisis message: people first, not the AI (lib/chatPause.js)
+  // 24h after a crisis message: people, not the AI (lib/chatPause.js)
   if (pause.paused) return <ChatPaused until={pause.until} />
 
   function send(event) {
@@ -69,7 +69,7 @@ export default function Chat() {
         return
       }
       if (out.kind === 'paused') {
-        // paused on another device: the support screen shows instead
+        // paused on another device
         pause.start(out.paused_until)
         return
       }
@@ -94,7 +94,7 @@ export default function Chat() {
     if (atRisk) {
       mark({ crisisShown: true })
       pause.start()
-      // with an account the server keeps the pause too; the phone already has it
+      // with an account the server keeps the pause too
       pauseChat().then(out => pause.start(out.paused_until)).catch(() => {})
       navigate('/urgent')
       return
@@ -106,8 +106,8 @@ export default function Chat() {
 
   const started = lines.length > 0
 
-  // the chat fills exactly the part of the screen above the keyboard, like a messaging app:
-  // the header stays, the messages sit right above the text box, only the messages scroll
+  // fill exactly the space above the keyboard like a messaging app:
+  // header stays, only the messages scroll
   return (
     <div className="fixed inset-x-0 overflow-hidden" style={{ top: screen.top, height: screen.height }}>
       <Screen fit keyboard={keyboardOpen}>
@@ -149,8 +149,8 @@ export default function Chat() {
               </button>
             </div>
           )}
-          {/* the next step as soft suggestions under the last reply, like quick replies in a messaging app */}
-          {/* the check-in, answered with one tap or in her own words */}
+          {/* next steps as quick replies under the last message */}
+          {/* check-in: one tap or free text */}
           {afterPause && lines.length === 1 && !waiting && (
             <div className="flex flex-wrap gap-2 animate-fade-in">
               <QuickReply onClick={() => sendText('A bit better')}>A bit better</QuickReply>
@@ -182,7 +182,7 @@ export default function Chat() {
               id="chat-text"
               value={text}
               onChange={e => setText(e.target.value)}
-              // Return sends, like a messaging app; the keyboard shows "send" on that key
+              // Return sends
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) send(e) }}
               enterKeyHint="send"
               placeholder="Write here…"
@@ -201,7 +201,7 @@ export default function Chat() {
           {!started && <Button to="/breathe" variant="link">No, just breathe</Button>}
         </form>
 
-        {/* always on screen, whatever she writes and however long the chat gets */}
+        {/* always visible */}
         <div className="mt-3 w-full">
           <EmergencyButton to="/urgent" title="I need urgent help" small />
         </div>
@@ -226,8 +226,8 @@ function useContacts() {
 }
 
 /**
- * The chat during the 24-hour crisis pause: a support screen, not a closed door. Fixed words, never the AI;
- * the emergency number and each trusted contact one tap away; breathing and grounding close; when it ends.
+ * Chat during the 24h pause: a support screen with fixed text, no AI.
+ * Emergency number and trusted contacts one tap away, plus breathing and grounding.
  */
 function ChatPaused({ until }) {
   const { user } = useAuth()
@@ -235,7 +235,7 @@ function ChatPaused({ until }) {
   const emergency = getEmergency(user?.country_code)
   return (
     <Screen calm>
-      {/* when the chat comes back, as a calm status line at the top; then the message; ways to reach someone at the bottom */}
+      {/* when the chat is back, then the message, then contacts at the bottom */}
       <p className="mt-5 flex items-center gap-2 rounded-full bg-white/80 px-4 py-2 text-sm text-sage shadow-sm shadow-sage/5">
         <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
           <circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" strokeLinecap="round" />
@@ -291,8 +291,8 @@ const GroundIcon = () => (
   </svg>
 )
 
-/** The part of the screen that is visible above the keyboard. The iPhone doesn't shrink the page when
- * the keyboard opens, it slides the whole page up, so the chat sizes itself from this instead. */
+/** Visible height above the keyboard. iOS slides the page up instead of resizing it,
+ * so the chat sizes itself from this. */
 function useVisibleScreen() {
   const read = () => ({ top: window.visualViewport?.offsetTop ?? 0, height: window.visualViewport?.height ?? window.innerHeight })
   const [box, setBox] = useState(read)

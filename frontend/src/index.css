@@ -30,8 +30,7 @@ body { @apply bg-cream text-sage-dark font-sans antialiased; }
 }
 .animate-fade-in { animation: fade-in 500ms ease-out both; }
 
-/* a page opening: a short, small slide that starts almost fully visible. A fade from invisible looked
-   like a broken, washed-out page for a moment, which is the wrong feeling during panic */
+/* page entrance: short small slide. fading in from invisible looked broken */
 @keyframes enter {
   from { opacity: 0.85; transform: translateY(6px); }
   to { opacity: 1; transform: none; }
@@ -45,14 +44,14 @@ body { @apply bg-cream text-sage-dark font-sans antialiased; }
 }
 .animate-draw { stroke-dasharray: 1; animation: draw 900ms ease-out both; }
 
-/* the soft glow of the flash on the finger illustration */
+/* flash glow on the finger illustration */
 @keyframes glow {
   0%, 100% { opacity: 0.45; }
   50% { opacity: 0.9; }
 }
 .animate-glow { animation: glow 2.4s ease-in-out infinite; }
 
-/* home start button: grows on 4s in, shrinks on 6s out, same rhythm as the breathing circle */
+/* start button: 4s in, 6s out, same as the breathing circle */
 @keyframes breathe {
   0%, 100% { transform: scale(0.94); }
   40% { transform: scale(1.04); }
@@ -66,7 +65,7 @@ body { @apply bg-cream text-sage-dark font-sans antialiased; }
 }
 .animate-halo { animation: halo 10s cubic-bezier(0.45, 0, 0.55, 1) infinite; }
 
-/* closing "getting through it": the sun rises over the horizon, then its rays fade in */
+/* closing page: sun rises, then the rays fade in */
 @keyframes sun-rise {
   from { transform: translateY(40px); }
   to { transform: none; }
@@ -78,13 +77,13 @@ body { @apply bg-cream text-sage-dark font-sans antialiased; }
 .sun-rise { animation: sun-rise 2.6s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
 .sun-rays { animation: sun-rays 3.2s ease-out both; }
 
-/* people who turn off motion on their phone get still versions */
+/* still versions for Reduce Motion */
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-in, .animate-enter, .animate-draw, .animate-glow, .animate-breathe, .animate-halo, .sun-rise, .sun-rays { animation: none; }
   .animate-draw { stroke-dashoffset: 0; }
 }
 
-/* calm check: the phone first, then the finger slides onto the camera and the flash glows (loops) */
+/* calm check: phone, finger slides onto the camera, flash glows (loops) */
 @keyframes finger-slide {
   0%, 22% { transform: translateX(200px); opacity: 0; }
   45%, 88% { transform: translateX(0); opacity: 1; }

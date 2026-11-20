@@ -3,16 +3,16 @@ import * as keys from './tokens.js'
 
 const BASE = import.meta.env.VITE_API_URL ?? ''
 
-// sync, for the places that only ask "is someone logged in?"
+// sync check for "is someone logged in?"
 export const getToken = () => keys.accessKey()
 export const hasLogin = keys.hasKeys
 export { loadKeys } from './tokens.js'
 
-// called when the login runs out for good (90 days unused, logged out elsewhere, password changed)
+// called when the login is gone for good (expired, logged out elsewhere, password changed)
 let loggedOut = () => {}
 export function whenLoggedOut(callback) { loggedOut = callback }
 
-// one refresh at a time: requests that fail together all wait for the same new keys
+// one refresh at a time, parallel requests wait for the same one
 let refreshing = null
 function refreshKeys() {
   const refresh = keys.refreshKey()
@@ -39,10 +39,10 @@ function refreshKeys() {
   return refreshing
 }
 
-/** Logged in: keeps the pair from the server (login, sign-up, password reset). */
+/** Save the token pair from the server. */
 export const saveLogin = keys.saveKeys
 
-/** Log out on this phone: the server cancels its refresh key too. */
+/** Log out here, the server revokes the refresh token too. */
 export async function logout() {
   const refresh = keys.refreshKey()
   await keys.clearKeys()
@@ -56,13 +56,13 @@ export class ApiError extends Error {
   }
 }
 
-// FastAPI's 422 list also has the sent values (maybe a password), so only field and reason
+// 422 errors include the sent values (could be a password), keep only field and reason
 const fieldErrors = list => (Array.isArray(list) ? list.map(e => `${e.loc?.join('.')}: ${e.msg}`).join('; ') : '')
 
-// every failed call is logged here, so the pages don't have to. Shows in the Xcode console
-// and Safari's Web Inspector. Never the body: it can hold a password or a chat message
+// every failed request is logged here (Xcode console / Safari inspector).
+// never the body, it can contain a password or a chat message
 async function request(method, path, body, retry = true) {
-  // renew first when the key is about to run out: the chat works without a login, so it would never say 401
+  // refresh early if the token is about to expire (chat works without login, so no 401 there)
   if (retry && !path.startsWith('/api/auth/') && keys.refreshKey() && keys.accessRunningOut()) {
     await refreshKeys().catch(() => {})  // offline: send it anyway
   }
@@ -79,11 +79,11 @@ async function request(method, path, body, retry = true) {
     console.warn(`[api] ${method} ${path} failed: ${err?.message ?? err} (backend: ${BASE || 'vite proxy'})`)
     throw err
   }
-  // the 1-hour key ran out: get new keys quietly and send the same request again, once
+  // access token expired: refresh and retry once
   if (response.status === 401 && retry && !path.startsWith('/api/auth/')) {
     if (await refreshKeys()) return request(method, path, body, false)
     if (!keys.refreshKey() && keys.accessKey()) {
-      // an old single key from an earlier version ran out
+      // old single token from an earlier version expired
       await keys.clearKeys()
       loggedOut()
     }
@@ -100,10 +100,10 @@ async function request(method, path, body, retry = true) {
 
 export const sendChat = ({ message, history, level, safeConfirmed = false }) =>
   request('POST', '/api/chat', { message, history, level, safe_confirmed: safeConfirmed })
-// "Yes, I need help now": the same 24-hour chat pause as a crisis message (needs an account)
+// "Yes, I need help now" = same 24h pause as a crisis message (account only)
 export const pauseChat = () => request('POST', '/api/chat/pause')
 
-// sign-up has two steps: email a code, then create the account with it
+// sign-up: email a code, then create the account with it
 export const startRegister = (email, password) => request('POST', '/api/auth/register/start', { email, password })
 export const register = (email, password, code, consent) =>
   request('POST', '/api/auth/register', { email, password, code, ...consent })

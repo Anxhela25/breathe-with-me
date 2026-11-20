@@ -1,5 +1,5 @@
-# Follows the OWASP Forgot Password Cheat Sheet: same answer whether or not the account exists,
-# short-lived single-use codes stored as a hash, and limits on requests and guesses.
+# Based on the OWASP Forgot Password cheat sheet: same answer whether the account exists or not,
+# short-lived single use codes stored as a hash, limits on requests and guesses.
 import hashlib
 import hmac
 import secrets
@@ -63,7 +63,7 @@ def check_code(db: Session, email: str, code: str) -> User | None:
 def finish(db: Session, user: User, password_hash: str) -> None:
     now = _now()
     user.password_hash = password_hash
-    user.password_changed_at = now  # signs out every other device
+    user.password_changed_at = now  # logs out other devices
     for reset in db.scalars(select(PasswordReset).where(PasswordReset.user_id == user.id, PasswordReset.used_at.is_(None))):
         reset.used_at = now
     db.commit()

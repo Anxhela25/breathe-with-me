@@ -27,4 +27,4 @@ class CalmCheckOut(BaseModel):
 
 class CalmBaselineOut(BaseModel):
     count: int
-    baseline: float | None  # her usual level, from her recent checks; None until she has some
+    baseline: float | None  # usual level from recent checks, None until there are some

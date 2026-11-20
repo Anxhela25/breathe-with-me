@@ -17,7 +17,7 @@ from app.services.email_check import email_problem
 from app.services.passwords import password_problem
 
 router = APIRouter(prefix="/api", tags=["account"])
-# never log emails or passwords; user ids are enough to find the account
+# don't log emails or passwords, user id is enough
 log = logging.getLogger("breathe.auth")
 
 
@@ -32,7 +32,6 @@ def _check_new_account(db: Session, email: str, password: str) -> None:
 
 @router.post("/auth/register/start", status_code=status.HTTP_202_ACCEPTED)
 def register_start(data: RegisterStartIn, background: BackgroundTasks, db: Session = Depends(get_db)):
-    """Step 1 of sign-up: checks the email and password, then emails a 6-digit code."""
     email = data.email.lower()
     if problem := email_problem(email):
         log.info("Sign-up refused: the email domain can't receive mail")
@@ -49,7 +48,6 @@ def register_start(data: RegisterStartIn, background: BackgroundTasks, db: Sessi
 
 @router.post("/auth/register", response_model=TokenOut, status_code=status.HTTP_201_CREATED)
 def register(data: RegisterIn, db: Session = Depends(get_db)):
-    """Step 2 of sign-up: creates the account once the emailed code is right."""
     email = data.email.lower()
     _check_new_account(db, email, data.password)
     if not email_verification.use_code(db, email, data.code):
@@ -97,14 +95,13 @@ def reset_password(data: ResetPasswordIn, db: Session = Depends(get_db)):
         log.info("Password reset refused: wrong or expired code")
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "This code is not valid or has expired. Ask for a new one.")
     password_reset.finish(db, user, hash_password(data.password))
-    tokens.revoke_all(db, user)  # every other phone logs out
+    tokens.revoke_all(db, user)  # log out other devices
     log.info("Password reset for account %d", user.id)
     return tokens.issue(db, user)
 
 
 @router.post("/auth/refresh", response_model=TokenOut)
 def refresh(data: RefreshIn, db: Session = Depends(get_db)):
-    """A new pair of keys for a refresh key; the old one stops working. 401: log in again."""
     pair = tokens.rotate(db, data.refresh_token)
     if pair is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Please log in again.")
@@ -113,7 +110,6 @@ def refresh(data: RefreshIn, db: Session = Depends(get_db)):
 
 @router.post("/auth/logout", status_code=status.HTTP_204_NO_CONTENT)
 def logout(data: RefreshIn, db: Session = Depends(get_db)):
-    """This phone's refresh key stops working. Answers the same whether or not the key was valid."""
     tokens.revoke(db, data.refresh_token)
 
 
@@ -132,7 +128,7 @@ def update_settings(data: SettingsIn, user: User = Depends(get_current_user), db
 
 @router.delete("/me/history", status_code=status.HTTP_204_NO_CONTENT)
 def delete_my_history(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    # sessions and calm checks (the usual rhythm is worked out from them); account and contacts stay
+    # sessions and calm checks only, account and contacts stay
     calm_checks = db.execute(delete(CalmCheck).where(CalmCheck.user_id == user.id)).rowcount
     episodes = db.execute(delete(Episode).where(Episode.user_id == user.id)).rowcount
     db.commit()

@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse
 from app.config import settings
 from app.routers import auth, calm_checks, chat, contacts, episodes, insights, safety
 
-# without this, Python only prints warnings and errors, with no time or module name
+# show time and module in the logs
 logging.basicConfig(
     level=settings.log_level.upper(),
     format="%(asctime)s %(levelname)-7s %(name)s: %(message)s",
@@ -19,12 +19,11 @@ logging.basicConfig(
 )
 log = logging.getLogger("breathe.api")
 
-# Tables are managed by Alembic: run `alembic upgrade head` after pulling new migrations.
+# tables come from alembic: run `alembic upgrade head`
 app = FastAPI(title="Breathe With Me API", version="0.1.0")
 
 
-# Added before CORS so CORS wraps it: a crash still gets CORS headers, and the phone shows the error
-# instead of "offline".
+# added before CORS so error responses still get CORS headers (otherwise the phone says offline)
 @app.middleware("http")
 async def log_failed_requests(request: Request, call_next):
     start = time.monotonic()
@@ -52,7 +51,7 @@ app.add_middleware(
 
 @app.exception_handler(RequestValidationError)
 async def log_invalid_request(request: Request, error: RequestValidationError):
-    # which field and why, never the value: it can be a password or a chat message
+    # log field + reason only, the value could be a password
     problems = [f"{'.'.join(map(str, e['loc']))}: {e['msg']}" for e in jsonable_encoder(error.errors())]
     log.info("%s %s rejected: %s", request.method, request.url.path, "; ".join(problems))
     return await request_validation_exception_handler(request, error)

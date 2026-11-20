@@ -1,6 +1,6 @@
-// Calm check (project plan section 5): one minute of breathing with the circle while a fingertip rests
-// on the camera. The heart rate is shown in calm colours; how well the rhythm followed the circle is
-// turned into kind words. Never during a strong attack, never a red zone.
+// Calm check: 1 minute breathing with the circle, fingertip on the camera.
+// Shows the heart rate, and turns how well the rhythm followed the circle into kind words.
+// Never during a strong attack, no red zones.
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import Screen from '../components/Screen.jsx'
@@ -17,7 +17,7 @@ import { useReducedMotion } from '../lib/motion.js'
 
 const MEASURE_S = 60  // seconds with the finger on the lens
 const GUIDE = { inhaleMs: 4000, exhaleMs: 6000 }  // the same pace as the breathing screen
-const SLOWER = { inhaleMs: 5000, exhaleMs: 7000 }  // "breathe a little longer": a longer out-breath
+const SLOWER = { inhaleMs: 5000, exhaleMs: 7000 }  // longer out-breath
 const BREATH_S = (GUIDE.inhaleMs + GUIDE.exhaleMs) / 1000
 const BREATHS = Math.round(MEASURE_S / BREATH_S)
 const MAX_TRIES = 2
@@ -58,7 +58,7 @@ export default function CalmCheck() {
     setOutcome(result)
     setSaved('idle')
     setPhase('result')
-    // saved automatically for logged-in users; failed readings are never saved
+    // auto-saved when logged in, failed readings aren't saved
     if (result.key !== RESULT.retry && user) save(result)
   }
 
@@ -183,11 +183,11 @@ export default function CalmCheck() {
 }
 
 function Measuring({ onDone, onStop, onError }) {
-  // the latest callbacks, so the camera starts once and isn't restarted when the parent re-renders
+  // latest callbacks in refs, so the camera starts once and isn't restarted on re-render
   const callbacks = useRef({ onDone, onError })
   useEffect(() => { callbacks.current = { onDone, onError } })
   const samples = useRef([])
-  const channel = useRef('r')  // red or green, whichever gives the cleaner pulse on this phone
+  const channel = useRef('r')  // red or green, whichever gives a cleaner pulse on this phone
   const stopCamera = useRef(null)
   const fingerSeconds = useRef(0)
   const locked = useRef(false)
@@ -202,7 +202,7 @@ function Measuring({ onDone, onStop, onError }) {
       const all = samples.current
       const previous = all[all.length - 1]
       all.push(frame)
-      // the minute only counts while the finger is on the lens
+      // only count time while the finger is on the lens
       if (previous && fingerOnLens(frame)) fingerSeconds.current += Math.min(0.1, frame.t - previous.t)
       if (!locked.current && fingerSeconds.current > 1.5) {
         locked.current = true
@@ -233,7 +233,7 @@ function Measuring({ onDone, onStop, onError }) {
       if (!all.length || finished.current) return
       const last = all[all.length - 1]
       const progress = Math.min(1, fingerSeconds.current / MEASURE_S)
-      // heart rate and the best colour channel, once a second from the last 15 seconds
+      // every second: heart rate + best channel from the last 15s
       let bpm
       if (++ticks % 4 === 0) {
         const recent = analyzePulse(all.filter(s => s.t >= last.t - 15))
@@ -271,10 +271,7 @@ function Measuring({ onDone, onStop, onError }) {
   )
 }
 
-/**
- * The live pulse, drawn smoothly on every screen frame: a soft line with a pale fill under it.
- * It shows the reading works without marking each heartbeat.
- */
+/** Live pulse line with a pale fill, drawn every frame. No beat markers. */
 function LiveWave({ samples, channel, faded }) {
   const canvas = useRef(null)
   const reduced = useReducedMotion()
@@ -284,7 +281,7 @@ function LiveWave({ samples, channel, faded }) {
     let lastDraw = 0
     const draw = now => {
       frame = requestAnimationFrame(draw)
-      if (now - lastDraw < (reduced ? 500 : 30)) return  // about 30 times a second; twice with Reduce Motion
+      if (now - lastDraw < (reduced ? 500 : 30)) return  // ~30fps, twice a second with Reduce Motion
       lastDraw = now
       const el = canvas.current
       const all = samples.current
@@ -334,7 +331,7 @@ function LiveWave({ samples, channel, faded }) {
   )
 }
 
-/** The heart rate in a pistachio ring that fills in, counting up softly. A check appears when steady. */
+/** Heart rate in a ring that fills in and counts up. Check mark when steady. */
 function ResultRing({ heartRate, steady }) {
   const reduced = useReducedMotion()
   const [shown, setShown] = useState(reduced ? heartRate : 0)
@@ -344,9 +341,9 @@ function ResultRing({ heartRate, steady }) {
     let frame
     const start = performance.now()
     const tick = now => {
-      // a frame's time can be slightly before `start`, so clamp at 0 (or the number goes negative)
+      // frame time can be a bit before start, clamp to 0
       const t = Math.min(1, Math.max(0, (now - start) / 1200))
-      setShown(Math.round(heartRate * (1 - (1 - t) ** 3)))  // eases out
+      setShown(Math.round(heartRate * (1 - (1 - t) ** 3)))  // ease out
       if (t < 1) frame = requestAnimationFrame(tick)
     }
     frame = requestAnimationFrame(tick)
@@ -381,24 +378,23 @@ function ResultRing({ heartRate, steady }) {
   )
 }
 
-/** Back of a phone with the camera, a fingertip resting on the lens and the flash glowing softly. */
 /**
- * A short looping animation: the back of a phone lying on its side, then a finger slides in from the
- * right and rests on the camera, and the flash glows through it. Still picture with Reduce Motion.
+ * Looping animation: phone from the back, a finger slides onto the camera, flash glows.
+ * Static with Reduce Motion.
  */
 function FingerIllustration() {
   return (
     <svg viewBox="0 0 240 150" className="h-36 w-56" aria-hidden>
-      {/* phone, lying horizontally, seen from the back */}
+      {/* phone, horizontal, from the back */}
       <rect x="8" y="14" width="196" height="122" rx="26" fill="white" />
-      {/* camera module in the top-left corner: two lenses and the flash */}
+      {/* camera: two lenses + flash */}
       <rect x="22" y="28" width="74" height="56" rx="18" fill="#E2EADA" />
       <circle cx="42" cy="46" r="10" fill="#2F4136" fillOpacity="0.85" />
       <circle cx="42" cy="70" r="9" fill="#2F4136" fillOpacity="0.85" />
       <circle cx="70" cy="46" r="5" fill="#F5E6B8" />
-      {/* the flash shining through the fingertip */}
+      {/* flash glow through the finger */}
       <circle cx="54" cy="46" r="30" fill="#F5D9A8" className="finger-glow" />
-      {/* finger sliding in from the right, its tip resting on the top lens and the flash */}
+      {/* finger sliding in from the right */}
       <g className="finger-slide">
         <path d="M260 26 L56 26 Q30 26 30 46 Q30 66 56 66 L260 66 Z" fill="#E8C4B0" stroke="#C99A85" strokeWidth="2" />
         <path d="M44 36 Q36 36 36 46 Q36 56 44 56 L56 56 Q60 46 56 36 Z" fill="#F2D7C8" stroke="#C99A85" strokeWidth="1.5" />

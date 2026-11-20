@@ -1,7 +1,6 @@
-// Turns the camera's colour readings into heartbeats (photoplethysmography, PPG).
-// Each heartbeat pushes a little more blood into the fingertip, so the image gets slightly darker.
-// This is plain signal processing on the phone, not an AI model. The numbers are first guesses and
-// are tuned with real recordings from the test screen.
+// Turns the camera colour readings into heartbeats (PPG).
+// Each beat pushes more blood into the fingertip, so the image gets a bit darker.
+// Just signal processing, no AI. The numbers are first guesses, tune with real recordings.
 
 const MIN_BEAT_GAP_S = 0.33  // fastest: about 180 beats per minute
 const MIN_IBI_MS = 300
@@ -20,8 +19,8 @@ export const median = list => {
   return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2
 }
 
-// Second-order filter (Butterworth), from the Audio EQ Cookbook. Run forwards and backwards so the
-// beats don't shift in time.
+// 2nd order Butterworth (Audio EQ Cookbook). Run forwards and backwards
+// so the beats don't shift in time.
 function biquad(values, type, cutoff, rate) {
   const w = (2 * Math.PI * cutoff) / rate
   const alpha = Math.sin(w) / Math.SQRT2
@@ -49,7 +48,7 @@ function pulseBand(values, rate) {
   return biquad(biquad(values.map(v => v - mean), 'high', 0.7, rate), 'low', 3.5, rate)
 }
 
-/** Just the filtered pulse wave, for drawing. Cheap enough to run on every screen frame. */
+/** Filtered pulse wave only, for drawing. Cheap enough for every frame. */
 export function pulseWave(samples, channel = 'r') {
   if (samples.length < 30) return []
   const times = samples.map(s => s.t)
@@ -58,9 +57,9 @@ export function pulseWave(samples, channel = 'r') {
 }
 
 /**
- * samples: [{ t (seconds), r, g, b }], about 30 per second.
- * Returns the pulse wave, the beat times and the time between beats, or null if too short.
- * With channel 'auto', both red and green are tried and the cleaner one is used (it depends on the phone).
+ * samples: [{ t, r, g, b }], ~30 per second.
+ * Returns the wave, beat times and intervals, or null if too short.
+ * channel 'auto' tries red and green and uses the cleaner one (depends on the phone).
  */
 export function analyzePulse(samples, { channel = 'auto' } = {}) {
   if (channel === 'auto') {
@@ -72,10 +71,10 @@ export function analyzePulse(samples, { channel = 'auto' } = {}) {
   if (samples.length < 90) return null
   const times = samples.map(s => s.t)
   const rate = (samples.length - 1) / (times[times.length - 1] - times[0])
-  // flip it: more blood = darker image = a peak upwards; then keep only heartbeat-speed changes
+  // invert (more blood = darker = peak up), then keep only heartbeat-speed changes
   const wave = pulseBand(samples.map(s => -s[channel]), rate)
 
-  // candidate beats: the highest point within 0.25 s on each side, above the drift line
+  // candidate beats: highest point within 0.25s on each side, above the drift line
   const half = Math.max(1, Math.round(rate * 0.25))
   const candidates = []
   for (let i = half; i < wave.length - half; i++) {
@@ -88,7 +87,7 @@ export function analyzePulse(samples, { channel = 'auto' } = {}) {
   const typical = median(candidates.map(i => wave[i])) ?? 0
   const beats = []
   for (const i of candidates.filter(i => wave[i] >= 0.35 * typical)) {
-    // place the beat between frames, from the shape of the peak (30 frames a second is coarse)
+    // interpolate the peak between frames (30fps is coarse)
     const [a, b, c] = [wave[i - 1], wave[i], wave[i + 1]]
     const bend = a - 2 * b + c
     const shift = bend === 0 ? 0 : Math.max(-0.5, Math.min(0.5, (0.5 * (a - c)) / bend))
@@ -96,7 +95,7 @@ export function analyzePulse(samples, { channel = 'auto' } = {}) {
     if (!beats.length || time - beats[beats.length - 1] >= MIN_BEAT_GAP_S) beats.push(time)
   }
 
-  const ibis = []  // time between beats, in ms, with the time of the second beat
+  const ibis = []  // intervals in ms, with the time of the second beat
   for (let k = 1; k < beats.length; k++) ibis.push({ t: beats[k], ms: (beats[k] - beats[k - 1]) * 1000 })
   const usual = median(ibis.map(x => x.ms).filter(ms => ms >= MIN_IBI_MS && ms <= MAX_IBI_MS))
   const clean = ibis.filter(x => usual && x.ms >= MIN_IBI_MS && x.ms <= MAX_IBI_MS
@@ -110,23 +109,23 @@ export function analyzePulse(samples, { channel = 'auto' } = {}) {
     ibis,
     clean,
     bpm: clean.length ? Math.round(60000 / median(clean.map(x => x.ms))) : null,
-    quality: ibis.length ? clean.length / ibis.length : 0,  // share of beats that look right
+    quality: ibis.length ? clean.length / ibis.length : 0,  // share of beats that look ok
   }
 }
 
 /**
- * How well the heart rhythm follows the breathing guide, from 0 (not at all) to 1.
- * When we breathe slowly the heart speeds up on the in-breath and slows on the out-breath. We measure
- * how much of the change in the time between beats happens at the circle's pace (one breath every
- * `breathSeconds`), compared with all slow changes (0.04 to 0.4 Hz). This is a standard heart rate
- * variability measure ("coherence"). Returns null without enough clean beats.
+ * How well the heart rhythm follows the breathing guide, 0 to 1.
+ * Slow breathing speeds the heart up on the in-breath and slows it on the out-breath.
+ * This is how much of the interval change happens at the breathing pace (one breath every
+ * `breathSeconds`) vs all slow changes (0.04-0.4 Hz), the HRV "coherence" measure.
+ * Returns null without enough clean beats.
  */
 export function rhythmLevel(clean, breathSeconds = 10) {
   if (clean.length < 25) return null
   const start = clean[0].t
   const end = clean[clean.length - 1].t
   if (end - start < 30) return null
-  // the beats are uneven in time: read the rhythm 4 times a second, joining the dots
+  // beats are uneven: resample at 4Hz with linear interpolation
   const step = 0.25
   const series = []
   let k = 0
@@ -135,7 +134,7 @@ export function rhythmLevel(clean, breathSeconds = 10) {
     const [a, b] = [clean[k], clean[k + 1]]
     series.push(a.ms + ((b.ms - a.ms) * (t - a.t)) / (b.t - a.t || 1))
   }
-  // remove the average and any steady drift
+  // remove mean and linear drift
   const n = series.length
   const meanT = (n - 1) / 2
   const meanV = series.reduce((s, v) => s + v, 0) / n
@@ -166,9 +165,9 @@ export function rhythmLevel(clean, breathSeconds = 10) {
 export const RESULT = { steady: 'steady', gentle: 'gentle', retry: 'retry' }
 
 /**
- * The words she sees come from this. Never a number for the level, never "low" or "failed".
- * baseline: her usual level from earlier checks, or null the first times.
- * The thresholds are first guesses, to be tuned with real checks.
+ * Picks the words shown to the user. Never a number, never "low" or "failed".
+ * baseline: usual level from earlier checks, null at first.
+ * Thresholds are first guesses, tune with real checks.
  */
 export function calmResult(result, breathSeconds, baseline) {
   if (!result || result.quality < 0.6 || result.clean.length < 25) return { key: RESULT.retry }
