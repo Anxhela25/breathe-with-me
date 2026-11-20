@@ -8,6 +8,12 @@ Calm support for panic moments. **A support tool, not a treatment.**
 - `frontend/` React + Vite + Tailwind CSS, wrapped as an iPhone app with Capacitor
 - `backend/` Python (FastAPI + SQLAlchemy) + PostgreSQL
 
+## Project pages
+
+- [Screens](https://anxhela25.github.io/breathe-with-me-screens/): every screen of the app and where its buttons lead
+- [How it works](https://anxhela25.github.io/breathe-with-me-screens/flow.html): flow charts of the app's logic
+- [Technology and decisions](https://anxhela25.github.io/breathe-with-me-screens/decisions.html): what we used, why, and the references
+
 ## What you need
 
 These steps are for a Mac with [Homebrew](https://brew.sh).
@@ -87,10 +93,16 @@ The app works without these. Each one switches on a feature. All of them go in `
 | Setting | What it does | Without it |
 |---|---|---|
 | `GROQ_API_KEY` (free at [console.groq.com](https://console.groq.com)) and/or `GEMINI_API_KEY` (free at [aistudio.google.com](https://aistudio.google.com)) | AI replies in the chat, and the AI safety check | The chat answers with a fixed calm message. The rule-based crisis check still works. |
-| `GMAIL_ADDRESS` and `GMAIL_APP_PASSWORD` | Sends sign-up and password reset codes by email | Codes are printed in the backend terminal |
+| `BREVO_API_KEY` and `BREVO_SENDER` (free at [brevo.com](https://www.brevo.com)) | Sends sign-up and password reset codes by email. Used first when set | Codes are printed in the backend terminal |
+| `GMAIL_ADDRESS` and `GMAIL_APP_PASSWORD` | Same, through Gmail. Used when Brevo isn't set | Codes are printed in the backend terminal |
+| `RESEND_API_KEY` (and `EMAIL_FROM`) | Same, through [Resend](https://resend.com). Used when neither of the above is set | Codes are printed in the backend terminal |
+| `SENTRY_DSN` (free at [sentry.io](https://sentry.io)) | Emails you when the backend crashes or logs an error. Nothing personal is sent | Errors only show in the backend terminal |
 
 For Gmail, use an **App Password**, not your normal password. Turn on 2-Step Verification in your
 Google account, then create one at https://myaccount.google.com/apppasswords.
+
+Leave `SENTRY_DSN` empty on your Mac, so errors from testing don't fill up Sentry. Set it only on
+Render. The tests never send anything to Sentry.
 
 Restart the backend after you change `.env`.
 
@@ -160,6 +172,7 @@ anywhere, put the backend online. Everything below is free:
    - `GROQ_API_KEY`, `GEMINI_API_KEY`: the same keys as in your `backend/.env`
    - `BREVO_API_KEY`: the Brevo key
    - `BREVO_SENDER`: the Gmail address you confirmed in Brevo
+   - `SENTRY_DSN` (optional): the DSN of your Sentry project for the backend
 5. Click **Apply** and wait for the deploy to finish (a few minutes). The tables are created
    automatically.
 6. Open `https://<your-service>.onrender.com/api/health` in a browser. It should show `{"status":"ok"}`.
@@ -169,6 +182,7 @@ anywhere, put the backend online. Everything below is free:
 Change `frontend/.env.production.local` to the Render address (https, no port):
 ```
 VITE_API_URL=https://breathe-with-me-api.onrender.com
+VITE_SENTRY_DSN=https://...ingest.de.sentry.io/...   # optional: errors from the app, from your Sentry React project
 ```
 Then run `npm run ios` in `frontend/` and press **Run** (▶) in Xcode. The app now works on any
 Wi-Fi or mobile data, with your Mac off.
@@ -209,4 +223,4 @@ The tests use the `breathe_with_me_test` database. They never send real emails o
 - [x] Part 3: chat with AI (Groq, Gemini, fallback), rule-based and AI crisis checks, reply check
 - [x] Part 4: calm check (camera and flash on the iPhone)
 - [x] Part 5: history, insights, doctor summary as a PDF
-- [ ] Part 6: deployment (ready for a free presentation setup, see "Put it online for a presentation")
+- [x] Part 6: online on free plans (Render, Neon, Brevo) and error reports with Sentry

@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.database import get_db
+from app.dates import as_utc
 from app.models import User
 from app.schemas.chat import ChatIn, ChatOut, PauseOut
 from app.services.auth import get_current_user, get_optional_user
@@ -15,9 +16,6 @@ from app.services.chat import run_chat
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 log = logging.getLogger("breathe.chat")
 
-
-def _aware(moment: datetime) -> datetime:
-    return moment if moment.tzinfo else moment.replace(tzinfo=timezone.utc)
 
 
 def _pause(user: User | None, db: Session, now: datetime) -> datetime:
@@ -40,7 +38,7 @@ def pause(user: User = Depends(get_current_user), db: Session = Depends(get_db))
 def chat(data: ChatIn, user: User | None = Depends(get_optional_user), db: Session = Depends(get_db)):
     now = datetime.now(timezone.utc)
     # during the 24h pause the AI isn't called at all (without an account the app keeps it)
-    if user and user.chat_paused_until and _aware(user.chat_paused_until) > now:
+    if user and user.chat_paused_until and as_utc(user.chat_paused_until) > now:
         log.info("Chat paused for account %d: AI not called", user.id)
         return ChatOut(kind="paused", reply=None, emergency_note=False, next_step="urgent", source="fixed",
                        paused_until=user.chat_paused_until)

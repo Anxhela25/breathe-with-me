@@ -5,6 +5,7 @@ import jwt
 
 from app.config import settings
 from app.database import SessionLocal
+from app.dates import as_utc
 from app.models import RefreshToken
 from app.services import tokens
 from tests.helpers import PASSWORD, last_code, sign_up
@@ -51,7 +52,7 @@ def test_refresh_key_lasts_90_days_from_its_last_use(client):
     new = refresh(client, keys["refresh_token"]).json()
     with SessionLocal() as db:
         row = db.query(RefreshToken).filter_by(token_hash=tokens._hash(new["refresh_token"])).one()
-    days = (tokens._aware(row.expires_at) - datetime.now(timezone.utc)) / timedelta(days=1)
+    days = (as_utc(row.expires_at) - datetime.now(timezone.utc)) / timedelta(days=1)
     assert 89.9 < days <= 90
 
 

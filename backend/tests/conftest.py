@@ -11,6 +11,7 @@ os.environ["REFRESH_TOKEN_MINUTES"] = "0"  # 0: use the days
 os.environ["CHAT_PAUSE_MINUTES"] = str(24 * 60)  # real pause length
 os.environ["CHECK_BREACHED_PASSWORDS"] = "false"  # no network calls in tests
 os.environ["CHECK_EMAIL_DOMAIN"] = "false"
+os.environ["SENTRY_DSN"] = ""  # test errors never go to Sentry
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402

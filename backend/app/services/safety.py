@@ -66,10 +66,6 @@ class SafetyResult:
     level: SafetyLevel
     matched: list[str] = field(default_factory=list)
 
-    @property
-    def is_crisis(self) -> bool:
-        return self.level is SafetyLevel.crisis
-
 
 def normalize(text: str) -> str:
     # "I CAN’T go on" -> "i cant go on"

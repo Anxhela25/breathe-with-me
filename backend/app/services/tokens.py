@@ -13,6 +13,7 @@ from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from app.config import settings
+from app.dates import as_utc
 from app.models import RefreshToken, User
 from app.schemas.user import TokenOut
 from app.services.auth import create_token
@@ -26,9 +27,6 @@ REUSE_GRACE = timedelta(seconds=60)
 def _hash(raw: str) -> str:
     return hashlib.sha256(raw.encode()).hexdigest()
 
-
-def _aware(moment: datetime) -> datetime:
-    return moment if moment.tzinfo else moment.replace(tzinfo=timezone.utc)
 
 
 def _lifetime() -> timedelta:
@@ -72,7 +70,7 @@ def rotate(db: Session, raw: str) -> TokenOut | None:
         log.info("Refresh refused: the key of account %d was cancelled", user.id)
         return None
     if row.revoked_at is not None:
-        if now - _aware(row.revoked_at) >= REUSE_GRACE:
+        if now - as_utc(row.revoked_at) >= REUSE_GRACE:
             # already used or revoked token came back, probably copied
             log.warning("Refresh key reused for account %d: every login of the account cancelled", user.id)
             revoke_all(db, user, now)
@@ -82,7 +80,7 @@ def rotate(db: Session, raw: str) -> TokenOut | None:
         log.info("Refresh key retried within the grace time for account %d", user.id)
         db.execute(update(RefreshToken).where(RefreshToken.id == row.replaced_by_id, RefreshToken.revoked_at.is_(None))
                    .values(revoked_at=now))
-    elif _aware(row.expires_at) <= now:
+    elif as_utc(row.expires_at) <= now:
         log.info("Refresh refused: the key of account %d expired after %s unused", user.id, _lifetime())
         return None
     new_row, new_raw = _new_refresh(db, user, now)
